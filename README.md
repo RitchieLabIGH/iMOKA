@@ -14,20 +14,22 @@ The folders iMOKA_core and iMOKA contains the sources of the CLI and the GUI par
 
 ## Acknowledgment
 #### Core:
-mlpack : https://github.com/mlpack/mlpack
-cxxopts : https://github.com/jarro2783/cxxopts
-nlohmann/json: https://github.com/nlohmann/json
-SimpSOM: https://github.com/fcomitani/SimpSOM
-sklearn: https://scikit-learn.org/
+
+- mlpack : https://github.com/mlpack/mlpack
+- cxxopts : https://github.com/jarro2783/cxxopts
+- nlohmann/json: https://github.com/nlohmann/json
+- SimpSOM: https://github.com/fcomitani/SimpSOM
+- sklearn: https://scikit-learn.org/
 
 
 #### GUI:
-igvteam ( igv.js ): https://github.com/igvteam/igv.js/
-plotly ( plotly.js) : https://github.com/plotly/plotly.js/
-d3js :  https://github.com/d3
-electron : https://www.electronjs.org/
-angular : https://angular.io/
-angular-material : https://material.angular.io/
+
+- igvteam : https://github.com/igvteam/igv.js/
+- plotly : https://github.com/plotly/plotly.js/
+- d3js :  https://github.com/d3
+- electron : https://www.electronjs.org/
+- angular : https://angular.io/
+- angular-material : https://material.angular.io/
 
 
 
