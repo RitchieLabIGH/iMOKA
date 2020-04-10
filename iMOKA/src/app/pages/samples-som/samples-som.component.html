@@ -1,0 +1,158 @@
+<script type="text/javascript">
+function fupdateSelNodesInfos(){
+	updateSelNodesInfos();
+}
+</script>
+<button  mat-button (click)="testonto()">View ontology</button>
+
+<div fxLayout="column" fxLayoutAlign="space-evenly stretch">
+	<div fxFlex class="row" id="files">
+	<div fxLayout fxLayoutAlign="start center">
+		<div fxFlex="10em">
+			<h2>Files </h2>
+			<button mat-raised-button (click)="loadData();">Add a file</button>
+		</div>
+	<div class="container" *ngFor="let file of files" fxFlex="25em">
+		<mat-card class="mat-elevation-z1"  >
+			<mat-card-content>
+				<p>File name:  {{file.file_name}} </p>
+				<p>File type: {{file.file_type}} </p>
+			</mat-card-content>
+			<mat-card-actions>
+				<button mat-button color="warn" (click)="loadData();">Change </button>
+				<button mat-button color="accent" *ngIf="file.file_type == 'kmers'" (click)="reset();">Reset</button>
+				<button mat-button color="accent" *ngIf="file.file_type != 'kmers'" (click)="closeData(file.file_type);">Close</button>
+			</mat-card-actions>
+		</mat-card>
+		</div>
+	</div>
+	</div>
+
+<!--  
+<ng-container *ngIf="!file.som">
+<div class="row">
+	<div class="col-md-12">
+		<nb-card> <nb-card-body>
+		<div class="flex-centered col-xl-4 col-lg-6 col-md-8 col-sm-12">
+			<h2 class="title">Welcome to iMoka</h2>
+			<small class="sub-title">This interactive visualization
+				tool.... bla bla bla</small>
+			<hr class="my-4">
+			<p>Load your self organizating map analyze result file from the
+				analysis.</p>
+			<button status="primary" nbButton (click)="loadData('som')" >Load</button>
+		</div>
+		</nb-card-body> </nb-card>
+	</div>
+</div>
+
+</ng-container>
+<ng-container *ngIf="file.som">
+<div class="row">
+<div class="col">
+		<nb-card *ngIf="! file.som"> <nb-card-body>
+		<button status="primary" class="btn-block" nbButton (click)="loadData('som')" >Add SOM</button>
+		</nb-card-body> </nb-card>
+		<nb-card *ngIf="file.som"> <nb-card-body>
+		Current SOM file: <strong (click)="loadData('som')">{{file.som}}</strong>. </nb-card-body> </nb-card>
+	</div>
+	<div class="col">
+		<nb-card *ngIf="! file.kmers"> <nb-card-body>
+			<button status="primary" class="btn-block" nbButton (click)="loadData('kmers')" >Add k-mers</button>
+		</nb-card-body> </nb-card>
+		<nb-card *ngIf="file.kmers"> 
+		<nb-card-body>Current k-mer file: <strong (click)="loadData('kmers')">{{file.kmers}}</strong>. </nb-card-body> </nb-card>
+		</div>
+	<div class="col">
+		<nb-card *ngIf="! file.models"> <nb-card-body>
+			<button status="primary"  class="btn-block" nbButton (click)="loadData('models')">Add models</button>
+		</nb-card-body> </nb-card>
+		<nb-card *ngIf="file.models"> <nb-card-body> Current models file: <strong (click)="loadData('models')">{{file.models}}</strong>. </nb-card-body> </nb-card>
+	</div>
+	
+</div>
+<div class="row" *ngIf="dtOptions.kmers">
+	<div class="col">
+		<nb-card> 
+		<nb-card-header>K-mer list </nb-card-header>
+		<nb-card-body>
+		<div class="col">
+			<table datatable [dtOptions]="dtOptions.kmers"
+				class="table row-border hover">
+			</table>
+		</div>
+		</nb-card-body> </nb-card>
+	</div>
+</div>
+  -->
+<div fxFlex class="row" *ngIf="data.samplesSOM" >
+	<div  >
+		<h2>SOM projection clustering</h2>
+		
+		<mat-form-field *ngIf="clust_select.length!=0" > <mat-label>Number of samples clusters</mat-label>
+		<!-- <select matNativeControl  -->
+			<select matNativeControl [(ngModel)]="clust" id="comboA" value={{clust}} (change)="updateCluster()" >
+				<option *ngFor="let clustopt of clust_select; index as i" value="{{clustopt.id}}">{{clustopt.nclust}}</option>
+			</select>
+		</mat-form-field>
+		
+		
+		<mat-form-field><mat-label>View style</mat-label>
+			<select matNativeControl [(ngModel)]="normOption" id="comboA" value={{normOption}} (change)="normOptionUpdate()" >
+				<option value="normByNode">normalize by node</option>
+				<option value="centerAvrg">center on average samples</option>
+				<option value="raw">raw count</option>
+				
+			</select>
+			</mat-form-field>
+		
+		<div id="gallery">
+		
+		<div *ngIf=data.mapaverage >
+				<ul id="">
+					<li style="text-align: center; margin-right: 20px;">
+						<div>Features importance</div>
+							<div id="sommapimportance0" class="mapcontainer"  ></div>
+						
+					</li><li style="text-align: center; margin-right: 20px;">
+						<div># Kmers by node</div>
+							<div id="sommapimportance1" class="mapcontainer"  ></div>
+					</li>
+				</ul>
+				<ul>
+						<li  *ngFor="let sample of data.mapaverage; index as i">
+					    	<div class="mosaicItem class">
+									<div id="sommapaverage{{i}}" class="mapcontainer"  ></div>
+					    			<div class="text class{{sample.classnumber}}"><div>{{sample.classori}}</div><div>{{sample.labelsamples}}</div></div>
+							</div>
+						</li>
+				</ul>
+		</div>
+		<input matInput id="selectedsample" class="hiddeninput" (change)="updateSelNodesInfos()"/>		
+			<mat-form-field> <mat-label>Node selected (click on map)</mat-label><input  placeholder="click on a map to select node" matInput id="listselectednode"  (change)="updateSelNodesInfos()"/>	
+			</mat-form-field>
+			 
+		 <button  mat-raised-button ng-disabled="this.selectednodes.length==0"  title="ontology on selected node( to select multiple nodes keep 'Ctrl' key press)" (click)="updateSelNodesgetonto()">View ontology</button>
+		
+		
+			<ul id="ulm">
+				<ng-container *ngFor="let sample of data.samplesSOM; index as i">
+				
+					<div *ngIf="i==0 || sample.bmu[clust]!=data.samplesSOM[i-1].bmu[clust]">Cluster{{sample.bmu[clust]}}</div>
+					<li>
+				    	<div class="mosaicItem class{{sample.bmu[clust]}}">
+								<div id="sommap{{i}}" class="mapcontainer"  ></div>
+								<!--	{{createmapindice(i)}},color:sample.projSOM 
+				    			<img src="{{sample.filename}}" alt="" />-->
+				    			<div class="text class{{sample.classnumber}}"><div>{{sample.classori}}</div><div>{{sample.labelsamples}}</div></div>
+						</div>
+					</li>
+				</ng-container>
+			</ul>
+		</div>
+	</div>
+
+</div>
+</div>
+
+

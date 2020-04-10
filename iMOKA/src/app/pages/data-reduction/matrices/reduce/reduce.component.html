@@ -1,0 +1,80 @@
+<h1 mat-dialog-title>Reduce the matrix {{matrix.name}} </h1>
+<div mat-dialog-content class="main-dialog">
+	<div fxLayout="column">
+		<mat-vertical-stepper linear="true" #stepper>
+		<mat-step [stepControl]="detailsControl">
+		<form [formGroup]="detailsControl">
+			<ng-template matStepLabel>Reduction parameters</ng-template>
+			<div class="high-tiles" fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px" fxLayoutAlign="flex-start">
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> 
+						<mat-label>Accuracy</mat-label> 
+						<input matInput required formControlName="accuracy" type="number"> 
+						<mat-hint>Accuracy threshold that the k-mers have to reach</mat-hint> 
+					</mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> 
+						<mat-label>Test percentage</mat-label> 
+						<input matInput required formControlName="test" type="number"> 
+						<mat-hint>The percentage of the smallest group used to test each cv round</mat-hint> 
+					</mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field>
+						<mat-label>Cross validation maximum rounds</mat-label> 
+						<input matInput required formControlName="crossvalidation" type="number"> 
+						<mat-hint>The maximum number of round in cross validation</mat-hint> 
+					</mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field>
+						<mat-label>Cross validation SD</mat-label> 
+						<input matInput required formControlName="crossvalidationsd" type="number"  step="0.01">
+						<mat-hint> The cross validation will stop when the sd of the accuracy will reach this value</mat-hint> 
+					</mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field>
+						<mat-label>Entropy adjustment 1 </mat-label> 
+						<input matInput required formControlName="entropyone" type="number"  step="0.01"> 
+						<mat-hint>First adjustment for the entropy filter</mat-hint> 
+					</mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field>
+						<mat-label>Entropy adjustment 2</mat-label> 
+						<input matInput required formControlName="entropytwo" type="number"  step="0.01">  
+						<mat-hint>Second adjustment for the entropy filter</mat-hint> 
+					</mat-form-field>
+				</div>
+			</div>
+		</form>
+		</mat-step> <mat-step [stepControl]="procControl">
+		<form [formGroup]="procControl">
+			<ng-template matStepLabel>Process resources</ng-template>
+			<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
+				fxLayoutAlign="flex-start">
+				<div fxFlex="0 1 calc(33.3% - 32px)"
+					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> <mat-label>Threads
+					per process</mat-label> <input matInput required formControlName="cores"
+						type="number"> <mat-hint>Number of cores used
+					per process</mat-hint> </mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)"
+					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> <mat-label>RAM available </mat-label> <input matInput required formControlName="mem"
+						type="number"> <mat-hint>Value in Gb</mat-hint> </mat-form-field>
+				</div>
+			</div>
+		</form>
+		</mat-step> </mat-vertical-stepper>
+	</div>
+	<pre *ngIf="error_message" class="error_message">{{error_message}} </pre>
+	<pre *ngIf="loading_message" class="loading_message">{{loading_message}} </pre>
+</div>
+<div mat-dialog-actions align="end">
+	<button mat-button mat-dialog-close>Close</button>
+	<button mat-button [disabled]="!isValid()" (click)="send()">Run</button>
+</div>

@@ -1,0 +1,114 @@
+
+<h2 mat-dialog-title>Gene ontologie power by PantherDB</h2>
+<div mat-dialog-content 
+	class="main-content">
+	<div class="container"  [hidden]="loaded">
+		<div *ngIf="datatabletest?.length != 0">
+		<mat-form-field> <mat-label>Enrichment
+		type</mat-label> <select matNativeControl
+			[(ngModel)]="panther_options.enrichmentType" id="enrichmentType"
+			value={{panther_options.enrichmentType}}
+			(change)="enrichmentAnalysis()">
+			<option *ngFor="let key of PDBEnrichmentTypeKeys" [value]="key">{{key}}</option>
+		</select> </mat-form-field>
+		<mat-form-field> <mat-label>Type</mat-label> <select
+			matNativeControl [(ngModel)]="panther_options.test_type"
+			id="test_type" value={{panther_options.test_type}}
+			(change)="enrichmentAnalysis()">
+			<option *ngFor="let key of PDBTestTypeKeys" [value]="key">{{key}}</option>
+		</select> </mat-form-field>
+		<mat-form-field> <mat-label>Correction</mat-label> <select
+			matNativeControl [(ngModel)]="panther_options.correction"
+			id="correction" value={{panther_options.correction}}
+			(change)="enrichmentAnalysis()">
+			<option *ngFor="let key of PDBCorrectionKeys" [value]="key">{{key}}</option>
+		</select> </mat-form-field>
+		<div style="max-height: 30vh; overflow-y: auto;">
+
+			<div *ngIf="datatabletest?.length > 0">
+				<div class="chart" style="text-align: center;">
+					<div style="display: inline-block;">
+						<plotly-plot [data]="graphdata.data" [layout]="graphdata.layout"></plotly-plot>
+
+					</div>
+					<div style="display: inline-block;">
+						<plotly-plot [data]="graphpvaldata.data"
+							[layout]="graphpvaldata.layout"></plotly-plot>
+
+
+					</div>
+				</div>
+			</div>
+		</div>
+
+	
+
+	</div>
+		<mat-form-field>
+		<input matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter">
+		</mat-form-field>
+	
+			<table mat-table matSort [dataSource]="dataSource" id="ontotable"
+				class="mat-elevation-z8">
+
+				<!--- Note that these columns can be defined in any order.
+				        The actual rendered columns are set as a property on the row definition" -->
+
+				<!-- Position Column -->
+				<ng-container matColumnDef="child">
+				<th mat-header-cell *matHeaderCellDef>Genes list</th>
+				<td mat-cell *matCellDef="let element"><mat-expansion-panel>
+					<mat-expansion-panel-header> <!-- <mat-panel-title>
+						      This is the expansion title
+						    </mat-panel-title> --> <mat-panel-description>
+					<span>{{element.child[0].genename}}</span> <span
+						*ngIf="element.child.length > 1">,
+						{{element.child[1].genename}}</span> <span
+						*ngIf="element.child.length > 2">,
+						{{element.child[2].genename}}</span> ... </mat-panel-description> </mat-expansion-panel-header> <mat-grid-list cols="2"
+						rowHeight="30px"> <mat-grid-tile class="justifyleft"
+						*ngFor="let chil of element.child"> <a
+						target='_blank'
+						href='https://www.genecards.org/cgi-bin/carddisp.pl?gene={{chil.genename}}'><mat-icon>link</mat-icon></a>
+					{{chil.genename}}</mat-grid-tile> <!--  <mat-list-item *ngFor="let chil of element.child"> {{chil.genename}} </mat-list-item> -->
+					</mat-grid-list> </mat-expansion-panel>
+				</ng-container>
+				<ng-container matColumnDef="name">
+				<th mat-header-cell *matHeaderCellDef mat-sort-header>Ontology
+					name</th>
+				<td mat-cell *matCellDef="let element">{{element.name}}</td>
+				</ng-container>
+				<ng-container matColumnDef="genename">
+				<th mat-header-cell *matHeaderCellDef mat-sort-header># of
+					genes</th>
+				<td mat-cell *matCellDef="let element">{{element.genename}} genes</td>
+				</ng-container>
+				<ng-container matColumnDef="pval">
+				<th mat-header-cell *matHeaderCellDef mat-sort-header>pval</th>
+				<td mat-cell *matCellDef="let element">{{element.pval| number}}</td>
+				</ng-container>
+				<ng-container matColumnDef="fdr">
+				<th mat-header-cell *matHeaderCellDef mat-sort-header>FDR</th>
+				<td mat-cell *matCellDef="let element">{{element.fdr | number}}</td>
+				</ng-container>
+
+
+
+				<tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+				<tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+			</table>
+			 <mat-paginator [pageSizeOptions]="[5, 10,20, 50]" showFirstLastButtons></mat-paginator>
+
+			<!--	<div id="resultraw">
+					<div *ngFor="let res of results">{{res.id}} , {{res.name}} , {{res.geneID}} , {{res.pval}} , {{res.FDR}}</div>
+				</div>  -->
+
+		</div>
+	
+
+</div>
+<div *ngIf="datatabletest?.length == 0" style="justify-content: center;">
+	<mat-spinner></mat-spinner>
+</div>
+
+

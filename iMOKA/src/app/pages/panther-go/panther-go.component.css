@@ -1,0 +1,10 @@
+.justifyleft .mat-figure  {
+
+    justify-content: left;
+}
+.margin-1 {
+	margin: 10px;
+}
+[hidden] {
+  display: none !important;
+}

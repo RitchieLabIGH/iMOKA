@@ -1,0 +1,52 @@
+
+<div fxLayout="row wrap">
+	<div fxFlex="50%">
+		<h3>General informations:</h3>
+		<ul>
+			<li><strong>iMOKA version: </strong> {{info.version}}</li>
+			<li><strong>Number of samples: </strong>
+				{{info.samples_names.length}}</li>
+			<li><strong>Groups:</strong>
+			<ul>
+					<li *ngFor="let grp of group_stat">{{grp.name}} :
+						{{grp.count}} samples</li>
+				</ul></li>
+			<li><strong>Predictors: </strong>
+				<ul>
+					<li *ngFor="let pr of info.predictors">{{pr}}</li>
+				</ul></li>
+			<li><strong>K size: </strong> {{info.k_len}}</li>
+		</ul>
+	</div>
+	<div fxFlex="50%">
+		<h3>Results informations:</h3>
+		<ul>
+			<li><strong>Events: </strong>
+				<ul>
+					<li *ngFor="let ev of info.events">{{ev.name}}: {{ev.visible}}</li>
+				</ul></li>
+			<li><strong>Number of genes: </strong> {{info.genes.length}}</li>
+
+		</ul>
+	</div>
+
+	<div fxFlex="100%">
+		<h3>Aggregation information:</h3>
+		<ul>
+			<li><strong>Accuracy threshold: </strong> {{info.threshold}}</li>
+			<li><strong>Initial number of k-mers: </strong>
+				{{info.initial_kmers}}</li>
+			<li><strong>Number of graphs: </strong> {{info.tot_graphs}}</li>
+			<li><strong>Graphs:</strong>
+			<ul>
+					<li *ngFor="let grp of info.graph_info ">{{grp.count}}
+						{{grp.name}} graphs, aggregating {{grp.kmers}} kmers</li>
+				</ul></li>
+			<li><strong>Number of graph derived sequences: </strong>
+				{{info.n_sequences }}</li>
+			<li><strong>Number of final k-mers: </strong> {{info.final_kmers
+				}} ( filtration efficiency {{100-info.reduction_percentage |
+				number}} % )</li>
+		</ul>
+	</div>
+</div>

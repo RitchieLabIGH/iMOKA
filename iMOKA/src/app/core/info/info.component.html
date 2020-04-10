@@ -1,0 +1,15 @@
+<h3>{{data.title}}</h3>
+<mat-accordion >
+  	<mat-expansion-panel *ngFor="let el of data.information_list">
+    <mat-expansion-panel-header >
+      <mat-panel-title>
+        {{el.title}}
+      </mat-panel-title>
+      <mat-panel-description *ngIf="el.subtitle">
+        {{el.subtitle}}
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+   	<div *ngIf="(el.content | typeof) === 'string'" [innerHTML]="el.content" style="max-height:200px;overflow:auto;" ></div>
+   	<div *ngIf="(el.content | typeof) === 'function'" ><button mat-raised-button (click)="el.content(el.args)">Click here </button></div>
+  </mat-expansion-panel>
+</mat-accordion>

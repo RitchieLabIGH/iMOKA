@@ -1,0 +1,14 @@
+Bootstrap: localimage
+
+From: #write here the base_img or use the script ./scripts/generate_singularity_images.sh
+
+	
+%files
+	/home/claudio/Utils/hg38/gmap_small /gmap_ref/
+%labels
+   Version v0.1
+
+
+
+
+	

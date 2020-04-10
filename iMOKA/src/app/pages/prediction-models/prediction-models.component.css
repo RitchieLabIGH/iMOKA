@@ -1,0 +1,10 @@
+.table-container {
+  height: 400px;
+  resize : vertical;
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+}
+

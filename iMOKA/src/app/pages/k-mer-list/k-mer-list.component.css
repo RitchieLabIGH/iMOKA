@@ -1,0 +1,25 @@
+table {
+  width: 100%;
+}
+
+.main-content {
+	height:80vh;
+	overflow-y :auto;
+}
+
+.igv-nav-bar-left-container .igv-nav-bar-toggle-button-container {
+    display: flex;
+    flex-flow: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%; 
+}
+.igv-nav-bar-left-container .igv-nav-bar-toggle-button-container div {
+      margin-left: 0;
+      margin-right: 4px; 
+}
+.igv-nav-bar-right-container .igv-nav-bar-toggle-button-container div:last-child {
+      margin-left: 0;
+      margin-right: 0; 
+}

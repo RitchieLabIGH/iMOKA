@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script type="text/javascript" src="clusterinSOMofsamplebyproj.json"></script>
+    <link rel="stylesheet" href="gallery.css">
+</head>
+<body>
+<h1>SOM projection clustering</h1>
+<h3>Select the number of samples clusters :<select id="comboA" onchange="getComboA()">
+
+<option value="0">2</option>
+<option value="1">3</option>
+<option value="2">4</option>
+    <option value="3">5</option>
+    <option value="4">6</option>
+    <option value="5">7</option>
+<option value="6">8</option>
+<option value="7">9</option>
+    <option value="8">10</option>
+    <option value="9">11</option>
+</select></h3>
+<div id="gallery">
+<ul id="ulm">
+
+</ul>
+</div>
+
+
+
+
+
+
+<script type="text/javascript">
+function getComboA() {
+    updatecluster()  ;
+}
+function updatecluster() {
+    var selectObject = document.getElementById('comboA');
+    var clust = parseInt(selectObject.value);
+
+
+    a=clustering.sort(function(a, b) {    return parseFloat(a.bmu[clust]) - parseFloat(b.bmu[clust]);});
+    var target = document.getElementById('ulm');
+    txt="";
+    for (i = 0; i < clustering.length; i++) {
+    if (i==0){
+        lastclass=a[i].bmu[clust];
+        }
+        else{
+            if (lastclass!=a[i].bmu[clust]){
+                txt+="</br>";
+                lastclass=a[i].bmu[clust];
+                }
+        }
+    console.log(a[i].bmu[clust]);
+    txt+='<li id="image'+i+'">\
+    <div class="mosaicItem class'+a[i].bmu[clust]+'"><a href="#popin'+i+'">\
+        <img src="'+a[i].filename+'" alt="" />\
+        <div class="text class'+a[i].classnumber+'">'+a[i].classori+'</br>'+a[i].labelsamples+'</div>\
+          </a></div>\
+          <div class="popin" id="popin'+i+'"><a href="#image'+i+'">\
+            <div class="overlay"></div>\
+            <div class="imgBox"><img src="'+a[i].filename+'" alt="" /></div>\
+          </a></div></li>'
+    }
+    target.innerHTML=txt;
+}
+ updatecluster();
+</script>
+</body>
+</html>

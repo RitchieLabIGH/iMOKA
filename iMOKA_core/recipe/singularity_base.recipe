@@ -1,0 +1,116 @@
+Bootstrap: docker
+
+From: ubuntu:bionic
+
+%files
+	./external /external
+
+%environment
+	export PATH="/miniconda3/bin:/external:/external/bin:$PATH"
+	export LD_LIBRARY_PATH="/usr/local/lib/:$LD_LIBRARY_PATH"
+
+%post
+	### env
+	BIOCONDA_DEP="multiqc fastqc seqkit sra-tools samtools"
+	threads=4
+	
+	apt-get clean all
+    apt-get update
+    apt-get -y upgrade
+    export DEBIAN_FRONTEND=noninteractive 
+    apt-get install -qy make build-essential gcc g++ \
+    	 libopenmpi-dev zlib1g-dev  \
+    	libarmadillo-dev libboost-test-dev \
+    	libboost-dev libboost-system-dev libboost-math-dev \
+    	libboost-program-options-dev libboost-serialization-dev \
+    	bedtools ncbi-entrez-direct  \
+    	gzip gawk libz-dev wget libseqan2-dev cmake git perl graphviz locales
+    ### mlpack v3.0.4
+    cd /external/
+    ## wget http://www.mlpack.org/files/mlpack-3.0.4.tar.gz
+ 	tar -xvzpf mlpack-3.0.4.tar.gz
+ 	mkdir -p ./mlpack-3.0.4/build
+ 	cd ./mlpack-3.0.4/build/
+ 	cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_CLI_EXECUTABLES=OFF -DBUILD_PYTHON_BINDINGS=OFF -DBUILD_TESTS=OFF -DUSE_OPENMP=ON  ../
+ 	make -j${threads}
+ 	make install
+ 	cd /external/
+ 	rm -fr ./mlpack-3.0.4 ./mlpack-3.0.4.tar.gz
+ 	
+ 	### libGkArrays-MPI
+ 	#cd /external/
+ 	#tar -xvzpf libGkArrays-MPI.tar.gz
+ 	#cd ./libGkArrays-MPI
+ 	#./configure
+ 	#make -j${threads}
+ 	#make install
+ 	#cd /external/
+ 	#rm -fr ./libGkArrays-MPI*
+ 	
+ 	### jellyfish  
+ 	cd /external/
+ 	tar -xvzpf ./jellyfish-2.2.10.tar.gz
+ 	mkdir -p ./jellyfish-2.2.10/build
+ 	cd ./jellyfish-2.2.10/build
+ 	export LD_LIBRARY_PATH=/usr/local/lib
+ 	../configure
+ 	make -j${threads}
+ 	make install
+ 	cd /usr/local/include/
+ 	mv -f ./jellyfish-2.2.10/jellyfish ./jellyfish
+ 	cd /external
+ 	rm -fr ./jellyfish-2.2.10 jellyfish-2.2.10.tar.gz
+ 	
+ 	
+ 	
+ 	### KMC 
+ 	cd /external/
+ 	## wget https://github.com/refresh-bio/KMC/releases/download/v3.0.0/KMC3.linux.tar.gz
+ 	tar -xvzpf KMC3.linux.tar.gz
+ 	rm ./KMC3.linux.tar.gz
+ 	
+ 	
+ 	### STAR
+ 	cd /external/
+ 	## wget https://github.com/alexdobin/STAR/archive/2.7.0f.tar.gz
+	tar -xzf 2.7.0f.tar.gz
+	cd STAR-2.7.0f/source
+	make -j${threads} STARlongStatic
+	make -j${threads} STARstatic
+	mv ./STAR ./STARlong /external/
+	cd /external/
+	rm -fr ./STAR-2.7.0f ./2.7.0f.tar.gz
+	
+	
+	### GMAP
+	cd /external/
+	## wget http://research-pub.gene.com/gmap/src/gmap-gsnap-2019-05-12.tar.gz
+	tar -xzf gmap-gsnap-2019-05-12.tar.gz
+	rm gmap-gsnap-2019-05-12.tar.gz
+	cd ./gmap-2019-05-12
+	./configure --prefix="/external/" --with-simd-level=sse42 && make && make install
+	cd /external/
+	rm -fr ./gmap-2019-05-12 gmap-gsnap-2019-05-12.tar.gz
+	
+	### added --disable-XXX to have a version for the lowest common denominator
+
+	
+    ### MINICONDA and dependencies
+    cd /external/
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh 
+    chmod +x ./Miniconda3-latest-Linux-x86_64.sh
+    ./Miniconda3-latest-Linux-x86_64.sh -b -p /miniconda3/
+    /miniconda3/bin/conda config --add channels defaults
+	/miniconda3/bin/conda config --add channels bioconda
+	/miniconda3/bin/conda config --add channels conda-forge
+	/miniconda3/bin/conda install -y numpy scipy scikit-learn pandas
+   	/miniconda3/bin/conda install -y -c bioconda $BIOCONDA_DEP
+   	/miniconda3/bin/conda install -y pip 
+   	/miniconda3/bin/pip install SimpSOM
+    /miniconda3/bin/conda clean --all -y -p -t -f  
+    rm -fr ./Miniconda3-latest-Linux-x86_64.sh 
+    rm -rf /var/lib/apt/lists/* /var/log/dpkg.log
+    apt-get clean
+    apt-get purge
+    apt-get autoclean
+    

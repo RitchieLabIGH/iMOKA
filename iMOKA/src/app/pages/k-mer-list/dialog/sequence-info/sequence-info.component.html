@@ -1,0 +1,40 @@
+
+<h1 mat-dialog-title>Informations for Sequence {{sequence.id}}</h1>
+<div mat-dialog-content class="main-content">
+	<div fxLayout="column" fxLayoutGap="25px">
+	<div fxFlex>
+		<mat-card class="margin-1  mat-elevation-z2"> <mat-card-title>
+				General informations </mat-card-title> <mat-card-content>
+				<mat-list>
+					<mat-list-item>
+						<strong matLine>Sequence</strong>
+						<p matLine>{{sequence.sequence}}</p>
+					</mat-list-item>
+					<mat-list-item>
+						<strong matLine>Best k-mer</strong>
+						<p matLine>{{sequence.best_kmer}}</p>
+					</mat-list-item>
+					<mat-list-item>
+						<strong matLine>Best k-mer comparison values</strong>
+						<p matLine *ngFor="let value of sequence.best_kmer_values; index as i"><span
+								class="font-w-bold"> {{info.predictors[i]}} </span> : <span
+								class="font-italic"> {{value | number}} </span></p>
+					</mat-list-item>
+					<mat-list-item>
+						<strong matLine >Graph number {{sequence.graph}} </strong>
+					</mat-list-item>
+					<mat-list-item>
+						<strong matLine>Alignments</strong>
+						<ul matLine *ngIf="sequence.alignments && sequence.alignments.length > 0">
+							<li *ngFor="let aln of sequence.alignments; index as i"
+								class="list-inline-item">
+								{{aln.chromosome}}:{{aln.start}}-{{aln.end}} [{{aln.strand}}]</li>
+						</ul>
+						<span matLine *ngIf="! sequence.alignments || sequence.alignments.length == 0 ">None</span>
+					</mat-list-item>
+				</mat-list>
+				</mat-card-content> </mat-card>
+				</div>
+	</div>
+</div>
+

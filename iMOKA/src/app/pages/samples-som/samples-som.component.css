@@ -1,0 +1,147 @@
+* {
+  box-sizing: border-box;
+}
+.hiddeninput{
+	visibility: hidden;
+}
+h1 {
+  font-family: "Open Sans", sans-serif;
+  margin-left: 125px;
+}
+#gallery ul {
+  list-style-type: none;
+}
+#gallery ul li {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+}
+#gallery ul li .mosaicItem {
+  width: 150px;
+  height: 140px;
+  padding:4px;
+      margin-left: 2px;
+    margin-right: 2px;
+}
+#gallery ul li .class0{
+    background-color: red;
+}
+#gallery ul li .class1{
+    background-color: blue;
+}
+#gallery ul li .class2{
+    background-color: #9d9f02;
+}
+#gallery ul li .class3{
+    background-color: green;
+}
+#gallery ul li .class4{
+    background-color: blueviolet;
+}
+
+
+#gallery ul li .mosaicItem  div.class0{
+    background-color: red;
+}
+#gallery ul li .mosaicItem  div.class1{
+    background-color: blue;
+}
+#gallery ul li .mosaicItem  div.class2{
+    background-color:  #9d9f02;
+}
+#gallery ul li .mosaicItem  div.class3{
+    background-color: green;
+}
+#gallery ul li .mosaicItem  div.class4{
+    background-color: blueviolet;
+}
+#gallery ul li .mosaicItem  .text {
+  position: absolute;
+  bottom: 4px;
+
+  width: 142px;
+  left: 6px;
+  /*height: 40px;*/
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  font-family: "Open Sans", sans-serif;
+  text-align: center;
+    font-weight: 60;
+    line-height: 20px;
+    transition: all 0.3s ease-in-out;
+  opacity: 0.4;
+}
+#gallery ul li .mosaicItem  .classori {
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  width: 25%;
+  height: 10%;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  font-family: "Open Sans", sans-serif;
+  text-align: center;
+  font-weight: 600;
+  line-height: 50px;
+  transition: all 0.5s ease-in-out;
+  opacity: 0;
+}
+#gallery .mapcontainer{
+	
+	    background-color: #f2f2f2;
+    height: 100%;
+
+}
+ ul li .mosaicItem  .text {
+  bottom: 0;
+  opacity: 1;
+}
+#gallery ul li .popin {
+  display: flex;
+  text-align: center;
+  position: fixed;
+  top: -100%;
+  transition: all ease 0.5s;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+#gallery ul li .popin:target {
+  top: 0;
+  opacity: 1;
+}
+#gallery ul li .popin:target .imgBox {
+  position: relative;
+  z-index: 998;
+}
+#gallery ul li .popin:target .imgBox:before {
+  content: "✖";
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  color: white;
+  z-index: 999;
+}
+#gallery ul li .popin:target .imgBox img {
+  border: 3px solid white;
+}
+#gallery ul li .popin .overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.7);
+  width: 100%;
+  height: 100%;
+  z-index: 899;
+}
+#gallery img{  width: 100%;
+  height: auto;}
+  
+  
+table {
+  width: 100%;
+}

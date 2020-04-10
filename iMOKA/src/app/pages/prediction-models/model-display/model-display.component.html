@@ -1,0 +1,102 @@
+<div fxLayout="row">
+		<div fxFlex="80%">
+			<plotly-plot
+				[data]="graph.data"
+				[layout]="graph.layout"></plotly-plot>
+		</div>
+		<div fxFlex="20%">
+			<mat-list dense> <mat-list-item>
+			<h3 matLine>Best model</h3>
+			<p matLine>{{model.name}}</p>
+			</mat-list-item> <mat-list-item>
+			<h3 matLine>Accuracy:</h3>
+			<p matLine>
+				{{model.acc | number}}
+				<ng-container *ngIf="model.unbalanced_acc"> (
+				unbalanced: {{model.unbalanced_acc | number}} ) </ng-container>
+			</p>
+			</mat-list-item> <mat-list-item *ngIf="model.roc">
+			<h3 matLine>ROC AUC:</h3>
+			<p matLine>{{model.roc | number}}</p>
+			</mat-list-item> <mat-list-item>
+			<h3 matLine>The shape represents the prediction</h3>
+			<h3 matLine>The color represents the given label</h3>
+			</mat-list-item> </mat-list>
+		</div>
+	</div>
+	<div fxLayout="row" fxLayoutAlign="space-evenly stretch">
+		<div fxFlex="45%">
+			<h3>Confusion matrix</h3>
+			<table class="mat-table mat-elevation-z8">
+				<thead>
+					<tr class="mat-header-row">
+						<th class="mat-header-cell">prediction\label</th>
+						<th class="mat-header-cell"
+							*ngFor="let cl of session.files.importance.info.groups_names ; let i = index">{{cl}}</th>
+						<th class="mat-header-cell">Total label</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="mat-row"
+						*ngFor="let cl of session.files.importance.info.groups_names ; let i = index">
+						<th class="mat-header-cell">{{cl}}</th>
+						<td class="mat-cell"
+							*ngFor="let cl2 of session.files.importance.info.groups_names ; let j = index">
+							{{ model.confusion_matrix[i][j] | number}}</td>
+						<td class="mat-cell"><strong>{{
+								reduceRow(model.confusion_matrix, i) }}</strong></td>
+					</tr>
+					<tr class="mat-row">
+						<th class="mat-header-cell">Total predictions</th>
+						<td class="mat-cell"
+							*ngFor="let cl2 of session.files.importance.info.groups_names ; let j = index">
+							<strong>{{ reduceCol(model.confusion_matrix, j) }}</strong>
+						</td>
+						<th></th>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div fxFlex="45%">
+			<h3>Metrics</h3>
+			<table class="mat-table mat-elevation-z8">
+				<thead>
+					<tr class="mat-header-row">
+						<th class="mat-header-cell"></th>
+						<th class="mat-header-cell">Precision</th>
+						<th class="mat-header-cell">Recall</th>
+						<th class="mat-header-cell">F1-score</th>
+						<th class="mat-header-cell">Support</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="mat-row"
+						*ngFor="let cl of session.files.importance.info.groups_names ; let i = index">
+						<th class="mat-header-cell">{{cl}}</th>
+						<td class="mat-cell">{{model.metrics[''+i].precision |
+							number}}</td>
+						<td class="mat-cell">{{model.metrics[''+i].recall |
+							number}}</td>
+						<td class="mat-cell">{{model.metrics[''+i]["f1-score"] |
+							number}}</td>
+						<td class="mat-cell">{{model.metrics[''+i].support |
+							number}}</td>
+					</tr>
+					<ng-container
+						*ngFor="let cl of ['macro avg', 'micro avg', 'weighted avg']">
+					<tr class="mat-row" *ngIf="model.metrics[cl]">
+						<th class="mat-header-cell">{{cl}}</th>
+						<td class="mat-cell">{{model.metrics[cl].precision |
+							number}}</td>
+						<td class="mat-cell">{{model.metrics[cl].recall |
+							number}}</td>
+						<td class="mat-cell">{{model.metrics[cl]["f1-score"] |
+							number}}</td>
+						<td class="mat-cell">{{model.metrics[cl].support |
+							number}}</td>
+					</tr>
+					</ng-container>
+				</tbody>
+			</table>
+		</div>
+	</div>

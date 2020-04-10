@@ -1,0 +1,90 @@
+
+<h1 mat-dialog-title>Random forest models generation </h1>
+<div mat-dialog-content class="main-dialog">
+	<div fxLayout="column">
+		<mat-vertical-stepper linear="true" #stepper>
+		<mat-step [stepControl]="mainParam">
+		<form [formGroup]="mainParam">
+			<ng-template matStepLabel>Main parameters</ng-template>
+			<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px grid" fxLayoutAlign="flex-start">
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> 
+						<mat-label>Experiment description</mat-label> 
+						<input matInput required formControlName="description"> 
+					</mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> 
+						<mat-label>K-mers to use</mat-label> 
+						<mat-select required formControlName="which_features">
+							<mat-option value="all">All the k-mers</mat-option>
+							<mat-option value="filtered">The ones visible in the table</mat-option>
+						</mat-select> 
+					</mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> 
+						<mat-label>Number of models</mat-label> 
+						<input matInput required formControlName="rounds" type="number"> 
+					</mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field>
+						<mat-label>Number of features</mat-label> 
+						<input matInput required formControlName="max_features" type="number"  >
+						<mat-hint>Use a subset of synegrgetic features</mat-hint> 
+					</mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field>
+						<mat-label>Number of trees</mat-label> 
+						<input matInput required formControlName="n_trees" type="number"> 
+						<mat-hint>Used in the feature importance evaluation </mat-hint> 
+					</mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field>
+						<mat-label>Cross validation</mat-label> 
+						<input matInput required formControlName="cross_validation" type="number" > 
+						<mat-hint>Cross validate to reduce overfitting.</mat-hint> 
+					</mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field>
+						<mat-label>Test fraction</mat-label> 
+						<input matInput required formControlName="test_fraction" type="number" > 
+						<mat-hint ><mat-icon matTooltip="Fraction of samples to use as test set relative to the smallest group.">info</mat-icon></mat-hint> 
+					</mat-form-field>
+				</div>
+			</div>
+		</form>
+		</mat-step> <mat-step [stepControl]="procControl">
+		<form [formGroup]="procControl">
+			<ng-template matStepLabel>Process resources</ng-template>
+			<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
+				fxLayoutAlign="flex-start">
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> 
+						<mat-label>Threads per process</mat-label> 
+						<input matInput required formControlName="cores" type="number"> 
+						<mat-hint>Number of cores used per process</mat-hint> 
+					</mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> 
+						<mat-label>Memory</mat-label> 
+						<input matInput required formControlName="mem" type="number"> 
+						<mat-hint>Memory required by the process in Gb (considering the mapping) </mat-hint> 
+					</mat-form-field>
+				</div>
+			</div>
+		</form>
+		</mat-step> </mat-vertical-stepper>
+	</div>
+	<pre *ngIf="error_message" class="error_message">{{error_message}} </pre>
+	<pre *ngIf="loading_message" class="loading_message">{{loading_message}} </pre>
+</div>
+<div mat-dialog-actions align="end">
+	<button mat-button (click)="close()">Close</button>
+	<button mat-button [disabled]="!isValid()" (click)="send()">Run</button>
+</div>

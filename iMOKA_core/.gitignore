@@ -1,0 +1,9 @@
+/Debug/
+/Release/**/*.o
+/Release/**/*.d
+/Release/iMOKA*
+
+/images
+/doxygen/html
+/doxygen/latex
+/doxygen/index.html

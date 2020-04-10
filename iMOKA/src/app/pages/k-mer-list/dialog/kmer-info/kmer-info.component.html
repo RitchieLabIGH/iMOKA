@@ -1,0 +1,73 @@
+
+<h1 mat-dialog-title>Informations for Kmer {{kmer.id}}</h1>
+<div mat-dialog-content class="main-content">
+	<div fxLayout="column" fxLayoutGap="25px">
+	<div fxFlex>
+		<mat-card class="margin-1  mat-elevation-z2"> <mat-card-title>
+				General informations </mat-card-title> <mat-card-content>
+				<mat-list>
+					<mat-list-item>
+						<strong matLine>Sequence</strong>
+						<p matLine>{{kmer.kmer}}</p>
+					</mat-list-item>
+					<mat-list-item>
+						<strong matLine>Comparison values</strong>
+						<p matLine *ngFor="let value of kmer.values; index as i"><span
+								class="font-w-bold"> {{info.predictors[i]}} </span> : <span
+								class="font-italic"> {{value | number}} </span></p>
+					</mat-list-item>
+					<mat-list-item>
+						<strong matLine >Overlapping events</strong>
+						<span *ngIf="!kmer.events || kmer.events.length == 0">None</span>
+						<ul matLine *ngIf="kmer.events && kmer.events.length > 0">
+						<li *ngFor="let event of kmer.events" class="list-inline-item">{{
+								event.type }} <span *ngIf="event.gene != 'NA' "> in gene
+									{{ event.gene }} </span><span *ngIf="event.info != '' "> (
+									{{event.info}} )</span>
+						</li>
+						</ul>
+					</mat-list-item>
+					<mat-list-item>
+						<strong matLine>Alignments</strong>
+						<ul matLine *ngIf="kmer.alignments && kmer.alignments.length > 0">
+							<li *ngFor="let aln of kmer.alignments; index as i"
+								class="list-inline-item">
+								{{aln.chromosome}}:{{aln.start}}-{{aln.end}} [{{aln.strand}}]</li>
+						</ul>
+						<span matLine *ngIf="! kmer.alignments || kmer.alignments.length == 0 ">None</span>
+					</mat-list-item>
+				</mat-list>
+				</mat-card-content> </mat-card>
+				</div>
+		<div fxFlex>
+			<mat-card class="margin-1  mat-elevation-z2" *ngIf="data.boxplot"> <mat-card-title>
+			Plots
+			</mat-card-title> <mat-card-content> <plotly-plot
+				[data]="data.boxplot.data" [layout]="data.boxplot.layout"></plotly-plot>
+			</mat-card-content> </mat-card>
+		</div>
+	</div>
+	<mat-card class="margin-1 mat-elevation-z2"> <mat-card-title> Counts per
+	sample </mat-card-title> <mat-card-content>
+	<table datatable class="mat-table">
+		<thead>
+			<tr class="mat-header-row">
+				<th class="mat-header-cell">Sample</th>
+				<th class="mat-header-cell">Class</th>
+				<th class="mat-header-cell">Count</th>
+				<th class="mat-header-cell">Normalized count</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr class="mat-row" *ngFor="let value of kmer.counts; index as i">
+				<th class="mat-header-cell">{{ info.samples_names[i] }}</th>
+				<td class="mat-cell">{{info.groups_names[info.groups[i]]}}</td>
+				<td class="mat-cell">{{value}}</td>
+				<td class="mat-cell">{{(value / info.count_normalization[i]) |
+					number }}</td>
+			</tr>
+		</tbody>
+	</table>
+	</mat-card-content> </mat-card>
+</div>
+

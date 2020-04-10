@@ -1,0 +1,217 @@
+		<mat-card> 
+		<mat-card-title>
+			Samples List
+		</mat-card-title><mat-card-content>
+		<div *ngIf="bulk_mod" fxLayout="column" fxLayoutGap="32px"
+			fxLayoutAlign="flex-start">
+			<div fxFlex>
+				<h3>Modify {{getSelectedNumber()}} samples</h3>
+				<mat-list> <mat-list-item style="height:100px;"
+					*ngFor="let met of bulk_mod;"
+					title="Metadata present in {{met.samples.length}} samples" [matBadge]="met.samples.length" matBadgeSize="small"
+					matBadgePosition="before">
+				<mat-checkbox matLine [(ngModel)]="met.keep" >
+				<div *ngIf="met.original_key">
+					Original metadata is: <strong>{{met.original_key}}</strong>:
+					{{met.original_value}} <em *ngIf="!met.keep"> Will be removed!</em>
+				</div>
+				<div *ngIf="!met.original_key">
+					New metadata <em *ngIf="!met.keep"> Will not be included!</em>
+				</div>
+				</mat-checkbox>
+				<div matLine>
+					<mat-form-field> <input matInput
+						placeholder="key" [(ngModel)]="met.new_key" [disabled]="!met.keep">
+					</mat-form-field>
+					<mat-form-field> <input matInput
+						placeholder="value" [(ngModel)]="met.new_value"
+						[disabled]="!met.keep"> </mat-form-field>
+				</div>
+				</mat-list-item> <mat-list-item>
+				<button class="table-button" mat-icon-button (click)="newBulkMod()">
+					<mat-icon>add</mat-icon>
+					add a new metadata
+				</button>
+				</mat-list-item> </mat-list>
+			</div>
+			<div fxFlex class="button-list-h">
+				<button mat-raised-button (click)="saveBulk()">Save
+					modifications</button>
+				<button mat-raised-button (click)="cancelBulk()">Discard
+					modifications</button>
+			</div>
+		</div>
+		<div fxLayout="column" [class.hidden]="bulk_mod">
+			<div fxFlex fxLayout="row wrap" fxLayoutGap="25px">
+				<mat-form-field fxFlex="20"> <mat-select
+					[(ngModel)]="dtOptions.displayedColumns" placeholder="Show columns"
+					multiple> <mat-option value="cbs">Selection
+				</mat-option> <mat-option value="name">Name </mat-option> <mat-option
+					value="tags">Tags </mat-option> <mat-option value="k_len">K
+				size</mat-option> <mat-option value="total_suffix">Total k-mers</mat-option> <mat-option
+					value="total_count">Sum of counts</mat-option> <mat-option
+					value="libType">Library type</mat-option> <mat-option
+					value="minCount">Minimum count</mat-option> <mat-option
+					value="fastqc">Fastqc</mat-option> <mat-option value="edit">Edit</mat-option>
+				</mat-select> </mat-form-field>
+				<mat-form-field fxFlex="20"> <mat-select
+					[(ngModel)]="dtOptions.metadataKeyFilter"
+					placeholder="Filter metadata keys"
+					(openedChange)="! $event && refreshTable('search')" multiple>
+					<mat-option *ngFor="let met of dtOptions.stats.metadata"
+						[value]="met.key" title="{{met.key}} ({{met.count}})">{{met.key}} ({{met.count}})
+					</mat-option> 
+					</mat-select> 
+				</mat-form-field>
+				<ng-container *ngFor="let met of dtOptions.stats.metadata">
+				<mat-form-field fxFlex="15" *ngIf="dtOptions.metadataKeyFilter.includes(met.key)">
+					 <mat-select [(ngModel)]="dtOptions.metadataKeyValFilter[met.key]"
+					 placeholder="Filter {{met.key}}"
+					(openedChange)="! $event && refreshTable('search')" multiple>
+						<mat-option *ngFor="let val of met.values"
+						[value]="val.value" title="{{val.value}} ({{val.count}})">{{val.value}} ({{val.count}})
+						</mat-option> 
+					</mat-select>
+					
+					
+				</mat-form-field>
+				</ng-container>
+			</div>
+			<div fxFlex fxLayout.lt-md="column" fxLayout="row" fxLayoutGap="12px"
+				fxLayoutAlign="flex-start">
+				<div fxFlex="0 1 calc(80% - 12px)" fxFlex.lt-md="100%">
+					<div class="mat-elevation-z6 table-container">
+						<table mat-table matSort (matSortChange)="refreshTable($event)"
+							[dataSource]="dataSource">
+							<ng-container matColumnDef="cbs">
+							<th mat-header-cell *matHeaderCellDef><mat-checkbox
+									(change)="$event ? masterToggle() : null"
+									[checked]="isAllSelected()"
+									[indeterminate]="getSelectedNumber() > 0 && ! isAllSelected()"
+									[matBadge]="getSelectedNumber()" matBadgeSize="small"
+									[matBadgeHidden]="getSelectedNumber()==0"></mat-checkbox></th>
+							<td mat-cell *matCellDef="let row"><mat-checkbox
+									[(ngModel)]="checked[row.name]" (change)="refreshCD(); updatePossibleTags();"
+									[disabled]="!row.total_suffix"></mat-checkbox></td>
+							</ng-container>
+							<ng-container matColumnDef="name">
+							<th mat-header-cell *matHeaderCellDef mat-sort-header>
+								Sample name</th>
+							<td mat-cell *matCellDef="let row">{{row.name}} <span
+								*ngIf="!row.total_suffix">(in process)</span></td>
+							</ng-container>
+							<ng-container matColumnDef="tags">
+							<th mat-header-cell *matHeaderCellDef>Tags</th>
+							<td mat-cell *matCellDef="let row"><mat-list
+									*ngIf="!edit[row.name]" dense>
+								<mat-list-item *ngFor="let met of row.metadata">
+								<strong>{{met.key}}</strong> : {{met.value}}</mat-list-item></mat-list> <mat-list
+									*ngIf="edit[row.name]" dense>
+								<mat-list-item
+									*ngFor="let met of edit[row.name].metadata; let i = index">
+								<input matInput placeholder="key" [(ngModel)]="met.key">
+								: <input matInput placeholder="value" [(ngModel)]="met.value">
+								<button title="remove this metadata" mat-icon-button
+									(click)="edit[row.name].metadata.splice(i, 1);">
+									<mat-icon>clear</mat-icon>
+								</button>
+								</mat-list-item>
+								<mat-list-item>
+								<button class="table-button" mat-icon-button
+									(click)="edit[row.name].metadata.push({key : '', value : ''})">
+									<mat-icon>add</mat-icon>
+									add a new metadata
+								</button>
+								</mat-list-item></mat-list></td>
+							</ng-container>
+							<ng-container matColumnDef="k_len">
+							<th mat-header-cell *matHeaderCellDef mat-sort-header>K size</th>
+							<td mat-cell *matCellDef="let row">{{row.k_len}}</td>
+							</ng-container>
+							<ng-container matColumnDef="total_suffix">
+							<th mat-header-cell *matHeaderCellDef mat-sort-header>Total
+								k-mers</th>
+							<td mat-cell *matCellDef="let row">{{row.total_suffix}}</td>
+							</ng-container>
+							<ng-container matColumnDef="total_count">
+							<th mat-header-cell *matHeaderCellDef mat-sort-header>Sum of
+								counts</th>
+							<td mat-cell *matCellDef="let row">{{row.total_count}}</td>
+							</ng-container>
+							<ng-container matColumnDef="libType">
+							<th mat-header-cell *matHeaderCellDef mat-sort-header>Library
+								type</th>
+							<td mat-cell *matCellDef="let row">{{row.libType}}</td>
+							</ng-container>
+							<ng-container matColumnDef="minCount">
+							<th mat-header-cell *matHeaderCellDef mat-sort-header>Minimum
+								count</th>
+							<td mat-cell *matCellDef="let row">{{row.minCount}}</td>
+							</ng-container>
+							<ng-container matColumnDef="fastqc">
+							<th mat-header-cell *matHeaderCellDef>FastQC</th>
+							<td mat-cell *matCellDef="let row"><a [href]="row.fastqc"
+								*ngIf="row.fastqc" target="_blank"><button mat-icon-button
+										title="View fastQC">
+										<mat-icon>pageview</mat-icon>
+									</button></a><span *ngIf="!row.fastqc">NA</span></td>
+							</ng-container>
+							<ng-container matColumnDef="edit">
+							<th mat-header-cell *matHeaderCellDef>Edit</th>
+							<td mat-cell *matCellDef="let row">
+								<button mat-icon-button *ngIf="!edit[row.name]"
+									(click)="editSample(row);">
+									<mat-icon>edit</mat-icon>
+								</button>
+								<button mat-icon-button *ngIf="edit[row.name]"
+									(click)="saveSample(row);">
+									<mat-icon>save</mat-icon>
+								</button>
+								<button title="cancel those modifications" mat-icon-button
+									*ngIf="edit[row.name]" (click)="cancelEdit(row);">
+									<mat-icon>undo</mat-icon>
+								</button>
+							</td>
+							</ng-container>
+							<tr mat-header-row
+								*matHeaderRowDef="dtOptions.displayedColumns;sticky : true;"></tr>
+							<tr mat-row cdk-row
+								*matRowDef="let row; columns: dtOptions.displayedColumns"></tr>
+						</table>
+					</div>
+					<mat-paginator [length]="dtOptions.recordsFiltered"
+						[pageSize]="dtOptions.pageSize" [pageIndex]="dtOptions.pageIndex"
+						(page)="refreshTable($event)" [pageSizeOptions]="[10, 15, 20]"></mat-paginator>
+				</div>
+				<div fxFlex="0 1 calc(20% - 12px)" fxFlex.lt-md="100%">
+					<h4>Samples operations </h4>
+					<div class="button-list-v">
+						<button mat-raised-button (click)="newSample()">Add a new
+							sample</button>
+						<button mat-raised-button (click)="modSelMetadata()"
+							[disabled]="getSelectedNumber()==0">Add/Modify
+							selected metadata</button>
+					</div>
+					<h4>Matrix creation</h4>
+					<div class="button-list-v">
+						<mat-form-field> 
+							<mat-select [disabled]="! possibleTags" 
+							[(ngModel)]="matrixTag" placeholder="Select a reference Tag">
+								<mat-option *ngFor="let met of possibleTags" [value]="met.key" title="{{met.title}}">{{met.key}}</mat-option>
+							</mat-select>
+							<mat-hint *ngIf="! possibleTags">First select the samples to include</mat-hint>
+						</mat-form-field>
+						<mat-form-field>
+							<mat-label>Choose a matrix name</mat-label> 
+							<input matInput [disabled]="! possibleTags"
+							[(ngModel)]="matrixName" placeholder="New matrix">
+						</mat-form-field>
+						<button mat-raised-button matLine (click)="createMatrix()" 
+							[disabled]="getSelectedNumber()==0 || ! matrixTag">
+								Create a matrix</button>
+						<mat-error *ngIf="matrix_error_messages"><span *ngFor="let mex of matrix_error_messages">{{mex}}</span></mat-error>
+					</div>
+				</div>
+			</div>
+		</div>
+		</mat-card-content> </mat-card>

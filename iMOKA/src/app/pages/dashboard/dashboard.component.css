@@ -1,0 +1,17 @@
+.mat-cell {
+	font-size: 0.8em;
+}
+
+.table-container {
+  height: 400px;
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+}
+
+.pre-container{
+	max-height: 200px;
+	overflow: auto;
+}

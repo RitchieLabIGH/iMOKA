@@ -1,0 +1,40 @@
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #drawer class="sidenav" fixedInViewport
+      [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
+      [mode]="(isHandset$ | async) ? 'over' : 'side'"
+      [opened]="(isHandset$ | async) === false">
+    <mat-toolbar>Menu</mat-toolbar>
+    <mat-nav-list>
+      <h3 matSubheader>General</h3>
+      <a mat-list-item routerLink="dashboard"><mat-icon matListIcon>dashboard</mat-icon> Dashboard</a>
+      <mat-divider></mat-divider>
+      <ng-container *ngIf="session && session.profile.process_config.profiles.length > 0">
+      	<h3 matSubheader >Preprocess</h3>
+      	<a mat-list-item routerLink="dred"><mat-icon fontSet="fa" fontIcon="fa-database" matListIcon ></mat-icon>Data reduction</a>
+      </ng-container>
+      <mat-divider></mat-divider>
+      <h3 matSubheader>Data analysis</h3>
+      <a mat-list-item routerLink="files"><mat-icon matListIcon>folder_open</mat-icon>Experiments</a>
+      <a mat-list-item routerLink="klist" *ngIf="session && session.files.kmers" ><mat-icon matListIcon>table-chart</mat-icon>K-mer list</a>
+      <a mat-list-item routerLink="models" *ngIf="session && session.files.importance"><mat-icon fontSet="fa"  fontIcon="fa-project-diagram" matListIcon ></mat-icon> Prediction models</a>
+      <a mat-list-item routerLink="som" *ngIf="session && session.files.som"><mat-icon matListIcon>map</mat-icon> Samples SOM</a>
+    </mat-nav-list>
+  </mat-sidenav>
+  <mat-sidenav-content fxLayout="column" fxLayoutAlign="none" >
+    <mat-toolbar color="primary"  style="z-index:10000000" fxFlex="60px">
+      <button
+        type="button"
+        aria-label="Toggle sidenav"
+        mat-icon-button
+        (click)="drawer.toggle()" >
+        <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+      </button>
+      <div><img style="height:50px;vertical-align:middle;" src="assets/images/iMOKA_white.png"><span><strong>i</strong>nteractive <strong>M</strong>ulti <strong>O</strong>bjective <strong>K</strong>-mer <strong>A</strong>nalysis </span></div>  
+     <span fxFlex="grow"></span>
+     <a title="Settings" mat-icon-button routerLink="setup" ><mat-icon>settings_applications</mat-icon></a>	
+    </mat-toolbar>
+    <div class="main-frame" fxFlex>
+    	<router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

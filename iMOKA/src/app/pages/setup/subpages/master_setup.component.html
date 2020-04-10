@@ -1,0 +1,141 @@
+<div class="container" fxLayout="column"
+	fxLayoutAlign="space-evenly stretch" fxLayoutGap="25px"
+	*ngIf="this.session">
+	<div fxFlex class="row" fxLayout.lt-sm="column" fxLayout="row wrap"
+		fxLayoutGap="32px" fxLayoutAlign="flex-start">
+		<h3 fxFlex="40%"
+			*ngIf="this.session.profile.process_config.profiles.length == 0">First
+			profile creation</h3>
+		<div fxFlex="40%">
+			<ng-container
+				*ngIf="session.profile.process_config.profiles.length > 0 && !modify">
+			<mat-form-field> <mat-label>Available
+			profiles</mat-label> <mat-select (selectionChange)="setProfile($event.value)"
+				[(ngModel)]="current_profile"> <mat-option
+				*ngFor="let profile of session.profile.process_config.profiles; let i=index"
+				value="{{i}}"> {{ profile.setting_name }} </mat-option> </mat-select> </mat-form-field>
+			<button matPrefix mat-icon-button
+				*ngIf="session.profile.process_config.current_profile == current_profile"
+				disabled title="This is the current profile">
+				<mat-icon>work</mat-icon>
+			</button>
+			<button matPrefix mat-icon-button
+				*ngIf="session.profile.process_config.current_profile != current_profile"
+				(click)="save($event)"
+				title="Click here to set this as current profile">
+				<mat-icon>work_off</mat-icon>
+			</button>
+			</ng-container>
+		</div>
+		<div fxFlex="100%" class="button-list-h">
+			<button mat-raised-button (click)="modify=true" *ngIf="!modify">Modify</button>
+			<button mat-raised-button (click)="save()" *ngIf="modify">Save</button>
+			<button mat-raised-button (click)="clear(false)" *ngIf="modify">Clear</button>
+			<button mat-raised-button (click)="remove()" *ngIf="modify">Remove</button>
+			<button mat-raised-button (click)="setProfile()" *ngIf="modify">Close</button>
+			<button mat-raised-button (click)="clear(true)" *ngIf="!modify">New</button>
+			<p *ngIf="loading">{{loading_message}}</p>
+			<p *ngIf="err_message">{{err_message}}</p>
+		</div>
+	</div>
+	<div fxFlex class="row">
+		<mat-divider [inset]="true"></mat-divider>
+		<form #settingForm="ngForm">
+			<fieldset [disabled]="!modify" style="border: 0;">
+				<h3>General parameters</h3>
+				<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
+					fxLayoutAlign="flex-start">
+					<div fxFlex="0 1 calc(33.3% - 32px)"
+						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+						<mat-form-field> <input matInput
+							placeholder="Setting name" [(ngModel)]="setting.setting_name"
+							name="setting_name"> </mat-form-field>
+					</div>
+					<div fxFlex="0 1 calc(33.3% - 32px)"
+						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+						<mat-form-field> <mat-label>Location</mat-label>
+						<mat-select [disabled]="!modify"
+							[(ngModel)]="setting.connection_type" name="connection_type">
+						<mat-option value="local">Local</mat-option> <!-- <mat-option
+						value="server">Server</mat-option> --> <mat-option value="cluster">Cluster</mat-option>
+						</mat-select> </mat-form-field>
+					</div>
+					<div fxFlex="0 1 calc(33.3% - 32px)"
+						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+						<mat-form-field> <input matInput
+							placeholder="Storage folder" [(ngModel)]="setting.storage_folder"
+							name="storage_folder"> </mat-form-field>
+					</div>
+					<div fxFlex="100%">
+						<mat-form-field style="width:100%"> <input
+							matInput type="text" placeholder="Singularity image"
+							[(ngModel)]="setting.original_image" name="original_image">
+							<mat-hint>URL or local path to the <a href="https://sourceforge.net/projects/imoka/files/iMOKA_core/iMOKA" title="Singularity image hosted on SourceForge">singulatiry image</a> that will be copied in the workspace. </mat-hint> 
+						</mat-form-field>
+
+					</div>
+				</div>
+				<ng-container
+					*ngIf="setting.connection_type=='server' || setting.connection_type=='cluster'">
+				<h3>SSH connection parameters</h3>
+				<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
+					fxLayoutAlign="flex-start">
+					<div fxFlex="0 1 calc(33.3% - 32px)"
+						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+						<mat-form-field> <input matInput
+							placeholder="Server address" [(ngModel)]="setting.ssh_address"
+							name="ssh_address"> </mat-form-field>
+					</div>
+					<div fxFlex="0 1 calc(33.3% - 32px)"
+						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+						<mat-form-field> <mat-label>Authentication
+						method</mat-label> <mat-select [disabled]="!modify"
+							[(ngModel)]="setting.ssh_auth" name="ssh_auth"> <mat-option
+							value="UsernamePassword">Username and Password</mat-option> <mat-option
+							value="SshKey">SSH key</mat-option> </mat-select> </mat-form-field>
+					</div>
+					<div fxFlex="0 1 calc(33.3% - 32px)"
+						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+						<mat-form-field> <input matInput
+							placeholder="Username" [(ngModel)]="setting.username"
+							name="username"> </mat-form-field>
+					</div>
+					<div fxFlex="0 1 calc(33.3% - 32px)"
+						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%"
+						*ngIf="setting.ssh_auth == 'UsernamePassword'">
+						<mat-form-field> <input matInput
+							placeholder="Password" type="password"
+							[(ngModel)]="setting.password" name="password"> </mat-form-field>
+					</div>
+					<div fxFlex="0 1 calc(33.3% - 32px)"
+						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%"
+						*ngIf="setting.ssh_auth == 'SshKey'">
+						<mat-form-field> <input matInput
+							placeholder="Private key location"
+							[(ngModel)]="setting.private_key" name="private_key"> </mat-form-field>
+					</div>
+				</div>
+				</ng-container>
+				<ng-container *ngIf="setting.connection_type=='cluster'">
+				<h3>Cluster parameters</h3>
+				<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
+					fxLayoutAlign="flex-start">
+					<div fxFlex="0 1 calc(33.3% - 32px)"
+						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+						<mat-form-field> <mat-label>Cluster
+						type</mat-label> <mat-select [disabled]="!modify"
+							[(ngModel)]="setting.cluster_type" name="cluster_type">
+						<mat-option value="slurm">SLURM</mat-option> </mat-select> </mat-form-field>
+					</div>
+					<div fxFlex="100%">
+						<mat-form-field style="width:100%"> <mat-label>Cluster
+						modules load</mat-label> <textarea matInput [(ngModel)]="setting.module_load"
+							name="module_load" style="height: 150px"></textarea> <mat-hint>Write
+						here the commands to load singularity module, if necessary</mat-hint> </mat-form-field>
+					</div>
+				</div>
+				</ng-container>
+			</fieldset>
+		</form>
+	</div>
+</div>

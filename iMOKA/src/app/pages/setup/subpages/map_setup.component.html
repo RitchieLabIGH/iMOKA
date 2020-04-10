@@ -1,0 +1,105 @@
+<div class="container" fxLayout="column" fxLayoutAlign="space-evenly stretch" fxLayoutGap="25px" *ngIf="this.setting">
+	<div fxFlex class="row" fxLayout.lt-sm="column"  fxLayout="row wrap" 
+  				fxLayoutGap="32px" 
+  				fxLayoutAlign="flex-start" >
+  		<h3 fxFlex="100%">Annotations</h3>
+  		<ng-container  *ngIf="setting.annotations && setting.annotations.length > 0">
+  		<mat-form-field fxFlex="45%">
+			<mat-label>Map configurations in {{setting.setting_name}}</mat-label> 
+			<mat-select [(ngModel)]="current_ann" [disabled]="modify_ann"> 
+			<mat-option
+				*ngFor="let ann of setting.annotations; let i=index"
+				value="{{i}}" > {{ ann.name }} </mat-option>
+			 </mat-select>
+	    </mat-form-field>
+	    <div fxFlex="45%" class="button-list-h">
+	    	<button mat-raised-button (click)="modify_ann=true;" *ngIf="!modify_ann">Modify</button>
+	    	<button mat-raised-button (click)="newAnn()" *ngIf="!modify_ann">New</button>
+	    	<button mat-raised-button (click)="removeAnn()" *ngIf="!modify_ann && setting.annotations[current_ann]">Remove</button>
+			<button mat-raised-button (click)="save()" *ngIf="modify_ann">Save</button>
+			<button mat-raised-button (click)="setProfile()" *ngIf="modify_ann">Clear</button>
+		</div>
+		<form  #settingForm="ngForm"  *ngIf="setting.annotations[current_ann]; let ann" fxFlex="100%">
+		 <fieldset [disabled]="!modify_ann" style="border:0;">
+		 <div fxLayout.lt-sm="column"  fxLayout="row wrap" 
+  				fxLayoutGap="32px" 
+  				fxLayoutAlign="flex-start">
+	    	<mat-form-field fxFlex="40%">
+				<mat-label>Name</mat-label>
+				<input matInput placeholder="Annotation name" [(ngModel)]="ann.name" name="name">
+			</mat-form-field>
+			<mat-form-field fxFlex="40%">
+				<mat-label>Annotation file</mat-label>
+				<input matInput placeholder="File path" [(ngModel)]="ann.file"  name="file">
+			</mat-form-field>
+		</div>
+		</fieldset>
+		</form>
+  		</ng-container>
+  		<button mat-raised-button *ngIf="!setting.annotations || setting.annotations.length == 0" (click)="newAnn()">Add an annotation file.</button>
+  		
+  		<h3 fxFlex="100%" >Mapper</h3> 
+  		<ng-container  *ngIf="setting.mappers && setting.mappers.length > 0">
+  		<mat-form-field fxFlex="45%">
+			<mat-label>Map configurations in {{setting.setting_name}}</mat-label> 
+			<mat-select [(ngModel)]="current_map" [disabled]="modify_mapper"> 
+			<mat-option
+				*ngFor="let map of setting.mappers; let i=index"
+				value="{{i}}" > {{ map.name }} </mat-option>
+			 </mat-select>
+	    </mat-form-field>
+	    <div fxFlex="45%" class="button-list-h">
+	    	<button mat-raised-button (click)="modify_mapper=true;" *ngIf="!modify_mapper">Modify</button>
+	    	<button mat-raised-button (click)="newMap()" *ngIf="!modify_mapper">New</button>
+	    	<button mat-raised-button (click)="removeMap()" *ngIf="!modify_mapper && setting.mappers[current_map]">Remove</button>
+			<button mat-raised-button (click)="save()" *ngIf="modify_mapper">Save</button>
+			<button mat-raised-button (click)="setProfile()" *ngIf="modify_mapper">Clear</button>
+		</div>
+		<form  #settingForm="ngForm"  *ngIf="setting.mappers[current_map]; let mapper" fxFlex="100%">
+		 <fieldset [disabled]="!modify_mapper" style="border:0;">
+		 <div fxLayout.lt-sm="column"  fxLayout="row wrap" 
+  				fxLayoutGap="32px" 
+  				fxLayoutAlign="flex-start">
+	    	<mat-form-field fxFlex="40%">
+				<mat-label>Name</mat-label>
+				<input matInput placeholder="Aligner name" [(ngModel)]="mapper.name" name="name">
+			</mat-form-field>
+			<mat-form-field fxFlex="40%">
+				<mat-label>Command</mat-label>
+				<input matInput placeholder="The basic command" [(ngModel)]="mapper.command"  name="command">
+			</mat-form-field>
+			<mat-form-field fxFlex="40%">
+				<mat-label>Flag in</mat-label>
+				<input matInput placeholder="-i" [(ngModel)]="mapper.flag_in"  name="flag_in">
+			</mat-form-field>
+			<mat-form-field fxFlex="40%">
+				<mat-label>Flag out</mat-label>
+				<input matInput placeholder="-o" [(ngModel)]="mapper.flag_out"  name="flag_out">
+			</mat-form-field>
+			<mat-form-field fxFlex="40%">
+				<mat-label>Flag multi threads</mat-label>
+				<input matInput placeholder="-t" [(ngModel)]="mapper.flag_multi_thread"  name="flag_multi_thread">
+			</mat-form-field>
+			<mat-form-field fxFlex="40%">
+				<mat-label>Fixed number of threads (-1 auto)</mat-label>
+				<input matInput type="number" placeholder="-1" [(ngModel)]="mapper.parallel"  name="parallel">
+			</mat-form-field>
+			<mat-form-field fxFlex="40%">
+				<mat-label>Options</mat-label>
+				<input matInput  placeholder="additional options" [(ngModel)]="mapper.options"  name="options">
+			</mat-form-field>
+			<mat-form-field fxFlex="40%" >
+				<mat-label>Output type</mat-label>
+				<mat-select [(ngModel)]="mapper.output_type"  name="output_type" [disabled]="!modify_mapper">
+					<mat-option value="sam">SAM</mat-option>
+				</mat-select>
+			</mat-form-field>
+			</div>
+			</fieldset>
+			</form>
+	    </ng-container>
+	    <button mat-raised-button *ngIf="!setting.mappers || setting.mappers.length == 0" (click)="newMap()">Create your first aligner configuration.</button>
+	    
+	</div>
+</div>
+<div *ngIf="! this.setting ">You first need to create a profile!</div>

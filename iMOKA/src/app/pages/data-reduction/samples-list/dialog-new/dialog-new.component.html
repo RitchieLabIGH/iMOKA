@@ -1,0 +1,107 @@
+<h1 mat-dialog-title>Add new samples </h1>
+<div mat-dialog-content class="main-dialog">
+	<div *ngIf="session" fxLayout="column">
+		<ng-container>
+		<div fxFlex
+			*ngIf="session.profile.process_config.profiles.length == 0">
+			<p>Sorry, you have first to create a valid profile!</p>
+		</div>
+		</ng-container>
+		<mat-horizontal-stepper  #stepper>
+		<mat-step [stepControl]="tsvControl">
+		<form [formGroup]="tsvControl">
+			<ng-template matStepLabel>Data sources</ng-template>
+			<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
+				fxLayoutAlign="flex-start">
+				<div fxFlex="100%">
+					<mat-form-field class="tsv-input"> <mat-label>Copy
+					and paste your source file</mat-label> <textarea matInput
+						formControlName="raw_file"
+						placeholder="
+sample_1&#9;drug_1:responsive;drug_2:resistant&#9;SRR0000000
+sample_2&#9;drug_1:resistant;sex:male&#9;http://example.com/read_1.fq;http://example.com/read_2.fq
+sample_3&#9;drug_2:responsive;ethnicity:caucasian&#9;/home/user/bam/sample_3.bam
+"></textarea>
+					<mat-hint>Divide the columns using the tab or a space,
+					the elements inside the columns with ";" and the metadata
+					key-vallue pairs with a ":" </mat-hint> </mat-form-field>
+				</div>
+			</div>
+		</form>
+		</mat-step> <mat-step [stepControl]="detailsControl">
+		<form [formGroup]="detailsControl">
+			<ng-template matStepLabel>Process details</ng-template>
+			<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
+				fxLayoutAlign="flex-start">
+				<div fxFlex="0 1 calc(33.3% - 32px)"
+					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> <mat-label>K-mer
+					length</mat-label> <input matInput required formControlName="k_len"
+						type="number"> <mat-hint>The length of the
+					k-mers</mat-hint> </mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)"
+					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> <mat-label>Minimum
+					count</mat-label> <input matInput required formControlName="minCounts"
+						type="number"> <mat-hint>Minimum count to
+					consider a k-mer in a sample</mat-hint> </mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)"
+					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field
+						title="Reverse files will be converted in their reverse-complementary form before the k-mer count">
+					<mat-label>Lybrary type <mat-icon>info</mat-icon></mat-label> <mat-select
+						formControlName="libraryType"> <mat-option
+						value="NULL">Unknwon or FF</mat-option> <mat-option value="fr">Forward/Reverse</mat-option>
+					<mat-option value="rf">Reverse/Forward</mat-option> <mat-option
+						value="rr">Reverse/Reverse</mat-option> </mat-select> <mat-hint>Used
+					only with paired end</mat-hint> </mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)"
+					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-slide-toggle formControlName="fastqc">Run
+					FastQC</mat-slide-toggle>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)"
+					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-slide-toggle formControlName="keepRaw">Keep
+					the raw and intermediate files</mat-slide-toggle>
+				</div>
+			</div>
+		</form>
+		</mat-step> <mat-step [stepControl]="procControl">
+		<form [formGroup]="procControl">
+			<ng-template matStepLabel>Process resources</ng-template>
+			<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
+				fxLayoutAlign="flex-start">
+				<div fxFlex="0 1 calc(33.3% - 32px)"
+					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> <mat-label>Threads
+					per process</mat-label> <input matInput required formControlName="cores"
+						type="number"> <mat-hint>Number of cores used
+					per process</mat-hint> </mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)"
+					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> <mat-label>Max memory
+					in Gb per process</mat-label> <input matInput required formControlName="mem"
+						type="number"> <mat-hint>Max ram used per
+					process </mat-hint> </mat-form-field>
+				</div>
+				<div fxFlex="0 1 calc(33.3% - 32px)"
+					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<mat-form-field> <mat-label>Divide jobs</mat-label> <input matInput required formControlName="njobs"
+						type="number"> <mat-hint>Divide the task in multiple jobs</mat-hint> </mat-form-field>
+				</div>
+			</div>
+		</form>
+		</mat-step> </mat-horizontal-stepper>
+	</div>
+	<pre *ngIf="error_message" class="error_message">{{error_message}} </pre>
+	<pre *ngIf="loading_message" class="loading_message">{{loading_message}} </pre>
+</div>
+<div mat-dialog-actions align="end">
+	<button mat-button mat-dialog-close>Close</button>
+	<button mat-button [disabled]="!isValid()" (click)="send()">Run</button>
+</div>

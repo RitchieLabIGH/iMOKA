@@ -1,0 +1,136 @@
+/* You can add global styles to this file, and also import other style files */
+@import "~@angular/material/prebuilt-themes/indigo-pink.css";
+@import "~@fortawesome/fontawesome-free/css/all.css";
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+.container {
+	padding : 15px 30px 15px 30px;
+}
+
+div.row {
+	margin-bottom : 30px; 
+}
+
+.hidden{
+	display:none !important;
+}
+.button-list {
+	padding:5px;
+}
+.button-list-h {
+	padding: 5px 0 5px 0;
+}
+.button-list-v {
+	padding: 0 5px 0 5px ;
+}
+
+.button-list button{
+	margin : 5px;
+}
+.button-list-h button{
+	margin : 0 5px 0 0;
+}
+.button-list-v button{
+	margin : 0 0 5px 0;
+	width : 100%;
+}
+.loading-spinner {
+	left : 45%;
+	top : 45%;
+}
+
+.margin-1 {
+	margin:10px;
+}
+.margin-2 {
+	margin:15px;
+}
+
+.margin-b1 {
+	margin-bottom:10px;
+}
+
+
+.loading:after {
+  content: '...';
+  animation: dots 1s steps(5, end) infinite;}
+
+@keyframes dots {
+  0%, 20% {
+    color: rgba(0,0,0,0);
+    text-shadow:
+      .25em 0 0 rgba(0,0,0,0),
+      .5em 0 0 rgba(0,0,0,0);}
+  40% {
+    color: white;
+    text-shadow:
+      .25em 0 0 rgba(0,0,0,0),
+      .5em 0 0 rgba(0,0,0,0);}
+  60% {
+    text-shadow:
+      .25em 0 0 white,
+      .5em 0 0 rgba(0,0,0,0);}
+  80%, 100% {
+    text-shadow:
+      .25em 0 0 white,
+      .5em 0 0 white;}}
+
+.fa {
+	font-size: 24px;
+}
+
+
+.padding-1 {
+	padding: 10px;
+}
+
+.mat-drawer-inner-container{
+	overflow-x: hidden !important;
+}
+
+
+
+.table-container table {
+  width: 100%;
+}
+
+.info-title {
+	cursor : help;
+}
+
+.main-dialog {
+	width: 75vw;
+	height: 80vh;
+	overflow-y:auto;
+}
+
+.divider{
+	margin-bottom : 20px;
+	margin-top: 20px;
+}
+
+.error_message{
+	color: #a40000;
+}
+
+.loading_message {
+	color: #3465a4;
+}
+.tab-container {
+	height: calc(100vh - 115px );
+	overflow: auto;
+}
+.card-tab-container{
+	height: calc(100vh - 96px );
+	overflow: hidden;
+}
+.tab-container-card {
+	height: calc(100vh - 155px );
+	overflow: auto;
+}
+
+
+
+
