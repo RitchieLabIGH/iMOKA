@@ -728,24 +728,27 @@ class iMokaBE extends EventEmitter {
 	
 	
 	getDataByID(request) {
-	    let el_id= request.request.id , el_type=request.request.type;
-	    if (typeof el_id == "number"){
-	        let dat = this.data[request.file_type][el_type].find((el)=>{
-	            return el.id == el_id ;
-	        });
-	        if ( dat ){
-	            return  { "data" : this.regenerate(dat) ,  "message": "SUCCESS" };
-	        }
-	    } else {
-	        let dat = this.data[request.file_type][el_type].find((el)=>{
-	            return el.kmer == el_id ;
-	        });
-	        if ( dat ){
-	            return { "data" : this.regenerate(dat) ,  "message": "SUCCESS" , code : 0}; 
-	        }
-	        
-	    }
-	    return {  "message": "Element not found", code : 1 };
+		return new Promise((resolve, reject)=>{
+			let el_id= request.request.id , el_type=request.request.type;
+		    if (typeof el_id == "number"){
+		        let dat = this.data[request.file_type][el_type].find((el)=>{
+		            return el.id == el_id ;
+		        });
+		        if ( dat ){
+		            resolve({ "data" : this.regenerate(dat) ,  "message": "SUCCESS" });
+		        }
+		    } else {
+		        let dat = this.data[request.file_type][el_type].find((el)=>{
+		            return el.kmer == el_id ;
+		        });
+		        if ( dat ){
+		            resolve({ "data" : this.regenerate(dat) ,  "message": "SUCCESS" , code : 0}) 
+		        }
+		        
+		    }
+		    reject("Element not found")
+		})
+	    
 	}
 	
 	getGenes(event){
