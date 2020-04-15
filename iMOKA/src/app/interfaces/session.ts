@@ -55,9 +55,13 @@ export class Setting {
 
 
 export class Message {
-    error : any;
-    code : number;
-    message: any;
+	constructor(message? : string){
+		this.message=message;
+	}
+    error ? : any;
+    code ? : number;
+    message ?: any;
+	type ? :string;
 }
 
 

@@ -31,10 +31,21 @@
       </button>
       <div><img style="height:50px;vertical-align:middle;" src="assets/images/iMOKA_white.png"><span><strong>i</strong>nteractive <strong>M</strong>ulti <strong>O</strong>bjective <strong>K</strong>-mer <strong>A</strong>nalysis </span></div>  
      <span fxFlex="grow"></span>
-     <a title="Settings" mat-icon-button routerLink="setup" ><mat-icon>settings_applications</mat-icon></a>	
+     <a title="Settings" mat-icon-button routerLink="setup" ><mat-icon>settings_applications</mat-icon></a>
+     <button title="Alerts" mat-icon-button (click)="hideAlert=!hideAlert" ><mat-icon *ngIf="hideAlert">notifications</mat-icon><mat-icon *ngIf="!hideAlert">notifications_none</mat-icon></button>
     </mat-toolbar>
     <div class="main-frame" fxFlex>
     	<router-outlet></router-outlet>
     </div>
   </mat-sidenav-content>
 </mat-sidenav-container>
+<div class="message-container" [class.hidden]="hideAlert">
+	<mat-card class="mat-elevation-z6 message-card" >
+		<mat-card-title>Alerts</mat-card-title>
+		<mat-card-content>
+			<mat-action-list>
+				<button mat-list-item *ngFor="let mex of messages; let i=index" (click)="messages.splice(i,1)">{{mex.message}}</button>
+			</mat-action-list>
+		</mat-card-content>
+	</mat-card>
+</div>

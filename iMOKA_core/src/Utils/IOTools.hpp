@@ -543,7 +543,7 @@ static void getParameter(json & origin, json & def, std::string key,
 			std::cout << key << " : " << destination << "\n";
 			return;
 		} catch (const std::exception& e) {
-
+			std::cerr << e.what() <<'\n';
 		}
 	}
 	if (def.is_null()) {

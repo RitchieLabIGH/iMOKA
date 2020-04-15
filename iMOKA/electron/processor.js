@@ -718,6 +718,7 @@ class Processor {
     		  let storage_dir= child_process.execSync("mkdir -p "+this.options.storage_folder + "/.singularity/ && realpath "+this.options.storage_folder ).toString();
     		  this.options.storage_folder=storage_dir.replace("\n", "");
     		  if ( this.options.remote_image){
+    			  this.mess.sendMessage({message : "Downloading "+this.options.original_image , type : "alert"});
     			  child_process.exec("wget "+this.options.original_image+" -O "+this.options.storage_folder +"/.singularity/iMOKA" , {} );
     		  } else {
     			  child_process.exec("cp "+this.options.original_image+" "+this.options.storage_folder +"/.singularity/iMOKA" , {} );

@@ -68,7 +68,7 @@ bool Aggregation::run(int argc, char** argv){
 				return false;
 			}
 			std::string where =
-					parsedArgs.count("config") == 0 ?
+					parsedArgs.count("output") == 0 ?
 							"stdcout" : parsedArgs["output"].as<std::string>();
 			print_conf(where);
 			return true;

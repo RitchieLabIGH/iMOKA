@@ -23,3 +23,19 @@
 	width: 100%;
 	overflow: auto;
 }
+
+.message-container {
+	position:fixed;
+	width:180px;
+	right:5px;
+	top:65px;
+	height:calc(100vw - 70px);
+	z-index:100000;
+	text-align:center;
+	
+}
+
+.message-card {
+	height:100%;
+	overflow:auto;
+}

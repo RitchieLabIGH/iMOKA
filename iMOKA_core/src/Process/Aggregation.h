@@ -37,6 +37,7 @@ private:
   "flag_out": ">",
   "options": "-f samse -K 100000000 -d hg38 -D /home/claudio/Utils/hg38/gmap/ ",
   "output_type": "sam",
+  "io_order" : "io" ,
   "parallel": -1
  },
  "annotation": {

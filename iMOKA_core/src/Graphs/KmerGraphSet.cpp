@@ -54,7 +54,7 @@ bool KmerGraphSet::load(std::string in_file, double threshold) {
 void KmerGraphSet::setCountMatrix(std::string file) {
 	matrix_file = file;
 	has_matrix = IOTools::fileExists(file);
-	if ( has_matrix ){
+	if (has_matrix) {
 		BinaryMatrix binm(matrix_file);
 		normalization_factors = binm.normalization_factors;
 		sample_groups_names = binm.unique_groups;
@@ -74,20 +74,22 @@ void KmerGraphSet::setCountMatrix(std::string file) {
 /// @param node the reference node
 /// @param l the length of the shift
 /// @return a set of nodes that overlap in the list "nodes"
-std::set<uint64_t> KmerGraphSet::findNodes(BNode & node, uint64_t l) {
+std::set<uint64_t> KmerGraphSet::findNodes(BNode &node, uint64_t l) {
 	std::set<uint64_t> out;
 	Kmer compBegin(node.kmer.str().substr(l) + std::string(l, 'A'));
 	Kmer compEnd(node.kmer.str().substr(l) + std::string(l, 'T'));
 	BNode comp_node(compBegin);
-	uint64_t b =
-			std::distance(nodes.begin(),
-					std::lower_bound(nodes.begin(), nodes.end(), comp_node,
-							[](const BNode & a, const BNode & b) {return a.kmer < b.kmer;}));
+	uint64_t b = std::distance(nodes.begin(),
+			std::lower_bound(nodes.begin(), nodes.end(), comp_node,
+					[](const BNode &a, const BNode &b) {
+						return a.kmer < b.kmer;
+					}));
 	comp_node.kmer = compEnd;
-	uint64_t e =
-			std::distance(nodes.begin(),
-					std::upper_bound(nodes.begin(), nodes.end(), comp_node,
-							[](const BNode & a, const BNode & b) {return a.kmer < b.kmer;}));
+	uint64_t e = std::distance(nodes.begin(),
+			std::upper_bound(nodes.begin(), nodes.end(), comp_node,
+					[](const BNode &a, const BNode &b) {
+						return a.kmer < b.kmer;
+					}));
 	e = e == 0 ? 0 : e - 1;
 	if (b <= e) {
 		for (uint64_t el = b; el <= e; el++) {
@@ -202,7 +204,7 @@ void KmerGraphSet::makeEdges() {
 	}
 }
 
-void KmerGraphSet::assignGraph(std::vector<uint64_t> & v, uint64_t i,
+void KmerGraphSet::assignGraph(std::vector<uint64_t> &v, uint64_t i,
 		int64_t graph) {
 	v.push_back(i);
 	nodes[i].graph = graph;
@@ -294,8 +296,8 @@ void KmerGraphSet::generateSequencesFromGraphs(double thr) {
 	uint64_t tot = 0;
 	sequences.clear();
 	for (uint64_t gi = 0; gi < graphs.size(); gi++) {
-		KmerGraph & g = graphs[gi];
-		for (auto & s : g.sequences) {
+		KmerGraph &g = graphs[gi];
+		for (auto &s : g.sequences) {
 			if (s.sequence.size() > k_len + 3) {
 				s.id = tot++;
 				s.graph = gi;
@@ -321,8 +323,9 @@ void KmerGraphSet::correctHolmBonferroni(double thr) {
 		std::cerr << "sorting...";
 		std::cerr.flush();
 		std::sort(order.begin(), order.end(),
-				[&](const uint64_t & a,const uint64_t & b) {
-					return sequences[a].best_kmer->values[comp] > sequences[b].best_kmer->values[comp];
+				[&](const uint64_t &a, const uint64_t &b) {
+					return sequences[a].best_kmer->values[comp]
+							> sequences[b].best_kmer->values[comp];
 				});
 		std::cerr << "done.\nEvaluating new pvalues....";
 		std::cerr.flush();
@@ -340,7 +343,7 @@ void KmerGraphSet::correctHolmBonferroni(double thr) {
 
 }
 
-void KmerGraphSet::alignSequences(Mapper & mapper) {
+void KmerGraphSet::alignSequences(Mapper &mapper) {
 
 	uint64_t s;
 	std::string input_file = "./sequences_" + IOTools::timestamp() + ".fa";
@@ -349,41 +352,43 @@ void KmerGraphSet::alignSequences(Mapper & mapper) {
 		ofs << ">seq_" << s << "\n" << sequences[s].sequence << "\n";
 	}
 	ofs.close();
-	std::string output_file = mapper.align(input_file);
+	std::string output_file =  mapper.align(input_file);
+
 	std::ifstream ifs(output_file);
 	std::string line;
-	int64_t new_pos = -1;
+	int64_t new_pos = -1, tot_pos=0;
 	while (getline(ifs, line)) {
-		if (line[0] != '#' && line[0] != '@') {
+		if (! mapper.isCommentLine(line)) {
 			MapperResultLine res_line(line, mapper.output_type);
 			if (!(res_line.flag & SAMflags::isUnmappedQuery)) {
 				new_pos = -2;
-				if ( sequences[res_line.query_index].alignments.size() > 0 ){
+				if (sequences[res_line.query_index].alignments.size() > 0) {
 					for (auto idx : sequences[res_line.query_index].alignments) {
 						if (mapper_results[idx].match < res_line.match) {
 							new_pos = idx;
 						}
 					}
-				}else {
-					new_pos=-1;
+				} else {
+					new_pos = -1;
 				}
-				for (auto & sig : res_line.signatures) {
-					std::pair<BNode*, bool> res = getBestKmerAndBorder(
-							sequences[res_line.query_index], sig,
-							res_line.strand);
-					if (res.second && sig.signature_type != "clipping") {
-						sig.generates_event = true;
+				if (new_pos != -2) {
+					for (auto &sig : res_line.signatures) {
+						std::pair<BNode*, bool> res = getBestKmerAndBorder(
+								sequences[res_line.query_index], sig,
+								res_line.strand);
+						if (res.second && sig.signature_type != "clipping") {
+							sig.generates_event = true;
+						}
+						sig.best_kmer = res.first;
 					}
-					sig.best_kmer = res.first;
-				}
-				if (new_pos == -1) {
-					sequences[res_line.query_index].alignments.push_back(
-							mapper_results.size());
-					res_line.id = mapper_results.size();
-					mapper_results.push_back(res_line);
-				} else if (new_pos >= 0 ){
-					res_line.id = new_pos;
-					mapper_results[new_pos] = res_line;
+					if (new_pos == -1) {
+						sequences[res_line.query_index].alignments.push_back(mapper_results.size());
+						res_line.id = mapper_results.size();
+						mapper_results.push_back(res_line);
+					} else if ( new_pos >= 0 ) {
+						res_line.id = new_pos;
+						mapper_results[new_pos] = res_line;
+					}
 				}
 			}
 		}
@@ -434,7 +439,7 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 				results[omp_get_thread_num()].push_back(ann);
 			}
 			for (int n = 0; n < results.size(); n++) {
-				for (auto & ann : results[n]) {
+				for (auto &ann : results[n]) {
 					mapper_results[ann.map_result_id].annotations.push_back(
 							ann);
 					if (ann.gene_id != "") {
@@ -453,9 +458,9 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 
 	alignmentDerivedFeatures.clear();
 	uint64_t grp, o;
-	for (auto & r : mapper_results) {
+	for (auto &r : mapper_results) {
 		findSplicing(r);
-		for (auto & sig : r.signatures) {
+		for (auto &sig : r.signatures) {
 			auto other = std::find(alignmentDerivedFeatures.begin(),
 					alignmentDerivedFeatures.end(), sig);
 			if (other != alignmentDerivedFeatures.end()) {
@@ -513,7 +518,7 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 	std::cerr << "done, producing the genes annotations...";
 	genes.clear();
 	std::vector<std::string> gene_ids_keys;
-	for (auto & gn : genes_ids) {
+	for (auto &gn : genes_ids) {
 		gene_ids_keys.push_back(gn.first);
 	}
 	std::vector<bool> sequences_done(sequences.size(), false);
@@ -536,13 +541,13 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 	std::cerr << "reduced to " << genes.size() << " genes.\n";
 	std::cerr << "Producing the alignment derived features...";
 	std::map<uint64_t, uint64_t> sig_to_ev;
-	for (auto & sig : alignmentDerivedFeatures) {
+	for (auto &sig : alignmentDerivedFeatures) {
 		if (sig.generates_event) {
 			if (sig_to_ev.count(sig.id) == 0) {
 				Event ev(sig.signature_type + "_borders", { }, sig.best_kmer);
 				ev.signatures.push_back(sig.id);
 				for (auto aln : sig.alignments) {
-					for (auto & ann : mapper_results[aln].annotations) {
+					for (auto &ann : mapper_results[aln].annotations) {
 						ev.gene_name.insert(ann.gene_name);
 					}
 				}
@@ -550,21 +555,22 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 				ev.id = events.size();
 				events.push_back(ev);
 			} else {
-				Event & ev = events[sig_to_ev[sig.id]];
+				Event &ev = events[sig_to_ev[sig.id]];
 				for (auto aln : sig.alignments) {
-					for (auto & ann : mapper_results[aln].annotations) {
+					for (auto &ann : mapper_results[aln].annotations) {
 						ev.gene_name.insert(ann.gene_name);
 					}
 				}
 			}
 		}
 	}
-	std::cerr << IOTools::format_space_human(IOTools::getCurrentProcessMemory()) << "\n";
-	for ( auto & g : genes){
+	std::cerr << IOTools::format_space_human(IOTools::getCurrentProcessMemory())
+			<< "\n";
+	for (auto &g : genes) {
 		for (int64_t j = g.events.size() - 1; j >= 0; j--) {
 			bool to_add = true;
 			if (g.events[j].type == "gene") {
-				for (auto & ev : events) {
+				for (auto &ev : events) {
 					if (ev.best_kmer == g.events[j].best_kmer) {
 						to_add = false;
 						ev.gene_name.insert(g.gene_name);
@@ -588,9 +594,9 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 void KmerGraphSet::processUnAnnotated(std::vector<bool> sequences_done) {
 	for (uint64_t s = 0; s < sequences.size(); s++) {
 		if (!sequences_done[s]) {
-			GraphSequence & seq = sequences[s];
+			GraphSequence &seq = sequences[s];
 			bool represented = false;
-			for (auto & ev : events) {
+			for (auto &ev : events) {
 				if (ev.best_kmer == seq.best_kmer) {
 					represented = true;
 				}
@@ -603,13 +609,13 @@ void KmerGraphSet::processUnAnnotated(std::vector<bool> sequences_done) {
 				} else if (seq.alignments.size() > 1) {
 					new_ev.type = "multimap";
 					std::set<std::string> gene_names;
-					for (auto & aln : seq.alignments) {
+					for (auto &aln : seq.alignments) {
 						for (auto g : mapper_results[aln].genes)
 							new_ev.gene_name.insert(genes[g].gene_name);
 					}
 				} else {
-					MapperResultLine & aln = mapper_results[seq.alignments[0]];
-					for (auto & ann : aln.annotations) {
+					MapperResultLine &aln = mapper_results[seq.alignments[0]];
+					for (auto &ann : aln.annotations) {
 						if (ann.gene_name != "")
 							new_ev.gene_name.insert(ann.gene_name);
 					}
@@ -628,8 +634,8 @@ void KmerGraphSet::processUnAnnotated(std::vector<bool> sequences_done) {
 	}
 }
 
-std::pair<BNode*, bool> KmerGraphSet::getBestKmerAndBorder(GraphSequence & gs,
-		AlignmentDerivedFeature & sig, std::string strand) {
+std::pair<BNode*, bool> KmerGraphSet::getBestKmerAndBorder(GraphSequence &gs,
+		AlignmentDerivedFeature &sig, std::string strand) {
 	int start = sig.q_position.start - k_len + 1;
 	int end = sig.q_position.end + k_len - 1;
 	int border_start = start - (k_len * 2) - 3;
@@ -650,13 +656,13 @@ std::pair<BNode*, bool> KmerGraphSet::getBestKmerAndBorder(GraphSequence & gs,
 		border_end = gs.sequence.size() - tmp_border;
 	}
 
-	BNode & best_kmer = getMaxKmer(gs.sequence.substr(start, end - start),
+	BNode &best_kmer = getMaxKmer(gs.sequence.substr(start, end - start),
 			gs.graph);
 	double best_val = *std::max_element(best_kmer.values.begin(),
 			best_kmer.values.end());
 	bool keep = true;
 	if (start - border_start > k_len) {
-		BNode & lower_border_best_kmer = getMaxKmer(
+		BNode &lower_border_best_kmer = getMaxKmer(
 				gs.sequence.substr(border_start, start - border_start),
 				gs.graph);
 		double lb_best_val = *std::max_element(
@@ -665,7 +671,7 @@ std::pair<BNode*, bool> KmerGraphSet::getBestKmerAndBorder(GraphSequence & gs,
 		keep = keep && (best_val > lb_best_val);
 	}
 	if (border_end - end > k_len) {
-		BNode & higher_border_best_kmer = getMaxKmer(
+		BNode &higher_border_best_kmer = getMaxKmer(
 				gs.sequence.substr(end, border_end - end), gs.graph);
 		double hb_best_val = *std::max_element(
 				higher_border_best_kmer.values.begin(),
@@ -675,7 +681,7 @@ std::pair<BNode*, bool> KmerGraphSet::getBestKmerAndBorder(GraphSequence & gs,
 	return {&best_kmer, keep};
 }
 
-void KmerGraphSet::findSplicing(MapperResultLine & mr) {
+void KmerGraphSet::findSplicing(MapperResultLine &mr) {
 	int a, b;
 	std::set<std::string> exon_a, exon_b;
 	if (mr.t_blocks.size() > 1) {
@@ -685,7 +691,7 @@ void KmerGraphSet::findSplicing(MapperResultLine & mr) {
 			if (a != b) {
 				exon_a.clear();
 				exon_b.clear();
-				for (auto & ann : mr.annotations) {
+				for (auto &ann : mr.annotations) {
 					if (ann.position.end == a)
 						exon_a.insert(ann.exon_id);
 					if (ann.position.start == b)
@@ -695,13 +701,13 @@ void KmerGraphSet::findSplicing(MapperResultLine & mr) {
 				if (exon_a.size() == 0)
 					left = "?";
 				else {
-					for (auto & en : exon_a)
+					for (auto &en : exon_a)
 						left += (left == "" ? "" : "-") + en;
 				}
 				if (exon_b.size() == 0)
 					right = "?";
 				else {
-					for (auto & en : exon_b)
+					for (auto &en : exon_b)
 						right += (right == "" ? "" : "-") + en;
 				}
 				if ((right != "?" || left != "?") || b - a > 10) {
@@ -709,7 +715,7 @@ void KmerGraphSet::findSplicing(MapperResultLine & mr) {
 							Segment(mr.q_blocks[i - 1].end,
 									mr.q_blocks[i].start), mr.chromosome,
 							left + " -> " + right);
-					GraphSequence & gs = sequences[mr.query_index];
+					GraphSequence &gs = sequences[mr.query_index];
 					std::pair<BNode*, bool> res = getBestKmerAndBorder(
 							sequences[mr.query_index], sig, mr.strand);
 					sig.best_kmer = res.first;
@@ -741,29 +747,29 @@ void KmerGraphSet::write_json(std::string out_file) {
 
 }
 
-void KmerGraphSet::write_genes_json(std::ofstream & ofs) {
+void KmerGraphSet::write_genes_json(std::ofstream &ofs) {
 	bool first = true;
 	json data;
-	for (auto& g : genes) {
+	for (auto &g : genes) {
 		ofs << (first ? " \"genes\" : [\n" : ",\n") << g.to_json().dump();
 		first = false;
 	}
 	ofs << (first ? "" : "\n]\n");
 }
 
-void KmerGraphSet::write_signatures_json(std::ofstream & ofs) {
+void KmerGraphSet::write_signatures_json(std::ofstream &ofs) {
 	bool first = true;
-	for (auto& s : alignmentDerivedFeatures) {
+	for (auto &s : alignmentDerivedFeatures) {
 		ofs << (first ? "\"signatures\" : [\n" : ",\n") << s.to_json().dump();
 		first = false;
 	}
 	ofs << (first ? "" : "\n]\n");
 }
 
-void KmerGraphSet::write_sequences_json(std::ofstream & ofs) {
+void KmerGraphSet::write_sequences_json(std::ofstream &ofs) {
 	bool first = true;
 	for (int64_t i = 0; i < sequences.size(); i++) {
-		GraphSequence & s = sequences[i];
+		GraphSequence &s = sequences[i];
 		json data = s.to_json();
 		if (max_values.size() > 0) {
 			data.erase("best_kmer_values");
@@ -785,7 +791,7 @@ void KmerGraphSet::write_sequences_json(std::ofstream & ofs) {
 	ofs << (first ? "" : "\n]\n");
 }
 
-void KmerGraphSet::write_kmers(std::ofstream & ofs) {
+void KmerGraphSet::write_kmers(std::ofstream &ofs) {
 	bool first = true;
 	for (int64_t i = 0; i < winning_nodes.size(); i++) {
 		if (!winning_nodes[i]->masked) {
@@ -797,13 +803,13 @@ void KmerGraphSet::write_kmers(std::ofstream & ofs) {
 	ofs << (first ? "" : "\n]\n");
 }
 
-BNode & KmerGraphSet::getMaxKmer(std::string seq, uint64_t graph_idx) {
+BNode& KmerGraphSet::getMaxKmer(std::string seq, uint64_t graph_idx) {
 	std::set<Kmer> kmers = Kmer::generateKmers(seq, k_len);
-	KmerGraph & gr = graphs[graph_idx];
+	KmerGraph &gr = graphs[graph_idx];
 	double best = -1;
 	int best_idx = 0;
 	for (int i = 0; i < gr.nodes.size(); i++) {
-		BNode & node = gr.nodes[i];
+		BNode &node = gr.nodes[i];
 		if (kmers.count(node.kmer) != 0
 				&& (best == -1
 						|| best
@@ -822,8 +828,8 @@ BNode & KmerGraphSet::getMaxKmer(std::string seq, uint64_t graph_idx) {
 ;
 
 std::vector<std::vector<double>> KmerGraphSet::generateValues(
-		GraphSequence & gs) {
-	KmerGraph & gr = graphs[gs.graph];
+		GraphSequence &gs) {
+	KmerGraph &gr = graphs[gs.graph];
 	int groups = gr.best_accuracies.size();
 	std::vector<std::vector<double>> out;
 	Kmer kmer;
@@ -832,7 +838,7 @@ std::vector<std::vector<double>> KmerGraphSet::generateValues(
 		for (int i = 0; i < gs.sequence.size() - k_len; i++) {
 			kmer = Kmer(gs.sequence.substr(i, k_len));
 			toadd.clear();
-			for (auto & n : gr.nodes) {
+			for (auto &n : gr.nodes) {
 				if (n.kmer == kmer) {
 					toadd = n.values;
 				}
@@ -848,13 +854,13 @@ void KmerGraphSet::rescale() {
 	max_values.clear();
 	max_values.resize(nodes[0].values.size());
 	int nv = max_values.size(), i;
-	for (auto & n : nodes) {
+	for (auto &n : nodes) {
 		for (i = 0; i < nv; i++) {
 			if (max_values[i] < n.values[i])
 				max_values[i] = n.values[i];
 		}
 	}
-	for (auto & n : nodes) {
+	for (auto &n : nodes) {
 		for (i = 0; i < nv; i++) {
 			n.values[i] = (n.values[i] * 100) / max_values[i];
 		}
@@ -868,8 +874,8 @@ int KmerGraphSet::aggregateCorrelated(double corr_thr) {
 	std::vector<std::set<uint64_t>> genes_per_node(winning_nodes.size());
 	for (int i = 0; i < winning_nodes.size(); i++) {
 		winning_nodes[i]->masked = false;
-		for (auto & j : winner_pos[i]) {
-			for (auto & g : winner_mapper_results[j].genes)
+		for (auto &j : winner_pos[i]) {
+			for (auto &g : winner_mapper_results[j].genes)
 				genes_per_node[i].insert(g);
 		}
 	}
@@ -907,7 +913,7 @@ int KmerGraphSet::aggregateCorrelated(double corr_thr) {
 
 void KmerGraphSet::recoverWinners(double corr) {
 	winning_nodes.clear();
-	for (auto & ev : events) {
+	for (auto &ev : events) {
 		addWinningNode(ev);
 	}
 	getNodePositions();
@@ -946,7 +952,7 @@ void KmerGraphSet::getNodePositions() {
 			std::cerr << "kmer " << winning_nodes[i]->kmer
 					<< " not found !\nSigning as \'misalign\'";
 			for (auto idx : map_results) {
-				MapperResultLine & mrl = mapper_results[idx];
+				MapperResultLine &mrl = mapper_results[idx];
 				std::cerr << mrl.id << " " << mrl.chromosome << " " << mrl.name
 						<< " " << mrl.strand << "\n";
 			}
@@ -959,9 +965,9 @@ void KmerGraphSet::getNodePositions() {
 }
 
 void KmerGraphSet::addKmerPosition(uint64_t kmer_idx, uint64_t map_result_idx) {
-	MapperResultLine & mrl = mapper_results[map_result_idx];
-	BNode & node = *(winning_nodes[kmer_idx]);
-	GraphSequence & gs = sequences[mrl.query_index];
+	MapperResultLine &mrl = mapper_results[map_result_idx];
+	BNode &node = *(winning_nodes[kmer_idx]);
+	GraphSequence &gs = sequences[mrl.query_index];
 	std::string kmer = node.kmer.str();
 	size_t q_pos = gs.sequence.find(kmer);
 	if (q_pos != std::string::npos) {
@@ -974,8 +980,8 @@ void KmerGraphSet::addKmerPosition(uint64_t kmer_idx, uint64_t map_result_idx) {
 			q_segment.start = q_pos;
 			q_segment.end = q_segment.start + k_len;
 		} else {
-			q_segment.start = gs.sequence.size() - q_pos - k_len +2;
-			q_segment.end = q_segment.start + k_len ;
+			q_segment.start = gs.sequence.size() - q_pos - k_len + 2;
+			q_segment.end = q_segment.start + k_len;
 		}
 		MapperResultLine new_mrl;
 		new_mrl.query = q_segment;
@@ -1013,7 +1019,7 @@ void KmerGraphSet::addKmerPosition(uint64_t kmer_idx, uint64_t map_result_idx) {
 				}
 
 			} else {
-				for (auto & bl : new_mrl.t_blocks) {
+				for (auto &bl : new_mrl.t_blocks) {
 					if (bl.isContained(
 							alignmentDerivedFeatures[s].position.start)
 							&& bl.isContained(
@@ -1047,7 +1053,7 @@ void KmerGraphSet::addKmerPosition(uint64_t kmer_idx, uint64_t map_result_idx) {
 	}
 }
 
-int64_t KmerGraphSet::addWinningNode(Event & ev) {
+int64_t KmerGraphSet::addWinningNode(Event &ev) {
 	double max_val = *std::max_element(ev.best_kmer->values.begin(),
 			ev.best_kmer->values.end());
 	if (max_val < sequence_threshold) {
@@ -1070,7 +1076,7 @@ int64_t KmerGraphSet::addWinningNode(Event & ev) {
 }
 
 json KmerGraphSet::generate_kmer_json(uint64_t node_idx) {
-	BNode & node = *(winning_nodes[node_idx]);
+	BNode &node = *(winning_nodes[node_idx]);
 	json json_events;
 	for (auto e : winner_events[node_idx]) {
 		json_events.push_back(events[e].to_json());
@@ -1186,7 +1192,7 @@ void KmerGraphSet::getNodeCounts() {
 		uint64_t mc = omp_get_max_threads();
 		std::vector<std::vector<Kmer>> requests(mc);
 		uint64_t t = 0, kmer_per_core = std::floor(winning_nodes.size() / mc);
-		for (auto & node : winning_nodes) {
+		for (auto &node : winning_nodes) {
 			requests[t].push_back(node->kmer);
 			if (t < mc - 1 && requests[t].size() == kmer_per_core) {
 				t++;

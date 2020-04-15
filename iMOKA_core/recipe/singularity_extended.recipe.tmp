@@ -1,0 +1,14 @@
+Bootstrap: localimage
+
+From: /home/claudio/git/iMOKA/iMOKA_core/images/iMOKA
+
+	
+%files
+	/home/claudio/Utils/hg38/gmap_small /gmap_ref/
+%labels
+   Version v0.1
+
+
+
+
+	

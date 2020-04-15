@@ -25,6 +25,8 @@ public:
 	bool isInit() {
 		return error_message.size() == 0;
 	}
+
+	bool isCommentLine(std::string line);
 	std::string align(std::string);
 	std::string error_message = "";
 	std::string output_type="sam";
@@ -38,7 +40,7 @@ private:
 	std::string options;
 	std::string flag_in_file;
 	std::string flag_out_file;
-
+	std::string io_order;
 
 	std::string log_base;
 

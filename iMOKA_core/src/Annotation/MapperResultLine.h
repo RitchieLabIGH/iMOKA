@@ -17,10 +17,23 @@ public:
 	}
 	;
 	MapperResultLine(std::string line, std::string type) {
-		parseSAM(line);
+		if ( type == "sam"){
+			parseSAM(line);
+		} else if ( type == "pslx"){
+			try {
+				parsePSLX(line);
+			} catch (const std::exception& e) {
+				std::cerr << e.what() <<'\n';
+			}
+
+		} else {
+			parseSAM(line);
+		}
+
 	}
 	;
 	void parseSAM(std::string line);
+	void parsePSLX(std::string line);
 	std::string to_bed();
 	std::string name = "NA";
 	uint64_t match = 0;

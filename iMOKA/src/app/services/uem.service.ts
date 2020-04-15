@@ -13,7 +13,7 @@ export class UemService {
     protected ipc : IpcRenderer;
     electron : boolean = false;
     session : BehaviorSubject<Session> = new BehaviorSubject<Session>(undefined);
-    messages : BehaviorSubject<Message> = new BehaviorSubject<Message>(undefined);
+    messages : BehaviorSubject<Message> = new BehaviorSubject<Message>(new Message("Welcome to iMOKA"));
     
 
     constructor( protected http: HttpClient ) {
@@ -47,6 +47,11 @@ export class UemService {
 	updateSession(){
 		this.ipc.send("getSession");
 	}
+	
+	getMessage() : Observable<Message>{
+		return this.messages.asObservable();
+	}
+	
 	refreshSession(){
 		var id = this.request;
         this.request += 1;

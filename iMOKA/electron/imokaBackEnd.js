@@ -352,11 +352,14 @@ class iMokaBE extends EventEmitter {
 	            this.user_session.save();
 	            if ( file_type == "kmers"){
 	         	   this.data[file_type].kmers.forEach((n, idx) =>{
-	         		  n.fc.forEach((v, idy)=>{
-	         			  if ( typeof v != "number" ){
-	         				  this.data[file_type].kmers[idx].fc[idy]=Infinity;
-	         			  }
-	         		  }) 
+	         		  if ( n.fc ){
+	         			 n.fc.forEach((v, idy)=>{
+		         			  if ( typeof v != "number" ){
+		         				  this.data[file_type].kmers[idx].fc[idy]=Infinity;
+		         			  }
+		         		  }) 
+	         		  }
+	         		  
 	         	   });
 	         	  this.data.kmers.info.final_kmers = this.data.kmers.kmers.length;
 	               this.initAlignmentMaps();
@@ -912,8 +915,8 @@ class iMokaBE extends EventEmitter {
 		            for ( var e=0; e < this.data.kmers.kmers.length; e++){
 		                this.data.kmers.masks.kmers[e]=false;
 		                if (request.minPred  == 0 || this.data.kmers.kmers[e].values.find((n)=>{ return n >=  request.minPred ;} ) != undefined  ){
-		              	if (request.minFC  == 0 || this.data.kmers.kmers[e].fc.find((n)=>{ if ( typeof n == "number") { return  Math.abs(n) >=  request.minFC; } else { return true;} } ) != undefined   ){
-		           		if (request.minPval  == 0 || this.data.kmers.kmers[e].pvalues.find((n)=>{ return n <=  request.minPval ;} ) != undefined  ){
+		              	if (request.minFC  == 0 || ! this.data.kmers.kmers[e].fc || this.data.kmers.kmers[e].fc.find((n)=>{ if ( typeof n == "number") { return  Math.abs(n) >=  request.minFC; } else { return true;} } ) != undefined   ){
+		           		if (request.minPval  == 0 || ! this.data.kmers.kmers[e].pvalues || this.data.kmers.kmers[e].pvalues.find((n)=>{ return n <=  request.minPval ;} ) != undefined  ){
 		                if (request.subset.length == 0 || request.subset.includes(this.data.kmers.kmers[e].kmer)){
 		                	if ( request.minCount == 0 || this.data.kmers.kmers[e].counts.find((n)=>{ return n >=  request.minCount ;} ) != undefined )  {
 		                		if ( request.eventsFilter.length == this.data.kmers.info.events.length || this.hasEvents(this.data.kmers.kmers[e], request.eventsFilter ) ){

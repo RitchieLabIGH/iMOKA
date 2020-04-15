@@ -7,10 +7,72 @@
 
 #include "MapperResultLine.h"
 namespace imoka { namespace annotation {
+void MapperResultLine::parsePSLX(std::string line) {
+	std::vector<std::string> content, block_sizes ,qblocks, tblocks, qbs, tbs;
+	IOTools::split(content, line);
+	name = content[9];
+	std::vector<std::string> name_components;
+	IOTools::split(name_components, name, "_");
+	query_index = std::stoll(name_components[1]);
+	query_type= name_components[0];
+	strand = content[8];
+	flag = strand == "+" ? 0 : 16;
+	match = std::stoll(content[0]);
+	chromosome = content[13];
+	query= Segment(std::stoll(content[11]), std::stoll(content[12]));
+	target = Segment(std::stoll(content[15]), std::stoll(content[16]));
+	uint64_t nblocks=std::stoll(content[17]), blen,qs, ts,j ;
+	std::string ref, mut;
+	IOTools::split(block_sizes, content[18], ",");
+	IOTools::split(qblocks, content[19], ",");
+	IOTools::split(tblocks, content[20], ",");
+	IOTools::to_upper(content[21]);
+	IOTools::to_upper(content[22]);
+	IOTools::split(qbs, content[21], ",");
+	IOTools::split(tbs, content[22], ",");
+	for ( uint64_t i=0; i < nblocks; i++){
+		blen = std::stoll(block_sizes[i]);
+		qs= std::stoll(qblocks[i]);
+		ts = std::stoll(tblocks[i]);
+		q_blocks.push_back(Segment(qs, qs+blen));
+		t_blocks.push_back(Segment(ts, ts+blen));
+		for (j=0; j< blen; j++){
+			if ( qbs[i][j] != tbs[i][j] ){
+				ref=tbs[i][j];
+				mut=qbs[i][j];
+				while (j < blen && qbs[i][j+1] != tbs[i][j+1] ){
+					j++;
+					ref+=tbs[i][j];
+					mut+=qbs[i][j];
+				}
+				signatures.push_back(AlignmentDerivedFeature("mutation",
+												Segment(ts+j-ref.size(), ts+j),
+												Segment(qs+j-ref.size(), qs+j),
+												chromosome,
+												ref + ">" + mut));
+			}
+		}
+	}
+	for ( uint64_t i=1; i < nblocks; i++){
+		if ( q_blocks[i-1].end ==q_blocks[i].start ){
+			if (t_blocks[i].start - t_blocks[i-1].end  <= 10 ){
+				signatures.push_back(AlignmentDerivedFeature("deletion",
+																Segment(t_blocks[i-1].end , t_blocks[i].start),
+																Segment(q_blocks[i-1].end,q_blocks[i].start ),
+																chromosome,
+																"^"+std::to_string(t_blocks[i].start - t_blocks[i-1].end)+"nt"));
+			}
+		} else {
+			signatures.push_back(AlignmentDerivedFeature("insertion", Segment(t_blocks[i-1].end , t_blocks[i].start), Segment(q_blocks[i-1].end,q_blocks[i].start ),
+																			chromosome, "+"+std::to_string(t_blocks[i].start - t_blocks[i-1].end)+"nt"));
+		}
+	}
 
+
+}
 void MapperResultLine::parseSAM(std::string line) {
 	std::vector<std::string> content;
-	IOTools::split(content, line);
+	IOTools::split(content, line, "[\t]+");
 	name = content[0];
 	std::vector<std::string> name_components;
 	IOTools::split(name_components, name);
