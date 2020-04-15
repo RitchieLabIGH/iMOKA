@@ -77,6 +77,13 @@
 				<input matInput placeholder="-o" [(ngModel)]="mapper.flag_out"  name="flag_out">
 			</mat-form-field>
 			<mat-form-field fxFlex="40%">
+				<mat-label>Input/Output arg order </mat-label>
+				<mat-select [(ngModel)]="mapper.io_order"  name="output_type" [disabled]="!modify_mapper">
+					<mat-option value="io">Input first</mat-option>
+					<mat-option value="oi">Output first</mat-option>
+				</mat-select>
+			</mat-form-field>
+			<mat-form-field fxFlex="40%">
 				<mat-label>Flag multi threads</mat-label>
 				<input matInput placeholder="-t" [(ngModel)]="mapper.flag_multi_thread"  name="flag_multi_thread">
 			</mat-form-field>
@@ -92,6 +99,7 @@
 				<mat-label>Output type</mat-label>
 				<mat-select [(ngModel)]="mapper.output_type"  name="output_type" [disabled]="!modify_mapper">
 					<mat-option value="sam">SAM</mat-option>
+					<mat-option value="pslx">PSLX (blat)</mat-option>
 				</mat-select>
 			</mat-form-field>
 			</div>

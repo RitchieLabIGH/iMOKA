@@ -1,4 +1,4 @@
-<mat-card style="height:95%"> <mat-card-header>
+<mat-card > <mat-card-header>
 <h2>Experiments selection</h2>
 </mat-card-header> <mat-card-content class="main-content" fxLayout="column">
 <div fxLayout="row" class="current-file-explorer" fxFlex="30%">
@@ -32,9 +32,9 @@
 </div>
 <div fxLayout="row" class="file-explorer" fxFlex="70%">
 	<div fxFlex="30%">
-		<mat-card class="folder-container"> <mat-card-header>
+		<mat-card > <mat-card-header>
 		<h3>Experiments</h3>
-		</mat-card-header> <mat-card-content>
+		</mat-card-header> <mat-card-content class="folder-container hide-scroll">
 		<p *ngIf="! session || ! session.matrices">There are no
 			experiments to show</p>
 		<mat-list class="folder-list" *ngIf="session && session.matrices">
@@ -48,7 +48,7 @@
 		</mat-list-item> </mat-list> </mat-card-content> </mat-card>
 	</div>
 	<div fxFlex="70%">
-		<mat-card class="info-container">
+		<mat-card>
 		<div *ngIf="current_matrix" fxLayout="row">
 			<div fxFlex>
 				<h3>{{current_matrix.name}}</h3>
@@ -57,7 +57,7 @@
 						(click)="openFile(current_matrix.uid)">Open this k-mer list</button>
 					<button mat-raised-button (click)="showInfoMatrix()">Informations</button>
 				</div>
-				<mat-list class="matrix-analysis">
+				<mat-list  class="info-container">
 				<h4>Random forest models</h4>
 				<mat-list
 					*ngIf="current_matrix.models && current_matrix.models.length > 0 ">
@@ -73,6 +73,7 @@
 					available</span> </mat-list>
 			</div>
 		</div>
+		<div *ngIf="!current_matrix" ><h3>Select an experiment to see here the details</h3></div>
 		</mat-card>
 	</div>
 </div>

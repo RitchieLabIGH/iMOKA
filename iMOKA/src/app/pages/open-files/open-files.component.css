@@ -1,5 +1,5 @@
 .main-content {
-	height: 70vh; 
+	min-height: 70vh; 
 }
 
 .folder-list-element {
@@ -15,7 +15,6 @@
 }
 
 .folder-container {
-	height: 90%;
 	margin-right: 10px;
 	overflow-y:auto;
 } 

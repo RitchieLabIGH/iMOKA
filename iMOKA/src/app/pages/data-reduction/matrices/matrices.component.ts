@@ -193,18 +193,6 @@ export class MatricesComponent implements OnInit {
           this.bottomSheet.open(InfoComponent, {data : data });
       });
   }
-  showResult(row:Matrix){
-      this.fileService.load(row.uid).then((resp)=>{
-          console.log(resp)
-          if (resp.message != "SUCCESS") {
-                this.snackMessage(resp.message, "Loading error", {});
-                return;
-            } else {
-                this.router.navigateByUrl('/klist');
-            }
-      })
-      
-  }
   
   openBottomSheet(name:string){
       console.log("TODO");

@@ -132,5 +132,9 @@ div.row {
 }
 
 
+.hide-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 
 

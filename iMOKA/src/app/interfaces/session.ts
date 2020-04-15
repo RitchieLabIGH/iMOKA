@@ -17,20 +17,20 @@ export class Profile {
 }
 
 export class MapConfiguration {
-    name : string="Default GMAP";
-    command : string="gmap";
+    name : string="Default Blat";
+    command : string="blat";
     flag_in :string=" ";
-    flag_multi_thread : string="-t";
-    flag_out : string=">";
-    log_base : string="./gmap_log";
-    options : string="-f samse -K 100000000 -d hg38 -D /gmap_ref/";
-    output_type : string ="sam";
+    flag_multi_thread : string="";
+    flag_out : string=" ";
+	io_order : "io";
+    options : string=" -out=pslx -stepSize=5 -repMatch=2253 -minScore=30 -minIdentity=90 /blat_ref/hg38.2bit ";
+    output_type : string ="pslx";
     parallel : number=  -1 ;
 }
 
 export class AnnotationConfiguration {
-    name : string;
-    file : string;
+    name : string = "Default Annotation";
+    file : string = "/blat_ref/gencode.v29.annotation.noIR.gtf";
 }
 export class Setting {
     connection_type : string = "local";

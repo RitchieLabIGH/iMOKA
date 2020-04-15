@@ -91,10 +91,10 @@
 			<button fxFlex="0 1 calc(20% - 12px)"
 				fxFlex.lt-md="0 1 calc(25% - 12px)" fxFlex.lt-sm="50%"
 				mat-raised-button (click)="extract();">Extract</button>
-			<button fxFlex="0 1 calc(10% - 12px)" *ngIf="session.profile.process_config.profiles.length > 0"
+			<button fxFlex="0 1 calc(10% - 12px)" *ngIf="session.profile.process_config.profiles.length > 0 && session.files.kmers.original_request != session.files.kmers.file"
 				fxFlex.lt-md="0 1 calc(12% - 12px)" fxFlex.lt-sm="25%"
 				mat-raised-button (click)="analyse('rf');">RF</button>
-			<button fxFlex="0 1 calc(10% - 12px)" *ngIf="session.profile.process_config.profiles.length > 0"
+			<button fxFlex="0 1 calc(10% - 12px)" *ngIf="session.profile.process_config.profiles.length > 0 && session.files.kmers.original_request != session.files.kmers.file"
 				fxFlex.lt-md="0 1 calc(12% - 12px)" fxFlex.lt-sm="25%"
 				mat-raised-button (click)="analyse('som');">SOM</button>
 			<mat-form-field *ngIf="data.models" fxFlex="0 1 calc(20% - 12px)"
