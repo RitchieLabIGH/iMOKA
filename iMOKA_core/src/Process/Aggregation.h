@@ -31,18 +31,18 @@ private:
 					R"(
 {
  "aligner": {
-  "command": "gmap",
+  "command": "blat",
   "flag_in": " ",
-  "flag_multi_thread": "-t",
-  "flag_out": ">",
-  "options": "-f samse -K 100000000 -d hg38 -D /home/claudio/Utils/hg38/gmap/ ",
-  "output_type": "sam",
+  "flag_multi_thread": "",
   "io_order" : "io" ,
-  "parallel": -1
+  "flag_out": " ",
+  "options": " -out=pslx -stepSize=5 -repMatch=2253 -minScore=30 -minIdentity=90 /blat_ref/hg38.2bit ",
+  "parallel": -1,
+  "output_type": "pslx"
  },
  "annotation": {
 	"name" : "DefaultAnnotation" , 
-  	"file": "/home/claudio/Utils/hg38/gencode.v29.annotation.noIR.gtf"
+  	"file": "/blat_ref/gencode.v29.annotation.noIR.gtf"
  }
 }
 
