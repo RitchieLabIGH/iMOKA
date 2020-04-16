@@ -1,7 +1,7 @@
 {
   "name": "imoka_electron",
   "version": "1.0.0",
-  "description": "iMOKA GUI",
+  "description": "Electron dependencies for iMOKA GUI",
   "main": "main.js",
   "dependencies": {
     "node-ssh": "^8.0.0",

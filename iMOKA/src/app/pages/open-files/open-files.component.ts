@@ -41,10 +41,12 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 					if (this.session.files[k]) {
 						let name = this.session.files[k].file.split("/").pop();
 						if (this.session.files[k].original_request && k == "kmers") {
-							let omat = this.session.matrices.find((m) => { return m.uid == this.session.files[k].original_request });
-							if (omat) {
-								name = omat.name;
-								external=false;
+							if ( this.session.matrices ){
+								let omat = this.session.matrices.find((m) => { return m.uid == this.session.files[k].original_request });
+								if (omat) {
+									name = omat.name;
+									external=false;
+								}	
 							}
 						}
 						this.status.push({ name: name, file: this.session.files[k].file, ftype: k, des: ft.des, external : external });

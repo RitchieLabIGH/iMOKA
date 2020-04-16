@@ -8,6 +8,9 @@ const fs =require('fs');
 const iMokaBE = require('./imokaBackEnd.js')
 const Messenger = require('./messenger.js')
 
+
+app.disableHardwareAcceleration()
+
 let win, backend, mess;
 
 const store = new Store({

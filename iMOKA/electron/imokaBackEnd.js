@@ -755,18 +755,24 @@ class iMokaBE extends EventEmitter {
 	}
 	
 	getGenes(event){
-	    let out=new Set(), obj;
-	    for ( let order=0; order < this.data.kmers.orders_idxs.kmers.length; order++ ){
-	        i = this.data.kmers.orders_idxs.kmers[order];
-	        if (! this.data.kmers.masks.kmers || this.data.kmers.masks.kmers[i] || event.all ){
-	            obj=this.regenerate(this.data.kmers.kmers[i]);
-	            obj.events.forEach(ev=>{
-	                ev.gene.forEach(g => out.add(g))
-	            });
-	        }
-	    }
-	    if ( out.has("")) out.delete("");
-	    return [...out];
+		return new Promise((resolve, reject)=>{
+			if ( !  this.data.kmers ){
+				reject("No k-mer list loaded")
+			} else {
+				let out=new Set(), obj, i;
+				for ( let order=0; order < this.data.kmers.orders_idxs.kmers.length; order++ ){
+					i = this.data.kmers.orders_idxs.kmers[order];
+					if (! this.data.kmers.masks.kmers || this.data.kmers.masks.kmers[i] || event.all ){
+						obj=this.regenerate(this.data.kmers.kmers[i]);
+						obj.events.forEach(ev=>{
+							ev.gene.forEach(g => out.add(g))
+						});
+					}
+				}
+				if ( out.has("")) out.delete("");
+				resolve([...out]);	
+			}
+		})
 	}
 	
 	getInfo(request){
