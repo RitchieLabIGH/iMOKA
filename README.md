@@ -1,4 +1,4 @@
-![enter image description here](https://i.ibb.co/vXTDs9c/iMOKA.png)
+![iMOKA](https://i.ibb.co/vXTDs9c/iMOKA.png)
 
 
 iMOKA (**i**nteractive **M**ulti **O**bjective **K**-mer **A**nalysis
@@ -14,6 +14,11 @@ The iMOKA_core and iMOKA_GUI are downlodable from the [Release page of GitHub](h
 The folders iMOKA_core and iMOKA contains the sources of the CLI and the GUI parts of the software, with dedicated README files, doxygen documentations (for the C++ component ) but, in case of doubt, don't hesitate to contact the maintainers.
 
 ## Acknowledgment
+
+This project is founded by the University of Montpellier (France) as part of the initiative MUSE: Montpellier Université d'excellence.
+
+ <img src="https://www.montpellier.archi.fr/wp-content/uploads/2019/02/Logo_MUSE_Original.png" alt="drawing" height="100"/>  <img src="https://muse.edu.umontpellier.fr/files/2017/09/LOGO_original_RVB.png" alt="drawing" height="100"/> <img src="https://muse.edu.umontpellier.fr/files/2017/09/CNRS_fr_quadri.png" alt="drawing" height="100"/>
+
 
 #### Core:
 - mlpack : https://github.com/mlpack/mlpack
