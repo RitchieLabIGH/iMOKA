@@ -36,7 +36,7 @@ export class Setting {
     connection_type : string = "local";
     setting_name:string = "New setting";
     storage_folder : string= "~/iMOKA/";
-	original_image : string = "https://sourceforge.net/projects/imoka/files/iMOKA_core/iMOKA";
+	original_image : string;
 	image_version : string;
 	singularity_version:string;
 	remote_image:boolean;
@@ -62,6 +62,7 @@ export class Message {
     code ? : number;
     message ?: any;
 	type ? :string;
+	action ?:string;
 }
 
 

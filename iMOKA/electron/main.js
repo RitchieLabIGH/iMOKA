@@ -87,7 +87,6 @@ function createWindow () {
 		  win.webContents.send("queue", {"message" : "SUCCESS",code :0, "data" : queue});
 	  });
 	  mess.on("message", (content)=>{
-		  console.log("Sending message");
 		  win.webContents.send("message", content);
 	    
 	  })

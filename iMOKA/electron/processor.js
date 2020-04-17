@@ -12,6 +12,8 @@ const SimCry = require("simple-crypto-js").default;
 const secret_key="TwoNo7esShyOfAn0ct4ve";
 let imoka =new iMOKA();
 let crypt = new SimCry(secret_key);
+const {download} = require('electron-dl');
+
 
 const clusterCommands = {
 		"slurm" : {
@@ -106,10 +108,13 @@ class Processor {
   error_message;
   warning_message="";
   options=undefined;
+  blocked=false;
   queue;
   tmp_dir;
   constructor(opts, mess) {
-	  this.setOptions(opts);
+	  this.setOptions(opts).catch((err)=>{
+		  console.log(err)
+	  });
 	  this.mess = mess;
   }
   
@@ -658,6 +663,8 @@ class Processor {
 				  }
 			  }).catch((err)=>{
 				  observer.error(err);
+				  console.log(err);
+				  observer.complete();
 			  });
 			  
 		  }
@@ -717,11 +724,32 @@ class Processor {
     		  this.options.storage_folder.replace("\n", "");
     		  let storage_dir= child_process.execSync("mkdir -p "+this.options.storage_folder + "/.singularity/ && realpath "+this.options.storage_folder ).toString();
     		  this.options.storage_folder=storage_dir.replace("\n", "");
+    		  this.blocked = true;
+    		  console.log(this.options)
     		  if ( this.options.remote_image){
-    			  this.mess.sendMessage({message : "Downloading "+this.options.original_image , type : "alert"});
-    			  child_process.exec("wget "+this.options.original_image+" -O "+this.options.storage_folder +"/.singularity/iMOKA" , {} );
+    			  const win = electron.BrowserWindow.getFocusedWindow();
+    			  console.log("Starting download of "+ this.options.original_image)
+    			  download(win , this.options.original_image, {directory : this.options.storage_folder +"/.singularity/", filename : "iMOKA", onProgress : (prg)=>{
+   					  this.mess.sendMessage({type : "action", action : "block", progress : Math.round(prg.percent*100) , message : "Downloading singularity image "+Math.round(prg.transferredBytes/1000000)+" Mb of "+Math.round(prg.totalBytes/1000000)+" Mb . Don't close the software!" })  
+    			  }, onCancel :(it)=>{
+    				  this.mess.sendMessage({type : "action", action :"release", message : "Error! Download was canceled! "})
+    				  this.blocked = false;
+    			  } , onStarted : (it)=>{
+    				  this.mess.sendMessage({type : "action", action :"block", progress : 0 , message : "Downloading singularity image. Don't close the software!"})
+    			  }} ).then((it)=>{
+    				  this.mess.sendMessage({type : "action", action :"release", message : "Singularity image downloaded"})
+    				  this.blocked = false;
+    			  }).catch((err)=>{
+    				  this.mess.sendMessage({type : "action", action :"release", message : err})
+    				  this.blocked = false;
+    			  });
     		  } else {
-    			  child_process.exec("cp "+this.options.original_image+" "+this.options.storage_folder +"/.singularity/iMOKA" , {} );
+    			  this.mess.sendMessage({type : "action", action :"block", progress : -1 , message : "Copying singularity image. Don't close the software!"})
+    			  child_process.exec("cp "+this.options.original_image+" "+this.options.storage_folder +"/.singularity/iMOKA" , {} , (err)=>{
+    				  console.log(err);Erro
+    				  this.mess.sendMessage({type : "action", action :"release", message : "Singularity image copied"})
+    				  this.blocked = false;
+    			  });
     		  }
     		  	
     	  } catch (err){
@@ -790,18 +818,19 @@ class Processor {
 				 if ( this.options.remote_image){
 					 promise=ssh.execCommand("wget "+this.options.original_image+" -O "+this.options.storage_folder + "/.singularity/iMOKA").catch((err)=>{
 						console.log("Error copying the singularity image");
+						this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Error copying the singularity image"})
 						reject(err);
 					 })
 				 } else {
 					 promise=ssh.putFile(this.options.original_image, this.options.storage_folder + "/.singularity/iMOKA").catch((err)=>{
 							console.log("Error copying the singularity image");
+							this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Error copying the singularity image"})
 							reject(err);
 						});
 				 }
-				 warning_message="Copying the singularity image in background. Don't close the software before it's completed."
+				 this.mess.sendMessage({type : "action", action :"block", progress : -1 , message : "Downloading singularity image on "+this.options.ssh_address+". Don't close the software!"})
 				 promise.then(()=>{
-						warning_message=undefined;
-						/// TODO: send a message using the backend send messager
+					 this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Image copied successfully!"})
 					});
 				if (result.code != 0){
 					 reject(result.stderr);
@@ -815,7 +844,6 @@ class Processor {
 					result_promise = ssh.execCommand("singularity --version");
 				}
 				
-				
 				result_promise.then((result)=>{
 					if ( result.code != 0 ){
 						reject(result.stderr)
@@ -826,7 +854,7 @@ class Processor {
 						reject(this.error_message)
 					};
 				}).catch((err)=>{console.log("Error in version detection");reject(err)});
-			 }).catch((err)=>{console.log("Error in environment setup ssh connection");reject(err)});
+			 }).catch((err)=>{console.log("Error in environment setup ssh connection"); console.log(err);reject(err)});
 		 }).catch((err)=>{console.log("Error in getting ssh connection");reject(err)});
 	  });
   }
@@ -850,7 +878,8 @@ class Processor {
 			  }
 			  this.options.remote_image=false;
 		  } else if (! this.options.original_image.match("^[s]?ftp://|http[s]?://")){
-			  this.error_message ="File "+this.options.original_image+" not recognized. Uset the full path or the url of the remote location." 
+			  this.error_message ="File "+this.options.original_image+" not recognized. Uset the full path or the url of the remote location."
+			  console.log(this.error_message)
 			  observer.error(this.error_message);
 		  } else {
 			  this.options.remote_image=true;
@@ -876,7 +905,7 @@ class Processor {
 				  }
 				  observer.complete()
 				  
-			  }).catch((err)=>{observer.error(err)});
+			  }).catch((err)=>{observer.error(err); console.log(err);observer.complete();});
 		  }else {
 			  observer.complete();
 		  }
@@ -961,7 +990,7 @@ class Processor {
 				  }).catch(observer.error);
 			  };
 			  setTimeout(tick, 500);
-		  }).catch((err)=>{observer.error(err);});
+		  }).catch((err)=>{observer.error(err); console.log(err);observer.complete();});
 	  });
   }
   

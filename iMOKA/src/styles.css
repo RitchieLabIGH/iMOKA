@@ -13,6 +13,9 @@ div.row {
 	margin-bottom : 30px; 
 }
 
+.clickable {
+	cursor:pointer
+}
 .hidden {
 	display:none !important;
 }
@@ -140,5 +143,15 @@ div.row {
   display: none;
 }
 
+
+.banner-fab {
+	height : 28px !important;
+	width : 28px !important;
+	margin-right : 10px !important;
+}
+
+.banner-fab span {
+	padding:2.5px 0 !important; 
+}
 
 

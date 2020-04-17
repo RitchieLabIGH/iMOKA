@@ -31,6 +31,7 @@
       </button>
       <div><img style="height:50px;vertical-align:middle;" src="assets/images/iMOKA_white.png"><span><strong>i</strong>nteractive <strong>M</strong>ulti <strong>O</strong>bjective <strong>K</strong>-mer <strong>A</strong>nalysis </span></div>  
      <span fxFlex="grow"></span>
+     <button mat-mini-fab class="banner-fab" *ngIf="blocked" color="white"  [title]="blocked.message" (click)="showAlert(blocked.message, 'Download in progress')" ><mat-progress-spinner  diameter="23" [mode]="blocked.progress && blocked.progress > 3 ? 'determinate' : 'indeterminate' " [value]="blocked.progress" ></mat-progress-spinner></button>
      <a title="GitHub" mat-icon-button href="https://github.com/RitchieLabIGH/iMOKA" target="_blank"><mat-icon fontSet="fab" fontIcon="fa-github"></mat-icon></a>
      <a title="Settings" mat-icon-button routerLink="setup" ><mat-icon>settings_applications</mat-icon></a>
      <button title="Alerts" mat-icon-button (click)="hideAlert=!hideAlert" ><mat-icon *ngIf="hideAlert">notifications</mat-icon><mat-icon *ngIf="!hideAlert">notifications_none</mat-icon></button>
@@ -40,13 +41,16 @@
     </div>
   </mat-sidenav-content>
 </mat-sidenav-container>
+<div class="message-container-bg cdk-overlay-dark-backdrop" [class.hidden]="hideAlert" (click)="hideAlert=!hideAlert"></div>
 <div class="message-container" [class.hidden]="hideAlert">
 	<mat-card class="mat-elevation-z6 message-card" >
 		<mat-card-title>Alerts</mat-card-title>
 		<mat-card-content>
-			<mat-action-list>
-				<button mat-list-item *ngFor="let mex of messages; let i=index" (click)="messages.splice(i,1)">{{mex.message}}</button>
-			</mat-action-list>
+			<mat-list>
+			<mat-list-item *ngFor="let mex of messages; let i=index">
+				<button mat-icon-button (click)="messages.splice(i,1)" title="Remove this message" ><mat-icon>cancel</mat-icon></button> <p>{{mex.message}}</p>
+			</mat-list-item>
+			</mat-list>
 		</mat-card-content>
 	</mat-card>
 </div>

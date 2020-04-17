@@ -13,7 +13,7 @@ export class UemService {
     protected ipc : IpcRenderer;
     electron : boolean = false;
     session : BehaviorSubject<Session> = new BehaviorSubject<Session>(undefined);
-    messages : BehaviorSubject<Message> = new BehaviorSubject<Message>(new Message("Welcome to iMOKA"));
+    messages : BehaviorSubject<Message> = new BehaviorSubject<Message>(undefined);
     
 
     constructor( protected http: HttpClient ) {

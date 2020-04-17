@@ -4,6 +4,7 @@
   "description": "Electron dependencies for iMOKA GUI",
   "main": "main.js",
   "dependencies": {
+    "electron-dl": "^3.0.0",
     "node-ssh": "^8.0.0",
     "rimraf": "^3.0.2",
     "rxjs": "^6.5.4",

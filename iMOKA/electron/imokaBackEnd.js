@@ -203,7 +203,7 @@ class iMokaBE extends EventEmitter {
 					reject(err);
 				})
 			} else {
-				reject({ "message": "Processor not loaded" , code:1} );
+				resolve({ "message": "Processor not loaded" , code:1} );
 			}
 		})
 	}
@@ -996,7 +996,8 @@ class iMokaBE extends EventEmitter {
 	
 	loadProfileFiles(){
 		return new Promise((resolve, reject)=>{
-			this.updateMatrices().then(()=>{
+			this.updateMatrices().then((err)=>{
+				console.log(err)
 				if (this.user_session.data.files ){
 			        Object.keys(this.user_session.data.files).forEach(file_type => {
 			           let fname = this.user_session.data.files[file_type].original_request;
@@ -1074,10 +1075,21 @@ class iMokaBE extends EventEmitter {
 	
 	setProfile(profile_number){
 		return new Promise((resolve, reject)=>{
+			console.log("Loading profile " + profile_number)
 			if (typeof profile_number == 'undefined' ){
-				if (! this.user_session.data.profile.process_config.current_profile){
-					reject("No profile given")
-					return;
+				if (! this.user_session.data.profile.process_config.current_profile ){
+					if ( this.user_session.data.profile.process_config.profiles.length == 0 ){
+						this.loadProfileFiles().then(()=>{
+							resolve("No profile given")
+						}).catch((err)=>{
+							reject(err);
+						})
+						return;
+					} else {
+						this.user_session.data.profile.process_config.current_profile=0;
+						profile_number=0;
+					}
+					
 				}
 				profile_number=this.user_session.data.profile.process_config.current_profile;
 			} else {
@@ -1110,11 +1122,16 @@ class iMokaBE extends EventEmitter {
 		this.emit("sendSession", this.user_session.data);
 	}
 	sendQueue(){
-		this.processor.getQueue().then((queue)=>{
-			this.emit("queue", queue);
-		}).catch((err)=>{
-			this.mess.sendMessage(err);
-		});
+		if ( this.processor ){
+			this.processor.getQueue().then((queue)=>{
+				this.emit("queue", queue);
+			}).catch((err)=>{
+				this.mess.sendMessage(err);
+			});
+		} else {
+			this.mess.sendMessage({message : "Processor not initialized, impossible to retrieve the queue!"});
+		}
+		
 	}
 	
 	saveProfile(request) {
@@ -1130,11 +1147,11 @@ class iMokaBE extends EventEmitter {
 				   }, ()=>{
 					   if ( with_error==0 ){
 						   if ( request.profile_number == this.user_session.data.profile.process_config.profiles.length ){
-							   request.profile.id =makeid(20); 
+							   request.profile.id =this.makeid(20); 
 							   this.user_session.data.profile.process_config.profiles.push(request.profile);
 						   } else {
 							   if (!this.user_session.data.profile.process_config.profiles[request.profile_number].id ){
-								   request.profile.id =makeid(20);
+								   request.profile.id =this.makeid(20);
 							   }else {
 								   request.profile.id=this.user_session.data.profile.process_config.profiles[request.profile_number].id
 							   }

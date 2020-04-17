@@ -24,15 +24,26 @@
 	overflow: auto;
 }
 
+
+
+
 .message-container {
 	position:fixed;
-	width:180px;
+	width:250px;
 	right:5px;
 	top:65px;
 	height:calc(100vw - 70px);
-	z-index:100000;
+	z-index:100001;
 	text-align:center;
-	
+}
+
+.message-container-bg {
+	position:fixed;
+	width : 100vw;
+	height : 100vh;
+	right:0;
+	top:0;
+	z-index:100000;
 }
 
 .message-card {

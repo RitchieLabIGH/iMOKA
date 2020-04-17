@@ -173,6 +173,7 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		this.info[file_type] = info;
 		if (file_type == "kmers") {
 			this.dtOptions = this.initDtOptions();
+			console.log(info)
 			info.events.forEach(ev => this.dtOptions.eventsFilter.push(ev.name));
 		} else if (file_type == "som") {
 			this.initSOM();

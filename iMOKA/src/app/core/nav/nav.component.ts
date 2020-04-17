@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { Session, Message } from '../../interfaces/session';
 import { UemService } from '../../services/uem.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
 	selector: 'app-nav',
@@ -21,21 +22,43 @@ export class NavComponent {
 	session: Session;
 	messages: Message[]=[];
 	hideAlert : boolean=true;
-	constructor(private breakpointObserver: BreakpointObserver, private uem: UemService) {
+	blocked : any;
+	constructor(private breakpointObserver: BreakpointObserver, private zone : NgZone, private uem: UemService,private alert: MatSnackBar,) {
 		this.uem.getSession().subscribe(session => {
 			this.session = session;
 		});
 		this.uem.getMessage().subscribe(message => {
 			if (message) {
+				console.log(message)
 				switch (message.type) {
 					case "alert": {
-
+						this.alert.open(message.message, "Warning", { duration: 2000 })
+					}
+					case "action" : {
+						if ( message.action == "block"){
+							this.zone.run(()=>{
+								this.blocked=message;
+							})
+							break;	
+						}
+						if (message.action == "release"){
+							this.blocked = undefined;
+							this.messages.push(message);
+							this.showAlert(message.message, "Done!");
+							break;
+						}
 					}
 					default: {
 						this.messages.push(message)
+						this.showAlert(message.message, "Warning!");
 					}
 				}
 			}
+		})
+	}
+	showAlert(message:string, title:string){
+		this.zone.run(()=>{
+			this.alert.open(message, title, {duration : 2000})
 		})
 	}
 

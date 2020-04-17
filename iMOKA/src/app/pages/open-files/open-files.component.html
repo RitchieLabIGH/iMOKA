@@ -1,13 +1,13 @@
-<mat-card > <mat-card-header>
+<mat-card class="main-content"> <mat-card-header>
 <h2>Experiments selection</h2>
-</mat-card-header> <mat-card-content class="main-content" fxLayout="column">
+</mat-card-header> <mat-card-content  fxLayout="column">
 <div fxLayout="row" class="current-file-explorer" fxFlex="30%">
 	<mat-card class="current-file" *ngFor="let file of status" fxFlex="33%">
 	<mat-card-content *ngIf="file.name">
 	<h4>{{file.des}}</h4>
 	<p>{{file.name}}</p>
 	<div>
-		<ng-container *ngIf="file.external && file.ftype == 'kmers' "> <mat-form-field>
+		<ng-container *ngIf="file.external && file.ftype == 'kmers' && session.profile.process_config.profiles.length > 0 "> <mat-form-field>
 		<mat-label>Save in library as</mat-label> <input matInput
 			[(ngModel)]="new_name"></mat-form-field>
 		<button matPrefix mat-icon-button title="Save"
@@ -30,7 +30,7 @@
 	</div>
 	</mat-card-content> </mat-card>
 </div>
-<div fxLayout="row" class="file-explorer" fxFlex="70%">
+<div fxLayout="row" class="file-explorer" fxFlex="70%" *ngIf="session.profile.process_config.profiles.length > 0">
 	<div fxFlex="30%">
 		<mat-card > <mat-card-header>
 		<h3>Experiments</h3>
