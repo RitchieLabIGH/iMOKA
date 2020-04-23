@@ -1,0 +1,36 @@
+
+<h1 mat-dialog-title>Informations for selected nodes {{info.nodes.join(",")}} </h1>
+<div mat-dialog-content class="main-content">
+	<div fxLayout="column" fxLayoutGap="25px">
+
+		<div fxFlex>
+			<mat-card class="margin-1  mat-elevation-z2" *ngIf="data.boxplot"> <mat-card-title>
+			Plots
+			</mat-card-title> <mat-card-content> <plotly-plot
+				[data]="data.boxplot.data" [layout]="data.boxplot.layout"></plotly-plot>
+			</mat-card-content> </mat-card>
+		</div>
+	</div>
+	<mat-card class="margin-1 mat-elevation-z2"> <mat-card-title> Counts per
+	sample </mat-card-title> <mat-card-content>
+	 <table datatable class="mat-table">
+		<thead>
+			<tr class="mat-header-row">
+				<th class="mat-header-cell">Sample</th>
+				<th class="mat-header-cell">Group</th>
+				<th class="mat-header-cell">Counts normalize cumulate</th>
+				
+			</tr>
+		</thead>
+		<tbody>
+			<tr class="mat-row" *ngFor="let value of counts; index as i">
+				<th class="mat-header-cell">{{ info.samples_names[i] }}</th>
+				<td class="mat-cell">{{info.groups_names[info.groups[i]]}}</td>
+				<td class="mat-cell">{{value}}</td>
+				
+			</tr>
+		</tbody>
+	</table> 
+	</mat-card-content> </mat-card>
+</div>
+

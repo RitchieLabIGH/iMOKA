@@ -1,0 +1,16 @@
+.tile {
+	margin : 15px;
+}
+
+.footer {
+  	color:white;
+  	transition: all 0.3s ease-in-out;
+  	opacity: 0.4;
+  	text-align:center;
+}
+
+.tile-content {
+	background-color: #f2f2f2;
+    height: 100%;
+    width: 100%;
+}
