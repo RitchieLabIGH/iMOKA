@@ -64,11 +64,13 @@ class iMokaBE extends EventEmitter {
 	}
 	
 	importKmerList(request){
-		console.log(request)
 		if (! this.processor){
 			throw "Processor not loaded";
 		}
-		request.info = this.clone(this.data.kmers.info); /// given that the file to import had been already opened
+		request.info = this.clone(this.data.kmers.info); // / given that the
+															// file to import
+															// had been already
+															// opened
 		request.info.uid=this.makeid(10);
 		
 		return new Promise((resolve, reject)=>{
@@ -347,9 +349,7 @@ class iMokaBE extends EventEmitter {
 			let file_type = this.checkDataType(new_data)
 	        if (file_type){
 	            this.data[file_type]=new_data;
-	            this.user_session.data.files[file_type]=infos;
-	            this.user_session.data.files[file_type].info=this.data[file_type].info;
-	            this.user_session.save();
+	            
 	            if ( file_type == "kmers"){
 	         	   this.data[file_type].kmers.forEach((n, idx) =>{
 	         		  if ( n.fc ){
@@ -365,15 +365,38 @@ class iMokaBE extends EventEmitter {
 	               this.initAlignmentMaps();
 	               this.initEvents();
 	               this.initBestScores();
+	               if ( this.data.som ){
+	            	   this.linkKmerSOM();
+	               }
 	            } else if (file_type == "models" ) {
 	               this.initModelsMaps();
+	            } else if (file_type == "som"){
+	            	this.initSOM();
+	            	if ( this.data.kmers ){
+	            		this.linkKmerSOM();
+	            	}
 	            }
+	            this.user_session.data.files[file_type]=infos;
+	            this.user_session.data.files[file_type].info=this.data[file_type].info;
+	            this.user_session.save();
 	            this.sendSession();
 	            resolve("File of type "+ file_type+" open correctly");
 	        } else {
 	        	reject("File not recognized.")
 	        }
 		})
+	}
+	
+	
+	linkKmerSOM(){
+		this.data.kmers.kmers.forEach((el)=>{
+			let idx = this.data.som.labels.findIndex((k)=>{return k == el.kmer });
+			if ( idx == -1  ) {
+				el.bmu= undefined;
+			} else {
+				el.bmu = this.data.som.kmerbmu[idx];
+			}
+		});
 	}
 	
 	openData(request) {
@@ -447,14 +470,11 @@ class iMokaBE extends EventEmitter {
 		return new Promise((resolve, reject)=>{
 			console.log("getSOMnodeImportance");
 			if ( ! this.data.som) reject("SOM file not opened");
-		    // console.log(data);
-			console.log(this.data.som.nodefeatureimpotance);
 		    let  data_to_send = [];
-		
-		    data_to_send.push({"projSOM":this.regenerate(this.data.som.nodefeatureimpotance)});
-			projSOMnormalize(data_to_send[0],"raw");
-			data_to_send.push({"projSOM":this.regenerate(this.data.som.nbKmerBynode)});
-		    projSOMnormalize(data_to_send[1],"raw");
+		    data_to_send.push({"projRAW":this.clone(this.data.som.nodefeatureimpotance), "name" : "nodeFeatureImportance"});
+			data_to_send[0].projSOM=this.projSOMnormalize(data_to_send[0].projRAW,"raw", false);
+ 			data_to_send.push({"projRAW":this.clone(this.data.som.nbKmerBynode), "name" : "nbKmerByNode"});
+			data_to_send[1].projSOM=this.projSOMnormalize(data_to_send[1].projRAW,"raw", false);
 		    resolve({ "data" : data_to_send,  "message": "SUCCESS" ,"draw" : request.draw , code : 0} );
 		})
 	    
@@ -465,12 +485,9 @@ class iMokaBE extends EventEmitter {
 			console.log("getSOMaverageclass");
 		    if (! this.data.som.averageclass)
 		        this.data.som.averageclass={};
-		    // console.log(data);
-			// console.log(this.data.som.averageclass);
 		    let  data_to_send = [];
 			for ( let i=0; i < this.data.som.meanbycat.length; i++ ){
-		    	data_to_send.push({"projSOM":this.regenerate(this.data.som.meanbycat[i].meanmatrix),"labelsamples":"Mean "+this.data.som.meanbycat[i].classname,"classori":this.data.som.meanbycat[i].classname,"classnumber":this.data.som.meanbycat[i].classid});
-				projSOMnormalize(data_to_send[i],request.norm);
+		    	data_to_send.push({"projSOM":this.projSOMnormalize(this.data.som.meanbycat[i].meanmatrix,request.norm),"labelsamples":"Mean "+this.data.som.meanbycat[i].classname,"classori":this.data.som.meanbycat[i].classname,"classnumber":this.data.som.meanbycat[i].classid});
 			}
 		    resolve({ "data" : data_to_send,  "message": "SUCCESS" ,"draw" : request.draw, code : 0} );
 		})
@@ -484,56 +501,35 @@ class iMokaBE extends EventEmitter {
 			}
 			console.log("getSOMclusters");
 		    if (! this.data.som.samplesSOM)
-		        this.data.som.samplesSOM={};
-		    console.log(data);   
-			console.log(this.data.som.samplesSOM[0]);
+		        this.data.som.samplesSOM=[];
 		    let  data_to_send = [];
-		
 		    for ( let i=0; i < this.data.som.samplesSOM.length; i++ ){
-		        data_to_send.push(this.regenerate(this.data.som.samplesSOM[i]));
-		        this.projSOMnormalize(data_to_send[data_to_send.length-1],request.norm);
-		
+		        data_to_send.push(this.clone(this.data.som.samplesSOM[i]));
+		        data_to_send[data_to_send.length-1].projSOM = this.projSOMnormalize(data_to_send[data_to_send.length-1].projSOM, request.norm);
 		    }
 			resolve({ "data" : data_to_send,  "message": "SUCCESS" ,"draw" : request.draw, code : 0});
 		});
 	};
+	
+	
 	getSOMkmers( request){
 		return new Promise((resolve, reject)=>{
 			if (!this.data.som) reject("SOM file not opened");
-			console.log("getSOMkmers");
-			console.log(request);
-			 let  data_to_send = {};
-			kmerindex=[];
-			nodesindexint=[]
-			console.log(this.data.som.kmerbmu);
-			request.nodesIds.forEach(function(elem, index, array) {
+			if (! this.data.kmers ) reject("K-mer list file not opened")
+			let  data_to_send = {};
+			let kmerindex=[], nodesindexint=[];
+			request.nodesIds.forEach((elem) =>{
 		         nodesindexint.push(parseInt(elem));
 		      })
-			this.data.som.kmerbmu.forEach(function(elem, index, array) {
+			this.data.som.kmerbmu.forEach((elem, index)=> {
 			    if (nodesindexint.includes(elem)) {
-			    	console.log(elem);
-			    	console.log(index);
-			    	kmerindex.push(this.clone((index)));}
-			
+			    	kmerindex.push(this.clone((index)))
+			    }
 			})
-			console.log("kmerindex length");
-			console.log(kmerindex.length)
-			console.log(this.data.kmers.length)
 			data_to_send["listKmersIndex"]=kmerindex;
 			data_to_send["kmers"]=[];
 			for(var i = 0; i < kmerindex.length; i++)
 		  		data_to_send["kmers"].push(this.clone(this.data.kmers.kmers[kmerindex[i]]));
-			
-			// console.log(this.data.kmers);
-			
-			console.log(data_to_send);
-			/*
-			 * console.log(this.data.kmers.kmers[0].genes);
-			 * console.log(Object.keys(this.data.kmers));
-			 * console.log(this.data.kmers.kmers.length);
-			 * console.log(Object.keys(this.data.kmers.kmers[0]));
-			 * console.log(this.data.kmers.kmers[0].genes);
-			 */
 			resolve({ "data" : data_to_send,  "message": "SUCCESS" ,"draw" : request.draw, code : 0} );
 		});
 		
@@ -542,19 +538,67 @@ class iMokaBE extends EventEmitter {
 	getSOMmap(event, id, request){
 		return new Promise((resolve, reject)=>{
 			if (! this.data.som) reject("SOM file not opened correctly.")
-			console.log("getSOMmap");
 		    if (! this.data.som.samplesSOM)
-		        this.data.som.samplesSOM={};
+		        this.data.som.samplesSOM=[];
 		    let  data_to_send = [];
 		    data_to_send.push(this.clone(this.data.som.samplesSOM[request.idmap]));
-			this.projSOMnormalize(data_to_send[0],request.norm);
+		    data_to_send[0].projSOM = this.projSOMnormalize(data_to_send[0].projSOM,request.norm);
 		    resolve({ "data" : data_to_send,  "message": "SUCCESS" ,"draw" : request.draw, code:0} );
 		});
 	    
 	
 	};
+	getSOMsampleDistrib( request){
+		return new Promise((resolve, reject)=>{
+			if (! this.data.som) reject("SOM file not opened correctly.")
+			let nclustid= request.nclustid;
+			let clusters = this.data.som.samplesSOM.map(x => x.bmu[nclustid]);
+			let uniqueclus = [...new Set(clusters)].sort(); 
+			let  data_to_send = [];
+			let countbyclust=[]
+			this.data.som.meanbycat.forEach(()=>{
+				countbyclust.push([...Array(uniqueclus.length).fill(0)]);
+			})
+			this.data.som.samplesSOM.forEach((elem)=> {
+				countbyclust[elem.classnumber][elem.bmu[nclustid]]+=1;
+			})	
+			this.data.som.meanbycat.forEach((elemcat,i)=> {
+				data_to_send.push({"x":uniqueclus.map(x=>"Cluster "+x),"y":countbyclust[i],"name":elemcat.classname,"type":"bar"});
+			})
+			resolve({ "data" : data_to_send,  "message": "SUCCESS" ,"draw" : request.draw, code:0} );
+		});
+	};
 	
-	
+
+	getSOMexpressionByNode(request){
+		return new Promise((resolve, reject)=>{
+			if (! this.data.som) reject("SOM file not opened correctly.")
+			console.log(request)
+			let nodesindexint=request.nodesIds;
+			
+			if (! this.data.som.samplesSOM )
+				this.data.som.samplesSOM=[];
+			let  data_to_send = {data:[], info:{ groups_names:[],samples_names:[],groups:[],nodes:nodesindexint,kmersindex:[]}};
+			this.data.som.samplesSOM.forEach((elem)=>{
+				let tmpmean=0;
+				nodesindexint.forEach((nodeelem)=>{
+					tmpmean+=elem.projSOM[nodeelem];
+				})
+				data_to_send.data.push(tmpmean);
+				data_to_send.info.samples_names.push(elem.labelsamples);
+				data_to_send.info.groups.push(elem.classnumber);
+			});
+			this.data.som.meanbycat.forEach((elem) =>{
+				data_to_send.info.groups_names.push(elem.classname)
+			})
+			let kmerindex=[];
+			this.data.som.kmerbmu.forEach((elem, index)=> {
+				if (nodesindexint.includes(elem)) {kmerindex.push(index);}
+			});
+			data_to_send.info.kmersindex=kmerindex;
+			resolve({ "data" : data_to_send,  "message": "SUCCESS" ,"draw" : request.draw, code:0} );
+		});
+	};
 	
 	checkDataType(new_data){
 	    if (new_data.kmers){
@@ -571,34 +615,28 @@ class iMokaBE extends EventEmitter {
 	}
 	
 	projSOMnormalize(proj,normstyle){
-		let minmap,maxmap;
-		// if (normstyle!="normByNode"){
-			minmap=Math.min(...proj.projSOM);
-			maxmap=Math.max(...proj.projSOM);
-		// }
-		// console.log(minmap);
-		// console.log(maxmap);
-		proj.projSOM.forEach(function(item, index, arr) {
-		  // item - current value in the loop
-		  // index - index for this value in the array
-		  // arr - reference to analyzed array
-			
-			if (normstyle=="normByNode")
-		  		arr[index] = (item - this.data.som.minmatrix[index])/(this.data.som.maxmatrix[index]-this.data.som.minmatrix[index]);
-			else if (normstyle=="centerAvrg"){
-				if ((this.data.som.meanmatrix[index]-minmap)>(maxmap -this.data.som.meanmatrix[index])){
-					maxmap=this.data.som.meanmatrix[index]+(this.data.som.meanmatrix[index]-minmap);
-				}else{
-					minmap=this.data.som.meanmatrix[index]-(maxmap -this.data.som.meanmatrix[index]);
-				}
-				// console.log("aftercentere")
-					// console.log(minmap);
-					// console.log(maxmap);
-				arr[index] = ((((item-this.data.som.meanmatrix[index])-minmap)/(maxmap-minmap)));
-			}else if (normstyle=="raw")
-				arr[index] = (item -minmap)/(maxmap-minmap);
-		})
-		return proj;
+		let minmap,maxmap, out=[];
+		minmap=Math.min(...proj);
+		maxmap=Math.max(...proj);
+		if (normstyle=="normByNode" ){
+			proj.forEach((item, index, arr)=> {
+				out.push((item - this.data.som.minmatrix[index])/(this.data.som.maxmatrix[index]-this.data.som.minmatrix[index]));
+			});
+		} else if (normstyle=="centerAvrg" ){
+			proj.forEach((item, index, arr)=> {
+					if ((this.data.som.meanmatrix[index]-minmap)>(maxmap -this.data.som.meanmatrix[index])){
+						maxmap=this.data.som.meanmatrix[index]+(this.data.som.meanmatrix[index]-minmap);
+					}else{
+						minmap=this.data.som.meanmatrix[index]-(maxmap -this.data.som.meanmatrix[index]);
+					}
+					out.push((((item-this.data.som.meanmatrix[index])-minmap)/(maxmap-minmap)));
+			});
+		} else if (normstyle=="raw") {
+			proj.forEach((item, index, arr)=> {
+					out.push((item -minmap)/(maxmap-minmap));
+			});
+		};
+		return out;
 	}
 	
 	clone(obj){
@@ -670,6 +708,25 @@ class iMokaBE extends EventEmitter {
 	        }
 	    );
 	}
+	initSOM(){
+		this.data.som.info = { "nodes" : this.data.som.nbKmerBynode , "samples" : [], "features" : [] };
+		this.data.som.samplesSOM.forEach((sam)=>{
+			sam.projSOM.forEach((n, idx)=>{
+				if ( this.data.som.nbKmerBynode[idx] == 0) n = undefined;
+				
+			});
+			this.data.som.info.samples.push({"name":sam.labelsamples, "group" : sam.classori})
+		});
+		this.data.som.nodefeatureimpotance.forEach((n,idx)=>{
+			if ( this.data.som.nbKmerBynode[idx] == 0) n = undefined;
+			
+		});
+		this.data.som.labels.forEach((lab, idx)=>{
+			this.data.som.info.features.push({"name": lab, "bmu" : this.data.som.kmerbmu[idx]});
+		});
+		
+	}
+	
 	
 	// / initialize the map to retrieve the index given a feature name
 	initModelsMaps(){
@@ -814,7 +871,7 @@ class iMokaBE extends EventEmitter {
 		    if (! this.data.kmers.orders) this.data.kmers.orders={};
 		    if (! this.data.kmers.masks) this.data.kmers.masks={};
 		    if (! this.data.kmers.orders_idxs) this.data.kmers.orders_idxs = {};
-		    if (!this.data.kmers.orders.kmers || this.data.kmers.orders.kmers != request.order ){
+		    if (! this.data.kmers.orders.kmers || this.data.kmers.orders.kmers != request.order ){
 		        this.data.kmers.orders.kmers = request.order;
 		        this.data.kmers.orders_idxs.kmers = [ ...Array(this.data.kmers.kmers.length).keys() ];
 		        var s_c= this.data.kmers.orders.kmers.name;
@@ -822,6 +879,11 @@ class iMokaBE extends EventEmitter {
 		        if ( s_c == "kmer" ){
 		            this.data.kmers.orders_idxs.kmers.sort((a,b)=>{
 		                 return this.data.kmers.kmers[a].kmer < this.data.kmers.kmers[b].kmer ? 1 : -1 ;   
+		            });
+		        }
+		        if ( s_c == "som" ){
+		            this.data.kmers.orders_idxs.kmers.sort((a,b)=>{
+		                 return this.data.kmers.kmers[a].bmu < this.data.kmers.kmers[b].bmu ? 1 : -1 ;   
 		            });
 		        }
 		        if ( s_c == "best_rank" ){
@@ -909,9 +971,10 @@ class iMokaBE extends EventEmitter {
 		    }
 		    let recordsFiltered=this.data.kmers.kmers.length;
 		    if (! this.data.kmers.current_search.kmers || this.data.kmers.current_search.kmers != request.search || this.data.kmers.current_search.subset != request.subset  || this.data.kmers.current_search.eventsFilter != request.eventsFilter || this.data.kmers.current_search.minPred!=request.minPred ){
-		        if ( request.search.value.length >= 2 || request.subset.length > 0 || request.eventsFilter.length != this.data.kmers.info.events.length || request.minCount != 0 || request.minPred != 0 || request.minFC != 0 || request.minPval != 0 ){
+		        if ( request.bmu.length > 0  || request.search.value.length >= 2 || request.subset.length > 0 || request.eventsFilter.length != this.data.kmers.info.events.length || request.minCount != 0 || request.minPred != 0 || request.minFC != 0 || request.minPval != 0 ){
 		            this.data.kmers.current_search.kmers = request.search;
 		            this.data.kmers.current_search.subset = request.subset;
+		            this.data.kmers.current_search.bmu = request.bmu;
 		            this.data.kmers.current_search.eventsFilter=request.eventsFilter;
 		            this.data.kmers.current_search.minCount=request.minCount;
 		            this.data.kmers.current_search.minPred=request.minPred;
@@ -920,6 +983,7 @@ class iMokaBE extends EventEmitter {
 		            if (! this.data.kmers.masks.kmers) this.data.kmers.masks.kmers = new Array(this.data.kmers.kmers.length);
 		            for ( var e=0; e < this.data.kmers.kmers.length; e++){
 		                this.data.kmers.masks.kmers[e]=false;
+		                if ( request.bmu.length == 0 ||  request.bmu.includes(this.data.kmers.kmers[e].bmu) ){
 		                if (request.minPred  == 0 || this.data.kmers.kmers[e].values.find((n)=>{ return n >=  request.minPred ;} ) != undefined  ){
 		              	if (request.minFC  == 0 || ! this.data.kmers.kmers[e].fc || this.data.kmers.kmers[e].fc.find((n)=>{ if ( typeof n == "number") { return  Math.abs(n) >=  request.minFC; } else { return true;} } ) != undefined   ){
 		           		if (request.minPval  == 0 || ! this.data.kmers.kmers[e].pvalues || this.data.kmers.kmers[e].pvalues.find((n)=>{ return n <=  request.minPval ;} ) != undefined  ){
@@ -928,7 +992,7 @@ class iMokaBE extends EventEmitter {
 		                		if ( request.eventsFilter.length == this.data.kmers.info.events.length || this.hasEvents(this.data.kmers.kmers[e], request.eventsFilter ) ){
 		                			if ( this.data.kmers.current_search.kmers.value.length < 2 || JSON.stringify(this.data.kmers.kmers[e]).includes(this.data.kmers.current_search.kmers.value) ) this.data.kmers.masks.kmers[e]=true;
 		                		}
-		                	}}}}
+		                	}}}}}
 		                }
 		                if (! this.data.kmers.masks.kmers[e]) recordsFiltered--;
 		            }
@@ -961,6 +1025,8 @@ class iMokaBE extends EventEmitter {
 		        } 
 		    }
 		    this.initEvents();
+		    this.user_session.data.last_kmer_table_request= request;
+		    this.user_session.save();
 		    resolve({ "data" : data_to_send,  "message": "SUCCESS", "draw" : request.draw, code : 0,
 		        "recordsTotal" : this.data.kmers.kmers.length, 
 		        "recordsFiltered" :  recordsFiltered, 
@@ -1006,7 +1072,7 @@ class iMokaBE extends EventEmitter {
 			           }
 			           console.log("opening "+ fname);
 			           this.openData({file_name: fname}).then( ()=>{
-			        	   this.mess.sendMessage({code : 0, message : "File "+fname+" opened correctly." });
+			        	   
 			           }).catch((err)=>{
 			        	   console.log(err)
 			        	   this.closeData({file_type : file_type});
@@ -1046,8 +1112,8 @@ class iMokaBE extends EventEmitter {
 	logout(){
 	    this.login("public", "None");
 	    /*
-		 * this.user_session.data={profile : {name : "public", picture : "" }, files :
-		 * {}}; this.user_session.save();
+		 * this.user_session.data={profile : {name : "public", picture : "" },
+		 * files : {}}; this.user_session.save();
 		 */
 	    this.data={};
 	}

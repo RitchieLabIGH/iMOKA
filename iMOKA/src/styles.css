@@ -19,6 +19,8 @@ div.row {
 .hidden {
 	display:none !important;
 }
+
+	
 .button-list {
 	padding:5px;
 }
@@ -154,4 +156,7 @@ div.row {
 	padding:2.5px 0 !important; 
 }
 
+.center {
+  margin:0 auto;
+}
 

@@ -106,7 +106,7 @@ class iMOKA {
 			 sam.libType = proc.details.libraryType;
 			 sam.minCount = proc.details.minCounts;
 			 out.files.push({name : sam.name+".metadata.json", content : JSON.stringify(sam)})
-			 out.commands.push("mkdir -p ${imoka_home}/samples/"+sam.name+"/ && rm -fr ${imoka_home}/samples/"+sam.name+"/* && cp ./"+sam.name+".metadata.json ${imoka_home}/samples/"+sam.name+"/ \n" );
+			 out.commands.push("mkdir -p ${imoka_home}/samples/"+sam.name+"/ && rm -fr ${imoka_home}/samples/"+sam.name+"/* && cp ./"+sam.name+".metadata.json ${imoka_home}/samples/"+sam.name+"/" );
 		 });
 		 out.files.push({"name" : "preprocess_input.tsv", "content" : input_file });
 		 let command = "singularity exec ${singularity_image} preprocess.sh -i preprocess_input.tsv " + 

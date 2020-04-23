@@ -1,9 +1,10 @@
-import {Matrix} from './samples'
-
+import {Matrix} from './samples';
+import {KmerDataTableOptions } from './kmer';
 export class Session {
     profile :Profile;
     files : any;
     matrices : Matrix[];
+	last_kmer_table_request :  KmerDataTableOptions;
 }
 
 export class Profile {

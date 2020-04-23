@@ -175,7 +175,6 @@ class LocalQueue {
 	
 	checkRunningQueue(){
 		let avail_cores = os.cpus().length , free_mem = os.freemem() ;
-		console.log("There are "+this.current_queue.data.running.length+" running jobs.");
 		for ( let i=this.current_queue.data.running.length -1; i>=0; i-- ){
 			let job=this.current_queue.data.running[i];
 			let lock=this.locker+"/"+job.job.uid;
@@ -187,7 +186,6 @@ class LocalQueue {
 				job.stdout=fs.readFileSync(lock+".out", 'utf8');
 			}
 			if ( running.match(/yes/)){
-				console.log("Detected as running")
 				avail_cores -= job.job.threads;
 			} else {
 				console.log("job completed")

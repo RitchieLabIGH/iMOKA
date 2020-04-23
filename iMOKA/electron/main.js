@@ -161,10 +161,15 @@ ipcMain.on("getData" , (event, id, request) => {
 		promise = backend.getSOMnodeImportance(request);
 	} else if ( request.data == "SOMaverageclass" ){
 		promise = backend.getSOMaverageclass(request);
-	} else if (request.data.includes("importance")){
+	} else if ( request.data == "SOMsampleDistrib" ){
+		promise= backend.getSOMsampleDistrib(request);
+	} else if ( request.data == "SOMexpressionByNode" ){
+			promise= backend.getSOMexpressionByNode(request);		
+    } else if (request.data.includes("importance")){
         promise= backend.getImportance(request.data );
     } else {
-        win.webContents.send("getData-"+id, { "message": "unrecognized request" } );
+    	console.log("UNRECOGNIZED REQUEST "+request.data)
+        win.webContents.send("getData-"+id, { "message": "Unrecognized request "+request.data } );
     }
     if (promise){
     	promise.then((res)=>{

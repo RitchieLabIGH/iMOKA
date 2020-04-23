@@ -19,11 +19,11 @@
 			<button style="margin-right:1em;" mat-raised-button (click)="refreshTable()" >Refresh now</button>
 			<mat-form-field>
 			<mat-select [(ngModel)]="refreshTime" placeholder="Refresh time" (openedChange)="! $event && updateRefresh() " > 
+				<mat-option value="-1">Disabled</mat-option>
 				<mat-option value="5000">5 seconds</mat-option>
 				<mat-option value="10000">10 seconds</mat-option>
 				<mat-option value="60000">1 minute</mat-option>
 				<mat-option value="600000">10 minutes</mat-option>
-				<mat-option value="-1">Disabled</mat-option>
 			</mat-select> 
 			</mat-form-field>
 		</div>

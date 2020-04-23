@@ -213,6 +213,7 @@ while read line; do
         echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] running fastqc ${fname}"
         mkdir ./fastqc
         fastqc -o ./fastqc -d ./tmp_dir -t ${threads} ${s_files} 2> ${logdir}/fastqc.err > ${logdir}/fastqc.out || ( echo "###[ERROR][$(date +%y-%m-%d-%H:%M:%S)] fastqc failed for ${s_files}" )
+        
     fi
     ## detect if the first file is compressed
     read_files=$(echo ${s_files} | awk '{ if ( $1 ~/.gz$|.zip$/ ) { print "zcat" } else { print "cat" } }' )

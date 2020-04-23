@@ -29,3 +29,24 @@ export interface Event {
     info : string;
     type : string;
 }
+
+
+
+export class KmerDataTableOptions {
+	displayedColumns: string[];
+	search: { value: string };
+	order: { name: string, asc: boolean };
+	subset: string[];
+	bmu : number[];
+	eventsFilter: string[];
+	minCount: number;
+	minPred: number;
+	minFC: number;
+	minPval: number;
+	pageSize: number;
+	pageIndex: number;
+	draw: number;
+	recordsTotal: number;
+	recordsFiltered: number;
+	stats: { genes: any[], events: any[] };
+}

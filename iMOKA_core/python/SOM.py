@@ -4,6 +4,7 @@
 
 # Import the library
 import numpy as np
+import json 
 # import SimpSOM as sps
 import utils.extendedSOM as sps
 import argparse
@@ -35,6 +36,7 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import average_precision_score
 from sklearn import model_selection
 from sklearn.ensemble import ExtraTreesClassifier
+from pathlib import Path
 
 import pickle
 
@@ -43,8 +45,8 @@ parser.add_argument("input",
                     help="Input file, containing the k-mer or feature matrix. First line have to contain the samples names, the second line the corresponding groups, or NA if unknown. The first column has to be the feaures names. The matrix is then organized with features on the rows and samples on the columns.")
 parser.add_argument("outputPath", help="Output path")
 
-parser.add_argument("-d", "--dataset-name", default="",
-                    help="Datasetname for result suffix. Default: empty")
+parser.add_argument("-d", "--dataset-name", default="results",
+                    help="Datasetname for result suffix. Default: results")
 parser.add_argument("-m", "--norm", default=True, type=bool,
                     help="normalize data before training (boolean). Default: True ")
 
@@ -65,7 +67,7 @@ parser.add_argument("-w", "--htmlpage", default=False, type=bool,
 
 args = parser.parse_args()
 file_path=args.input
-outputPath=args.outputPath
+outputPath=Path(args.outputPath).absolute()
 datasetname=args.dataset_name
 norm = args.norm
 it = args.iteration
@@ -181,6 +183,8 @@ labelsamples = labels[0, 1:].T
 labels = labels[2:, 0]
 data = Y[2:, 1:]
 
+
+
 print("Number of kmer in the list =", len(labels), flush=True)
 
 
@@ -220,7 +224,7 @@ for   inn,tmpsize  in enumerate(nnsize):
 
     # 30x30_lr0.1_it50000norm
     #resdir = "{0}x{1}_lr{2}_it{3}".format(nnsizex, nnsizey, lr, it) /home/sylvain/Documents/SOMProject/results
-    resdir = "{5}/{4}{0}x{1}_lr{2}_it{3}".format(nnsizex, nnsizey, lr, it,datasetname,outputPath)
+    resdir = "{5}/{4}_{0}x{1}_lr{2}_it{3}".format(nnsizex, nnsizey, lr, it,datasetname,outputPath)
     print(resdir)
     boolstring = ""
     if norm == True:
@@ -274,7 +278,9 @@ for   inn,tmpsize  in enumerate(nnsize):
         #get BMU
         net.setBMUtable(data)
         uniqubmu, countbmu = np.unique(net.bmuList, return_counts=True)
+        
         print("number of bmunode ={} on {} total node. Maximum kmer by node= {}".format(uniqubmu.shape[0],nnsizex*nnsizey,np.max(countbmu)))
+        print(len(net.bmuList))
         fig=plt.figure()
         ax=plt.bar(range(uniqubmu.shape[0]),(np.flip(np.sort(countbmu))))
         plt.xlim((0,nnsizex*nnsizey))
@@ -355,45 +361,28 @@ for   inn,tmpsize  in enumerate(nnsize):
 
 
         #####################
-        # #json v3 for electron
-        with open("clusterinSOMofsamplebyprojElectron.json", "w") as file:
-            text = ""
-            text += '{"samplesSOM":[\n\t'
-
-            for i, labbelS in enumerate(labelsamples):
-                if i != 0:
-                    text += ","
-                text += "{\n\t"
-                text += '"labelsamples":"{}",\n\t"filename":"{}/{}_Sample_{}centeredSampleProj.png"\n\t,"classori":"{}","classnumber":{},\n\t'.format(
-                    labbelS, os.getcwd(), classori[i], i, classori[i], np.where(uniq_classes == classori[i])[0][0])
-                text += '"projSOM":[' + ','.join(["{}".format(projtmp) for projtmp in proj[i,:]]) + '],\n'
-
-                text += '"bmu":[' + ','.join(["{}".format(bmutmp) for bmutmp in bmulists[:, i]]) + ']\n}\n'
-
-            text += "],"
-            text += '"kmerbmu":[' + ','.join(["{}".format(bmukmtmp) for bmukmtmp in net.bmuList]) + '],\n'
-            text += '"meanmatrix":['+','.join(["{}".format(projtmp) for projtmp in meanmatrixSOM]) + '],\n'
-            projmax = np.max(proj,axis=0)
-            projmin = np.min(proj, axis=0)
-            text += '"minmatrix":['+','.join(["{}".format(projtmp) for projtmp in projmin]) + '],\n'
-            text += '"maxmatrix":[' + ','.join(["{}".format(projtmp) for projtmp in projmax]) + '],\n'
-            text += '"nodefeatureimpotance":[' + ','.join(["{}".format(projtmp) for projtmp in importances]) + '],\n'
-            text += '"nbKmerBynode":[' + ','.join(["{}".format(projtmp) for projtmp in countbmu]) + '],\n'
-
-            text +='"meanbycat":[\n'
-
-            for i, cat in enumerate(classes):
-                if i!=0 :
-                    text += ","
-                text += "{\n\t"
-                text += '"classname":"{}",\n\t"classid":{},\n\t'.format(cat,i)
-                text += '"meanmatrix":[' + ','.join(["{}".format(meanbycattmp) for meanbycattmp in meanbycatSOM[i, :]]) + ']\n}'
-
-            text +=']}\n'
-
-            print(text, file=file, end="")
-
-
+        ## json v3 for electron
+        count_all_bmu = [0] * (nnsizex*nnsizey)
+        for b in net.bmuList:
+            count_all_bmu[b]+=1
+        
+        out_file = { "samplesSOM" : [] , "kmerbmu" : net.bmuList, "labels" : labels.tolist() , 
+            "meanmatrix" :  meanmatrixSOM.tolist(), "minmatrix" : np.min(proj,axis=0).tolist(), "maxmatrix" : np.max(proj,axis=0).tolist(),
+            "nodefeatureimpotance" : importances.tolist(), "nbKmerBynode" : count_all_bmu, "meanbycat" : []
+        };
+        for i, labbelS in enumerate(labelsamples):
+            out_file["samplesSOM"].append({
+                "labelsamples" : labbelS, "classori" : classori[i].tolist(), 
+                "classnumber" : int(np.where(uniq_classes == classori[i])[0][0]),
+                "projSOM" : np.round(proj[i,:], 4).tolist() , "bmu" : bmulists[:, i].tolist()     });
+        
+        for i, cat in enumerate(classes):
+            out_file["meanbycat"].append({"classname" : cat, "classid":i, "meanmatrix" : meanbycatSOM[i, :].tolist()})
+        with open("iMOKA_som.json", 'w') as f:
+	        json.dump(out_file, f, indent=0)
+	    
+	    #############
+	    ## web page
         if webpage:
             # json v2 for HTML page
             commandclient = "cp  "+ os.path.join(srcpath,"htmlres/visuclusterandsamples.html")+" ."

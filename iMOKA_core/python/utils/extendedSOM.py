@@ -103,8 +103,9 @@ class extendedSOM(sps.somNet):
         bmuList, cls = [], []
         for i in range(array.shape[0]):
             bmuList.append(self.find_bmu_id(array[i, :]))
-
         self.bmuList=bmuList
+
+
     def projectsample(self, array, colnum=-1, name="", normbybmu=False,show=False, printout=True, path='./',meanmatrix = [],clim=3):
 
         """Project the datapoints of a given array to the 2D space of the

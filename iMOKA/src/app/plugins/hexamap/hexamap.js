@@ -54,7 +54,7 @@
 			console.error("d3pie error: d3 is not available");
 			return false;
 		}
-		//console.log(hexamap.params)
+		console.log(hexamap.params)
 
 
 		//The number of columns and rows of the heatmap
@@ -72,7 +72,6 @@
 	 */
 	hexamap.createmap = function(options) {
 		hexamap.params = options;
-		//console.log("hexamap.createmap");
 		//console.log("createmap");
 
 		//console.log(hexamap.params)
@@ -186,24 +185,30 @@
 		};
 		//Mouseout function
 		function nodeclick(d,i) {
+			if ( typeof hexamap.params.onClick != 'undefined' ){
+				let selected_nodes = hexamap.params.onClick(d, i, d3.event.ctrlKey );
+				d3.selectAll(".hexagon").attr("stroke-width", "0px").attr("stroke","white");
+				selected_nodes.forEach((n)=>{
+					d3.selectAll(".hex-"+n).attr("stroke-width", "2px").attr("stroke","black");
+				});
+			} else {
+				if (d3.event.ctrlKey && document.getElementById("listselectednode").value.length !=0) {
+
+					document.getElementById("listselectednode").value+=","+i;
+				}else{
+					d3.selectAll(".hexagon").attr("stroke-width", "0px").attr("stroke","white");
+					document.getElementById("listselectednode").value=i;
+				}
+				d3.select(this).each(function(){
+			        this.parentNode.appendChild(this);
+			      });
+				var el = d3.select(this).attr("stroke-width", "5px").attr("stroke","black");
+				document.getElementById("selectedsample").value=hexamap.params.sampleid;
+				//document.getElementById("listselectednode").onchange();
+
+			}
 			/*console.log("nodeclick")
 			console.log(d);*/
-
-			if (d3.event.ctrlKey && document.getElementById("listselectednode").value.length !=0) {
-
-				document.getElementById("listselectednode").value+=","+i;
-			}else{
-				d3.selectAll(".hexagon").attr("stroke-width", "0px").attr("stroke","white");
-				document.getElementById("listselectednode").value=i;
-			}
-			d3.select(this).each(function(){
-		        this.parentNode.appendChild(this);
-		      });
-			var el = d3.select(this).attr("stroke-width", "5px").attr("stroke","black");
-			document.getElementById("selectedsample").value=hexamap.params.sampleid;
-			//document.getElementById("listselectednode").onchange();
-			
-			
 		};
 		
 
@@ -212,25 +217,20 @@
 		///////////////////////////////////////////////////////////////////////////
 
 		//svg sizes and margins
-		var margin = {
-			top: 25,
-			right: 20,
-			bottom: 20,
-			left: 35
-		};
-
+		
 		//The next lines should be run, but hexamap seems to go wrong on the first load in bl.ocks.org
 		//var width = $(window).width() - margin.left - margin.right - 40;
 		//var height = $(window).height() - margin.top - margin.bottom - 80;
 		//So I set it fixed to:
 
 		//The maximum radius the hexagons can have to still fit the screen
-		var hexRadius = d3.min([hexamap.params.width / (Math.sqrt(3) * (hexamap.params.MapColumns + 3)),
+var hexRadius = d3.min([hexamap.params.width / (Math.sqrt(3) * (hexamap.params.MapColumns + 3)),
 		hexamap.params.height / ((hexamap.params.MapRows  + 3) * 1.5)]);
+var margin = {
+		top: (hexamap.params.height - (hexRadius * hexamap.params.MapColumns))/4,
+		left: (hexamap.params.width - (hexRadius * hexamap.params.MapColumns))/4
+	};
 
-//Set the new height and width based on the max possible
-hexamap.params.width = hexamap.params.MapColumns * hexRadius * Math.sqrt(3);
-hexamap.params.height = hexamap.params.MapRows * 1.5 * hexRadius + 0.5 * hexRadius;
 
 //Set the hexagon radius
 var hexbin = d3.hexbin()
@@ -251,10 +251,17 @@ for (var i = 0; i < hexamap.params.MapRows; i++) {
 
 //Create SVG element
 //console.log(d3.select("#" + hexamap.params.element));
-d3.select("#" + hexamap.params.element).select("svg").remove();
-var svg = d3.select("#" + hexamap.params.element).append("svg")
-	.attr("width", hexamap.params.width + margin.left + margin.right)
-	.attr("height", hexamap.params.height + margin.top + margin.bottom)
+let main_div;
+if ( typeof hexamap.params.element == 'string'){
+	main_div=d3.select("#" + hexamap.params.element)
+} else {
+	main_div=d3.select(hexamap.params.element)
+}
+main_div.select("svg").remove();
+
+var svg = main_div.append("svg")
+	.attr("width", hexamap.params.width )
+	.attr("height",hexamap.params.height )
 	.append("g")
 	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -267,7 +274,9 @@ svg.append("g")
 	.selectAll(".hexagon")
 	.data(hexbin(points))
 	.enter().append("path")
-	.attr("class", "hexagon")
+	.attr("class", (d,i)=>{
+		return "hexagon hex-"+i;
+		})
 	.attr("d", function(d) {
 		return "M" + d.x + "," + d.y + hexbin.hexagon();
 	})

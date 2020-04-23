@@ -1,158 +1,133 @@
-<script type="text/javascript">
-function fupdateSelNodesInfos(){
-	updateSelNodesInfos();
-}
-</script>
-<button  mat-button (click)="testonto()">View ontology</button>
-
-<div fxLayout="column" fxLayoutAlign="space-evenly stretch">
-	<div fxFlex class="row" id="files">
-	<div fxLayout fxLayoutAlign="start center">
-		<div fxFlex="10em">
-			<h2>Files </h2>
-			<button mat-raised-button (click)="loadData();">Add a file</button>
+<div fxLayout="column" class="main" #mainPage>
+	<mat-card fxFlex class="sticky-options"> 
+	<mat-card-content [class.no-padding]="hideOptions">
+	<div  fxLayout="row wrap" [class.hidden-vertical]="hideOptions"  class="hidden-vertical-fade">
+	<h4 fxFlex="100%" style="margin:0;">Options and filters</h4>
+	<div fxFlex="100%" fxLayout="row wrap" fxLayoutGap="15px">
+		<mat-form-field fxFlex="20%"> <mat-label>Number
+		of samples clusters</mat-label> <mat-select [(ngModel)]="clust" value="{{clust}}"
+			(openedChange)="! $event && update()"> <mat-option
+			*ngFor="let clustopt of clust_select; index as i"
+			value="{{clustopt.id}}">{{clustopt.nclust}}</mat-option> </mat-select> </mat-form-field>
+		<mat-form-field fxFlex="20%"> <mat-label>View
+		style</mat-label> <mat-select [(ngModel)]="normOption" value="{{normOption}}"
+			(openedChange)="! $event && update()"> <mat-option
+			value="normByNode">normalize by node</mat-option> <mat-option
+			value="centerAvrg">center on average samples</mat-option> <mat-option
+			value="raw">raw count</mat-option> </mat-select> </mat-form-field>
+	</div>
+	<div fxFlex="100%" fxLayout="row wrap" fxLayoutGap="15px">
+		<mat-form-field fxFlex="20%"> <mat-label>Cluster
+		filter</mat-label> <mat-select [(ngModel)]="clustFilterl"
+			(openedChange)="! $event && update()" multiple> <mat-option
+			*ngFor="let clu of hexamappes.indices;let i = index" [value]="i">Cluster
+		{{i}}</mat-option> </mat-select> </mat-form-field>
+		<mat-form-field fxFlex="20%">
+		<mat-label>Categories filter</mat-label> <mat-select
+			[(ngModel)]="catFilterl" (openedChange)="! $event && update()" multiple>
+		<mat-option *ngFor="let catl of catergoryList" [value]="catl">{{catl}}</mat-option>
+		</mat-select> </mat-form-field>
+		<mat-form-field fxFlex="20%"> <mat-label>Samples
+		name filter</mat-label> <mat-select [(ngModel)]="sampleFilterl"
+			(openedChange)="! $event && update()" multiple> <mat-option
+			*ngFor="let sample of this.data.samplesSOM"
+			[value]="sample.labelsamples">{{sample.labelsamples}}</mat-option> </mat-select> </mat-form-field>
+	</div>
+	<div fxFlex="100%" fxLayout="row wrap" fxLayoutGap="15px"
+		*ngIf="selectedNodes.length > 0">
+		<div fxFlex="30%" class="button-list-h">
+			<button mat-raised-button
+				title="ontology on selected node ( to select multiple nodes keep 'Ctrl' key press)"
+				(click)="updateSelNodesgetonto()">View ontology</button>
+			<button mat-raised-button *ngIf="selectedNodes.length > 0"
+				title="Distribution cumulated on selected node( to select multiple nodes keep 'Ctrl' key press)"
+				(click)="updateSelNodesgetDistrib()">View distribution</button>
 		</div>
-	<div class="container" *ngFor="let file of files" fxFlex="25em">
-		<mat-card class="mat-elevation-z1"  >
-			<mat-card-content>
-				<p>File name:  {{file.file_name}} </p>
-				<p>File type: {{file.file_type}} </p>
-			</mat-card-content>
-			<mat-card-actions>
-				<button mat-button color="warn" (click)="loadData();">Change </button>
-				<button mat-button color="accent" *ngIf="file.file_type == 'kmers'" (click)="reset();">Reset</button>
-				<button mat-button color="accent" *ngIf="file.file_type != 'kmers'" (click)="closeData(file.file_type);">Close</button>
-			</mat-card-actions>
-		</mat-card>
-		</div>
+		<mat-chip-list fxFlex="60%" selectable="false"><mat-chip>Nodes selected:</mat-chip> <mat-chip color="primary"
+			*ngFor="let node of selectedNodes">{{node}}</mat-chip> </mat-chip-list>
 	</div>
 	</div>
-
-<!--  
-<ng-container *ngIf="!file.som">
-<div class="row">
-	<div class="col-md-12">
-		<nb-card> <nb-card-body>
-		<div class="flex-centered col-xl-4 col-lg-6 col-md-8 col-sm-12">
-			<h2 class="title">Welcome to iMoka</h2>
-			<small class="sub-title">This interactive visualization
-				tool.... bla bla bla</small>
-			<hr class="my-4">
-			<p>Load your self organizating map analyze result file from the
-				analysis.</p>
-			<button status="primary" nbButton (click)="loadData('som')" >Load</button>
-		</div>
-		</nb-card-body> </nb-card>
-	</div>
-</div>
-
-</ng-container>
-<ng-container *ngIf="file.som">
-<div class="row">
-<div class="col">
-		<nb-card *ngIf="! file.som"> <nb-card-body>
-		<button status="primary" class="btn-block" nbButton (click)="loadData('som')" >Add SOM</button>
-		</nb-card-body> </nb-card>
-		<nb-card *ngIf="file.som"> <nb-card-body>
-		Current SOM file: <strong (click)="loadData('som')">{{file.som}}</strong>. </nb-card-body> </nb-card>
-	</div>
-	<div class="col">
-		<nb-card *ngIf="! file.kmers"> <nb-card-body>
-			<button status="primary" class="btn-block" nbButton (click)="loadData('kmers')" >Add k-mers</button>
-		</nb-card-body> </nb-card>
-		<nb-card *ngIf="file.kmers"> 
-		<nb-card-body>Current k-mer file: <strong (click)="loadData('kmers')">{{file.kmers}}</strong>. </nb-card-body> </nb-card>
-		</div>
-	<div class="col">
-		<nb-card *ngIf="! file.models"> <nb-card-body>
-			<button status="primary"  class="btn-block" nbButton (click)="loadData('models')">Add models</button>
-		</nb-card-body> </nb-card>
-		<nb-card *ngIf="file.models"> <nb-card-body> Current models file: <strong (click)="loadData('models')">{{file.models}}</strong>. </nb-card-body> </nb-card>
-	</div>
-	
-</div>
-<div class="row" *ngIf="dtOptions.kmers">
-	<div class="col">
-		<nb-card> 
-		<nb-card-header>K-mer list </nb-card-header>
-		<nb-card-body>
-		<div class="col">
-			<table datatable [dtOptions]="dtOptions.kmers"
-				class="table row-border hover">
-			</table>
-		</div>
-		</nb-card-body> </nb-card>
-	</div>
-</div>
-  -->
-<div fxFlex class="row" *ngIf="data.samplesSOM" >
-	<div  >
-		<h2>SOM projection clustering</h2>
-		
-		<mat-form-field *ngIf="clust_select.length!=0" > <mat-label>Number of samples clusters</mat-label>
-		<!-- <select matNativeControl  -->
-			<select matNativeControl [(ngModel)]="clust" id="comboA" value={{clust}} (change)="updateCluster()" >
-				<option *ngFor="let clustopt of clust_select; index as i" value="{{clustopt.id}}">{{clustopt.nclust}}</option>
-			</select>
-		</mat-form-field>
-		
-		
-		<mat-form-field><mat-label>View style</mat-label>
-			<select matNativeControl [(ngModel)]="normOption" id="comboA" value={{normOption}} (change)="normOptionUpdate()" >
-				<option value="normByNode">normalize by node</option>
-				<option value="centerAvrg">center on average samples</option>
-				<option value="raw">raw count</option>
-				
-			</select>
-			</mat-form-field>
-		
-		<div id="gallery">
-		
-		<div *ngIf=data.mapaverage >
-				<ul id="">
-					<li style="text-align: center; margin-right: 20px;">
-						<div>Features importance</div>
-							<div id="sommapimportance0" class="mapcontainer"  ></div>
-						
-					</li><li style="text-align: center; margin-right: 20px;">
-						<div># Kmers by node</div>
-							<div id="sommapimportance1" class="mapcontainer"  ></div>
-					</li>
-				</ul>
-				<ul>
-						<li  *ngFor="let sample of data.mapaverage; index as i">
-					    	<div class="mosaicItem class">
-									<div id="sommapaverage{{i}}" class="mapcontainer"  ></div>
-					    			<div class="text class{{sample.classnumber}}"><div>{{sample.classori}}</div><div>{{sample.labelsamples}}</div></div>
-							</div>
-						</li>
-				</ul>
-		</div>
-		<input matInput id="selectedsample" class="hiddeninput" (change)="updateSelNodesInfos()"/>		
-			<mat-form-field> <mat-label>Node selected (click on map)</mat-label><input  placeholder="click on a map to select node" matInput id="listselectednode"  (change)="updateSelNodesInfos()"/>	
-			</mat-form-field>
-			 
-		 <button  mat-raised-button ng-disabled="this.selectednodes.length==0"  title="ontology on selected node( to select multiple nodes keep 'Ctrl' key press)" (click)="updateSelNodesgetonto()">View ontology</button>
-		
-		
-			<ul id="ulm">
-				<ng-container *ngFor="let sample of data.samplesSOM; index as i">
-				
-					<div *ngIf="i==0 || sample.bmu[clust]!=data.samplesSOM[i-1].bmu[clust]">Cluster{{sample.bmu[clust]}}</div>
-					<li>
-				    	<div class="mosaicItem class{{sample.bmu[clust]}}">
-								<div id="sommap{{i}}" class="mapcontainer"  ></div>
-								<!--	{{createmapindice(i)}},color:sample.projSOM 
-				    			<img src="{{sample.filename}}" alt="" />-->
-				    			<div class="text class{{sample.classnumber}}"><div>{{sample.classori}}</div><div>{{sample.labelsamples}}</div></div>
+	<div class="button-hide-container" ><button color="primary" mat-mini-fab (click)="hideOptions=!hideOptions"><mat-icon *ngIf="hideOptions">expand_more</mat-icon><mat-icon *ngIf="!hideOptions">expand_less</mat-icon></button></div>
+	</mat-card-content>
+	</mat-card>
+	<div fxFlexFill>
+		<mat-tab-group [(selectedIndex)]="somTabIndex" mat-align-tabs="center"> <mat-tab
+			label="Self organizing maps"> <ng-template matTabContent>
+		<div  class="tab-content" fxLayout="row wrap" fxLayoutAlign="center start" >
+			<div fxFlex="50%" fxLayout="column" fxLayoutAlign="center start">
+			<div fxFlex>
+			<mat-card >
+				<mat-card-content  fxLayout="row wrap">
+				<h3 fxFlex="100%">General</h3>
+				<hexamap-app [fxFlex]="(opt.width+30)+'px'"
+					*ngFor="let opt of this.hexamappes.importances" [options]="opt"
+					class="mapcontainer"></hexamap-app>
+				</mat-card-content>
+			</mat-card>
+			</div><div fxFlex>
+			<mat-card >
+				<mat-card-content  fxLayout="row wrap">
+				<h3 fxFlex="100%">Averages</h3>
+				<hexamap-app [fxFlex]="(opt.width+30)+'px'"
+					*ngFor="let opt of this.hexamappes.averages" [options]="opt"
+					class="mapcontainer"></hexamap-app>
+				</mat-card-content>
+			</mat-card>
+			</div>
+			</div>
+			<div fxFlex="50%" fxLayout="column">
+				<div fxFlex *ngFor="let grp of hexamappes.indices; index as i" > 
+					<mat-card >
+						<mat-card-content  fxLayout="column">
+						<h3 fxFlex>Cluster {{i}}: {{grp.length}} samples</h3>
+						<div  [class.hidden-vertical]="indices[i].hidden" class="hidden-vertical-fade" fxLayout="row wrap">
+							<div fxFlex="50%" style="overflow:visible"><mat-slider style="width:90%;margin-top:18px" thumbLabel step="1"  [(ngModel)]="indices[i].from_pos" min="0" [max]="grp.length-indices[i].to_display" ></mat-slider></div>
+							<div fxFlex="50%"><mat-form-field><mat-label>Display</mat-label><input matInput [(ngModel)]="indices[i].to_display" type='number' min="1" max="100" ></mat-form-field></div>						
+							<ng-container *ngFor="let opt of grp; index as j">
+							<hexamap-app *ngIf="j >= indices[i].from_pos && j < indices[i].from_pos+indices[i].to_display "  [fxFlex]="(opt.width+30)+'px'" [options]="opt"
+								class="mapcontainer"></hexamap-app>
+							</ng-container>
 						</div>
-					</li>
-				</ng-container>
-			</ul>
+						<div  fxFlex class="button-hide-container" ><button color="primary" mat-mini-fab (click)="indices[i].hidden=!indices[i].hidden"><mat-icon *ngIf="indices[i].hidden">expand_more</mat-icon><mat-icon *ngIf="!indices[i].hidden">expand_less</mat-icon></button></div>
+						</mat-card-content>
+					</mat-card>
+			</div>
+			</div>
 		</div>
+		</ng-template> 
+		</mat-tab> 
+		<mat-tab label="Samples clustering"> 
+			<ng-template matTabContent> 
+			<mat-card class="tab-content"> 
+				<mat-card-content> <plotly-plot 
+					[data]="this.data.clusterdist.data"
+					[layout]="this.data.clusterdist.layout"
+					(plotly_click)="barclustdistClick($event)"></plotly-plot> 
+				</mat-card-content>
+			</mat-card>
+			</ng-template>
+		</mat-tab> 
+		<mat-tab label="Other graphs"> 
+			<ng-template matTabContent> 
+			<mat-card class="tab-content"> 
+				<mat-card-content fxLayout="row wrap">
+				<div fxFlex="50%"> 
+				
+				<plotly-plot
+								[data]="this.data.graphImportance.data"
+								[layout]="this.data.graphImportance.layout"></plotly-plot>
+				</div><div fxFlex="50%">
+				<plotly-plot
+								[data]="this.data.graphFeatureNumber.data"
+								[layout]="this.data.graphFeatureNumber.layout"></plotly-plot>
+					</div>				
+				</mat-card-content>
+			</mat-card>
+			</ng-template>
+		</mat-tab> 
+		</mat-tab-group>
 	</div>
+</div>
 
-</div>
-</div>
 
 

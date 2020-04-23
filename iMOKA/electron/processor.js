@@ -531,8 +531,13 @@ class Processor {
 							  } else {
 								  sample.message = "In process";
 							  }
-							  if ( fs.existsSync(samples_dir+s_dir.name+"/fastqc") && fs.existsSync(samples_dir+s_dir.name+"/fastqc/"+s_dir.name+"_fastqc.html")){
-								  sample.fastqc = "file://"+samples_dir+s_dir.name+"/fastqc/"+s_dir.name+"_fastqc.html";
+							  if ( fs.existsSync(samples_dir+s_dir.name+"/fastqc") ){
+								  let fqfs = fs.readdirSync(samples_dir+s_dir.name+"/fastqc/").filter((fn)=>{
+									  return fn.includes(".html");
+								  })
+								  if (fqfs.length == 1 ){
+									  sample.fastqc = "file://"+samples_dir+s_dir.name+"/fastqc/"+fqfs[0]
+								  }
 							  }
 							  samples.push(sample);
 						  }

@@ -8,7 +8,8 @@ import { MatTable } from '@angular/material';
 import { MatTabGroup } from '@angular/material/tabs';
 import { UemService } from '../../services/uem.service';
 import { FileService } from '../../services/file.service';
-import { Session, } from '../../interfaces/session';
+import { Session } from '../../interfaces/session';
+import {KmerDataTableOptions} from '../../interfaces/kmer';
 
 
 import { OpenTrackComponent } from './dialog/open-track/open-track.component'
@@ -25,6 +26,7 @@ import { RandomForestComponent } from './dialog/random-forest/random-forest.comp
 
 import igv from '../../plugins/igv/igv.js';
 import * as $ from 'jquery';
+
 
 
 @Component({
@@ -48,7 +50,7 @@ export class KMerListComponent implements OnInit, OnDestroy {
 	browser: any;
 	genome: string = 'hg38';
 	info: any = {};
-	dtOptions: any = this.initDtOptions();
+	dtOptions: KmerDataTableOptions = this.initDtOptions();
 	data: any = {};
 	cols: any = {};
 	session: Session;
@@ -149,12 +151,13 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		this.dataSource.loadKmer(this.dtOptions).then(() => this.cd.markForCheck());
 	}
 
-	initDtOptions() {
+	initDtOptions() :KmerDataTableOptions{
 		return {
 			displayedColumns: ['best_rank', 'kmer', 'position', 'genes', 'events'],
 			search: { value: "" },
 			order: { name: 'best_rank', asc: true },
 			subset: [],
+			bmu : [] ,
 			eventsFilter: [],
 			minCount: 0,
 			minPred: 0,
@@ -186,13 +189,19 @@ export class KMerListComponent implements OnInit, OnDestroy {
 
 	initSOM(): Promise<any> {
 		return new Promise<any>((resolve, reject) => {
+			if (! this.dtOptions.displayedColumns.includes("som")) {
+				this.dtOptions.displayedColumns.unshift("som");
+			}
 		});
 	};
 
 	initImportance() {
 		this.subscriptions.push(this.trackService.getData("importance_models").subscribe((resp) => {
-			this.data.models = resp;
-			if (this.dtOptions.displayedColumns[0] != "importance") {
+			this.data.models = [];
+			resp.forEach((mod)=>{
+				this.data.models.push({fetatures : mod.features, acc : mod.models[mod.best_model].acc})
+			});
+			if (! this.dtOptions.displayedColumns.includes("importance")) {
 				this.dtOptions.displayedColumns.unshift("importance");
 			}
 		}));
@@ -207,7 +216,6 @@ export class KMerListComponent implements OnInit, OnDestroy {
 
 	searchBrowser(request: any) {
 		let tosearch = "";
-		console.log(request);
 		if (typeof request == typeof "string") {
 			tosearch = request;
 		} else if (request.chromosome) {
