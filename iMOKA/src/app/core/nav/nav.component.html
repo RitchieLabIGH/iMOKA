@@ -18,6 +18,11 @@
       <a mat-list-item routerLink="klist" *ngIf="session && session.files.kmers" ><mat-icon matListIcon>table-chart</mat-icon>K-mer list</a>
       <a mat-list-item routerLink="models" *ngIf="session && session.files.importance"><mat-icon fontSet="fa"  fontIcon="fa-project-diagram" matListIcon ></mat-icon> Prediction models</a>
       <a mat-list-item routerLink="som" *ngIf="session && session.files.som"><mat-icon matListIcon>map</mat-icon> Samples SOM</a>
+   	  <mat-divider></mat-divider>
+   	  <h3 matSubheader>Others</h3>
+   	  <a mat-list-item routerLink="setup"><mat-icon matListIcon>settings_applications</mat-icon>Settings</a>
+      <a mat-list-item routerLink="about" ><mat-icon matListIcon>info</mat-icon>About iMOKA</a>
+      
     </mat-nav-list>
   </mat-sidenav>
   <mat-sidenav-content fxLayout="column" fxLayoutAlign="none" >

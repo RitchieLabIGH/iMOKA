@@ -5,6 +5,15 @@
 .margin-1 {
 	margin: 10px;
 }
-[hidden] {
-  display: none !important;
+
+
+table {
+	width : 100%;
+	height : 100%;
+}
+
+.table-container {
+	width : 100%;
+	height: 70vh;
+	overflow-y : auto;
 }

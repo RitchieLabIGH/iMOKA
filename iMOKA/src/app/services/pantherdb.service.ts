@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders} from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient} from '@angular/common/http';
 import { map } from 'rxjs/operators/map';
 
 
@@ -42,12 +41,12 @@ export interface PantherDBOptions {
     geneList? : string[],
 }
 
-export interface PantherDBEnrichmentResult{
-    id : string,
-    name : string,
-    geneID : string,
-    pval : number,
-    FDR : number
+export class PatherDataRow{
+    id : string;
+    name : string;
+    genes : string[];
+    pval : number;
+    fdr?: number;
 }
 
 
@@ -59,21 +58,13 @@ export class PantherDBService {
     private baseUrl = 'http://www.pantherdb.org/webservices/garuda/tools/enrichment/VER_2/enrichment.jsp?';  // URL to web api
     constructor(private http: HttpClient){}
     
-    
-    enrichmentAnalysis(options : PantherDBOptions ): Observable<PantherDBEnrichmentResult[]>  {
-        console.log("enrichmentAnalysis");
-		console.log("options");
+    enrichmentAnalysis(options : PantherDBOptions ): Promise<PatherDataRow[]>  {
         if ( options.type != PDBType.enrichment ){
-            return new Observable(observer => {
-                observer.error({message : "Given option type is not \"enrichment\""});
+            return new Promise((resolve, reject) => {
+                reject({message : "Given option type is not \"enrichment\""});
             });
         }
-		var Options = {
-		  responseType: 'text' as 'json'
-		};
-
         const formData = new FormData();
-	console.log(options.geneList.map(line => line+="\n"));
         let file = new File(options.geneList.map(line => line+="\n"), "gene_list.txt", {type : "application/octet-stream"});
         formData.append("geneList", file, file.name);
         formData.append("organism", options.organism);
@@ -82,28 +73,24 @@ export class PantherDBService {
         formData.append("correction", options.correction);
         formData.append("enrichmentType", options.enrichmentType);
         const httpOptions = { responseType: "text" as 'json' };
-        return this.http.post<PantherDBEnrichmentResult[]>(this.baseUrl,formData, httpOptions ).pipe(map(this.enrichmentAnalysisDataMapper));
+        return this.http.post<PatherDataRow[]>(this.baseUrl,formData, httpOptions ).pipe(map(this.enrichmentAnalysisDataMapper)).toPromise();
     }
     
-    enrichmentAnalysisDataMapper(data : any) : PantherDBEnrichmentResult[]{
-		
-        //TODO parse the data output to fill the out object
-        let out : PantherDBEnrichmentResult[]= [];
-		data=data.split("\n");
-		for(let iline=0;iline<data.length;iline++){
-			let line=data[iline].split("\t");
-			if (line.length>4 && line[0]!="Id" ){
-				out.push(<PantherDBEnrichmentResult>{
-			    id : line[0],
-			    name : line[1],
-			    geneID : line[2],
-			    pval : Number(line[3]),
-			    FDR : Number(line[4])
-				})
+    enrichmentAnalysisDataMapper(data : any) : PatherDataRow[]{
+        let out : PatherDataRow[]= [];
+		data.split("\n").forEach((line_s : string)=>{
+			if ( line_s.match(/^GO/) ){
+				let line = line_s.split("\t")
+				if ( out.length > 0 && out[out.length-1].id == line[0]){
+					out[out.length-1].genes.push(line[2])
+				} else {
+					out.push({genes:[line[2]], id:line[0], name : line[1], pval: Number(line[3]) })
+					if ( line.length == 5 ){
+						out[out.length-1].fdr = Number(line[4])
+					}
+				}
 			}
-			
-		}
-
+		});
         return out;
     }
 

@@ -39,6 +39,8 @@ import { CoreModule } from '../core/core.module';
 import { NodesInfoComponent } from './samples-som/nodes-info/nodes-info.component'
 import { HexamapComponent } from './samples-som/hexamap/hexamap.component';
 
+import {AboutComponent} from './about/about.component';
+
 PlotlyModule.plotlyjs = PlotlyJS;
 
 
@@ -68,6 +70,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
 		ModelDisplayComponent,
 		RandomForestComponent,
 		HexamapComponent,
+		AboutComponent,
 	],
 	imports: [
 		CommonModule,

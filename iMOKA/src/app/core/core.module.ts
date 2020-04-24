@@ -18,6 +18,7 @@ import { InfoComponent } from './info/info.component'
 
 /// Pipes
 import {TypeofPipe} from '../pipes/typeof.pipe';
+import {SafeHtmlPipe, SafeURLPipe} from '../pipes/safeHtml.pipe';
 
 
 
@@ -36,13 +37,13 @@ export const NB_CORE_PROVIDERS = [
     LayoutModule,
     FlexLayoutModule,
   ],
-  declarations: [ NavComponent, InfoComponent, TypeofPipe],
+  declarations: [ NavComponent, InfoComponent, TypeofPipe, SafeHtmlPipe, SafeURLPipe],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: environment.defaultLanguage }
     
   ],
   entryComponents : [ InfoComponent ],
-  exports: [ NavComponent ,TypeofPipe]
+  exports: [ NavComponent ,TypeofPipe, SafeHtmlPipe, SafeURLPipe]
 })
 export class CoreModule {
   constructor(@Optional() @SkipSelf() parentModule: CoreModule) {

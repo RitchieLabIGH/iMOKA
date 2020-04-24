@@ -2,15 +2,15 @@
 <h1 mat-dialog-title>Informations for selected nodes {{info.nodes.join(",")}} </h1>
 <div mat-dialog-content class="main-content">
 	<div fxLayout="column" fxLayoutGap="25px">
-
 		<div fxFlex>
 			<mat-card class="margin-1  mat-elevation-z2" *ngIf="data.boxplot"> <mat-card-title>
-			Plots
+			<h3>Counts distribution</h3>
 			</mat-card-title> <mat-card-content> <plotly-plot
 				[data]="data.boxplot.data" [layout]="data.boxplot.layout"></plotly-plot>
 			</mat-card-content> </mat-card>
 		</div>
 	</div>
+	
 	<mat-card class="margin-1 mat-elevation-z2"> <mat-card-title> Counts per
 	sample </mat-card-title> <mat-card-content>
 	 <table datatable class="mat-table">

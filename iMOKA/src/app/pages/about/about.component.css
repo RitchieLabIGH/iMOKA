@@ -1,0 +1,22 @@
+.main > div {
+	padding : 2em 1em;
+}
+
+.main {
+	padding : 0 10em;
+}
+p {
+	font-size: 1.5em;
+}
+
+
+.logo-container {
+	text-align : center;
+	width:100%;
+}
+
+.logo-container img {
+	height : 10vh;
+	margin: 0 30px
+	
+}

@@ -54,7 +54,6 @@
 			console.error("d3pie error: d3 is not available");
 			return false;
 		}
-		console.log(hexamap.params)
 
 
 		//The number of columns and rows of the heatmap
@@ -93,6 +92,7 @@
 				.duration(10)
 				.style("fill-opacity", 0.3)
 				;
+			
 		}
 		function RGBToHex(r, g, b) {
 			r = r.toString(16);
@@ -289,7 +289,9 @@ svg.append("g")
 	})
 	.on("mouseover", mover)
 	.on("mouseout", mout)
-	.on("click",nodeclick);
+	.on("click",nodeclick)
+	.append("svg:title")
+          .text(function(d, i) { return "Node number " + i+"\nValue: "+Math.round(hexamap.params.color[i]*100)+"\n"+ (hexamap.params.counts && hexamap.params.counts.length > i ? "Number of features "+hexamap.params.counts[i] : ""); });
 	
 
 ///////////////////////////////////////////////////////////////////////////
