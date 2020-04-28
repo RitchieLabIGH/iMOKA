@@ -99,7 +99,28 @@ The formula for the normalization of the i*th* k-mer of the j*th* sample is the 
 
 If you want to change the normalization, you can modify the array having the key "total_counts" in the json file. 
 
+You can use the following dataset to test the software: 
 
+```
+ERR2407636	responsive:F	ERR2407636
+ERR2407637	responsive:F	ERR2407637
+ERR2407638	responsive:F	ERR2407638
+ERR2407639	responsive:F	ERR2407639
+ERR2407640	responsive:F	ERR2407640
+ERR2407641	responsive:F	ERR2407641
+ERR2407642	responsive:F	ERR2407642
+ERR2407643	responsive:T	ERR2407643
+ERR2407644	responsive:T	ERR2407644
+ERR2407645	responsive:T	ERR2407645
+ERR2407646	responsive:T	ERR2407646
+ERR2407647	responsive:T	ERR2407647
+ERR2407648	responsive:T	ERR2407648
+ERR2407649	responsive:T	ERR2407649
+ERR2407650	responsive:T	ERR2407650
+ERR2407651	responsive:T	ERR2407651
+ERR2407652	responsive:T	ERR2407652
+```
+That contains targeted RNA sequencing of 17 DLBCL patients responsive (10) and non responsive (7) to an anthracycline-based terapy, as described in the reference study [Crump, M. et al](https://pubmed.ncbi.nlm.nih.gov/28774879/)
 
 ## <a name="core"></a> Run the core software
 The main software aims to reduce the k-mers to a non redundant subset having the potential to classify the samples in the given classes. The final list of k-mer can be directly explored using the GUI (TODO link), where it's also possible to refine the list with filters and criterias in according to the user's needs.
