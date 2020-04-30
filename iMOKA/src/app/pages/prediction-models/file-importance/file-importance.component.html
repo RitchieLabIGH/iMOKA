@@ -1,87 +1,80 @@
 
-   <div fxLayout="column"  fxLayoutGap="25px">
-		<div fxFlex>
-			<mat-card class="mat-elevation-z2">
-				<mat-card-title>
-					<h3>Informations</h3>
-				</mat-card-title>
-				<mat-card-content>
-					<mat-list>
-						<mat-list-item>
-							<strong>Method</strong>: {{info.method}}
-						</mat-list-item>
-						<mat-list-item>
-							<strong>Number of samples</strong>:
-							{{info.sample_names.length}}
-						</mat-list-item>
-						<mat-list-item>
-							<strong>Number of features</strong>: {{info.total_features}}
-						</mat-list-item>
-						<mat-list-item>
-							<strong>Number of models generated</strong>: {{info.nmodels}}
-						</mat-list-item>
-						<mat-list-item>
-							<strong>Groups</strong>: <ul><li *ngFor="let grp of info.groups_names; let i = index"><strong>{{grp}}</strong>: {{info.groupcount[i]}} samples.</li></ul>
-						</mat-list-item>
-					</mat-list>
-				</mat-card-content>
-			</mat-card>
-		</div>
-		<div fxFlex>
-			<mat-card *ngIf="data.feature_importance">
-				<mat-card-title>
-					<h3>Features importance</h3>
-				</mat-card-title>
-				<mat-card-content>
-					<div fxLayout="column" fxLayoutGap="25px">
-						<div fxFlex>
-							<div >
-								<label>From</label>
-								<mat-slider  thumbLabel step="1" class="margin-1"  [(ngModel)]="data.feature_importance.from_pos" min="0" [max]="info.total_features-1" ></mat-slider>
-								<label>to</label>
-								<mat-slider thumbLabel step="1" class="margin-1" placeholder="Display to feature" [(ngModel)]="data.feature_importance.to_pos" [min]="data.feature_importance.from_pos+1" [max]="info.total_features" ></mat-slider>
-								<button mat-raised-button class="margin-1" type="button" (click)="updateFI()">Draw</button>
-							</div>
-						</div>
-						<div fxFlex>
-							<plotly-plot [data]="data.feature_importance.display_data" [layout]="data.feature_importance.layout"></plotly-plot>
-							
-						</div>
-					</div>
-				</mat-card-content>
-			</mat-card>
-		</div>
-		<ng-container *ngIf="data.samples_eval">
-		<div fxFlex *ngFor="let dat of data.samples_eval; let i = index">
-			<mat-card>
-				<mat-card-title>
-					<h3>{{dat.name}} samples evaluation</h3>
-				</mat-card-title>
-				<mat-card-content>
-				<div fxLayout="column" fxLayoutGap="25px">
-						<div fxFlex>
-							<div >
-							<label>From</label>
-								<mat-slider thumbLabel step="1"  class="margin-1" [(ngModel)]="dat.from_pos" min="0" [max]="this.info.groupcount[i]-1" ></mat-slider>
-								<label>to</label>
-								<mat-slider thumbLabel step="1"  class="margin-1"  [(ngModel)]="dat.to_pos" [min]="dat.from_pos+1" [max]="this.info.groupcount[i]" ></mat-slider>
-								<button mat-raised-button class="margin-1" type="button" (click)="updateSample(dat.name)">Draw</button>
-								<mat-form-field><mat-label>Samples</mat-label>
-									<mat-select multiple [(ngModel)]="dat.toshow" (openedChange)="! $event && updateSample(dat.name)" >
-										<mat-option value="all"  >All</mat-option>
-										<mat-option *ngFor="let n of dat.samples" [value]="n.name" [disabled]="dat.toshow[0]=='all'">{{n.name}}</mat-option>
-									</mat-select></mat-form-field>
-							</div>
-						</div>
-						<div fxFlex>
-							<plotly-plot [data]="dat.display_data" [layout]="dat.layout"></plotly-plot>
-							
-						</div>
-					</div>
-				</mat-card-content>
-			</mat-card>
-		</div>
-		</ng-container>
-	</div>
+<div fxLayout="column" fxLayoutGap="25px" >
+  <div fxFlex >
+    <mat-card class="mat-elevation-z2"> <mat-card-title>
+    <h3>Informations</h3>
+    </mat-card-title> 
+    <mat-card-content> 
+      <div fxLayout="row wrap" >
+        <div fxFlex="33%"><strong>Method</strong>: {{info.method}} </div>
+        <div fxFlex="33%"><strong>Number of samples</strong>: {{info.sample_names.length}} </div>
+        <div fxFlex="33%"><strong>Number of features</strong>: {{info.total_features}}</div>
+        <div fxFlex="33%"><strong>Number of models generated</strong>: {{info.nmodels}}</div>
+        <div fxFlex="33%"><strong>Groups</strong>:
+        <ul>
+          <li *ngFor="let grp of info.groups_names; let i = index"><strong>{{grp}}</strong>: {{info.groupcount[i]}} samples.</li>
+        </ul></div>
+        <div fxFlex="33%"></div>
+      </div> 
+     </mat-card-content>
+     </mat-card>
+  </div>
+  <div fxFlex>
+    <mat-card *ngIf="data.feature_importance"> <mat-card-title>
+    <h3>Features importance</h3>
+    </mat-card-title> <mat-card-content>
+    <div fxLayout="column" fxLayoutGap="25px">
+      <div fxFlex fxLayout="row wrap">
+        <div fxFlex="50%" style="overflow: visible">
+        <button [disabled]="data.feature_importance.from_pos < data.feature_importance.to_display" mat-icon-button (click)="data.feature_importance.from_pos=data.feature_importance.from_pos-data.feature_importance.to_display; updateFI()">
+            <mat-icon>skip_previous</mat-icon>
+          </button>
+          <mat-slider  style="width:70%;margin-top:18px" thumbLabel step="1" [tickInterval]="data.feature_importance.to_display" [(ngModel)]="data.feature_importance.from_pos" min="0" [max]="info.total_features-1" (change)="updateFI()"></mat-slider>
+          <button [disabled]="data.feature_importance.from_pos+data.feature_importance.to_display > info.total_features" mat-icon-button (click)="data.feature_importance.from_pos=data.feature_importance.from_pos+data.feature_importance.to_display ; updateFI()">
+            <mat-icon>skip_next</mat-icon>
+          </button>
+        </div>
+        <div fxFlex="30%">
+          <mat-form-field> <mat-label>Display</mat-label> <input matInput [(ngModel)]="data.feature_importance.to_display" type='number' min="1" (change)="updateFI()"></mat-form-field>
+        </div>
+      </div>
+      <div fxFlex="max(80vh, 450px)">
+        <plotly-plot [revision]="revision" [useResizeHandler]="true" [style]="gstyle" [data]="data.feature_importance.display_data" [layout]="data.feature_importance.layout"></plotly-plot>
+      </div>
+    </div>
+    </mat-card-content> </mat-card>
+  </div>
+  <ng-container *ngIf="data.samples_eval">
+  <div fxFlex *ngFor="let dat of data.samples_eval; let i = index">
+    <mat-card> <mat-card-title>
+    <h3>{{dat.name}} samples evaluation</h3>
+    </mat-card-title> <mat-card-content>
+    <div fxLayout="column" fxLayoutGap="25px">
+      <div fxFlex fxLayout="row wrap">
+        <div fxFlex="50%" style="overflow: visible">
+        <button [disabled]="dat.from_pos < dat.to_display" mat-icon-button (click)="dat.from_pos=dat.from_pos-dat.to_display ; updateSample(dat.name)">
+            <mat-icon>skip_previous</mat-icon>
+          </button>
+          <mat-slider [tickInterval]="dat.to_display" style="width:70%;margin-top:18px" thumbLabel step="1" [(ngModel)]="dat.from_pos" min="0" [max]="info.groupcount[i]-1" (change)="updateSample(dat.name)"></mat-slider>
+           <button [disabled]="dat.from_pos+dat.to_display > info.groupcount[i]" mat-icon-button (click)="dat.from_pos=dat.from_pos+dat.to_display  ; updateSample(dat.name)">
+            <mat-icon>skip_next</mat-icon>
+          </button>
+        </div>
+        <div fxFlex="20%">
+          <mat-form-field> <mat-label>Display</mat-label> <input matInput [(ngModel)]="dat.to_display" type='number' min="1" (change)="updateSample(dat.name)"></mat-form-field>
+        </div>
+        <div fxFlex="30%">
+          <mat-form-field>
+          <mat-label>Samples</mat-label> <mat-select multiple [(ngModel)]="dat.toshow" (openedChange)="! $event && updateSample(dat.name)"> <mat-option value="all">All</mat-option> <mat-option *ngFor="let n of dat.samples" [value]="n.name" [disabled]="dat.toshow[0]=='all'">{{n.name}}</mat-option> </mat-select></mat-form-field>
+        </div>
+      </div>
+      <div fxFlex="max(80vh, 450px)">
+        <plotly-plot [revision]="revision" [data]="dat.display_data" [layout]="dat.layout" [useResizeHandler]="true" [style]="gstyle"></plotly-plot>
+      </div>
+    </div>
+    </mat-card-content> </mat-card>
+  </div>
+  </ng-container>
+</div>
 
 

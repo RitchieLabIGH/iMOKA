@@ -1,19 +1,22 @@
 import { Component, OnInit, NgZone, OnDestroy, ViewChild, HostListener, ElementRef } from '@angular/core';
-import { FileService } from '../../services/file.service';
 import { TracksService } from '../../services/tracks.service';
 import { UemService } from '../../services/uem.service';
 import { MatDialog } from '@angular/material/dialog';
-import { FormControl } from '@angular/forms';
 import { NodesInfoComponent } from './nodes-info/nodes-info.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabGroup } from '@angular/material';
-
-
-import { Subscription, Subject } from 'rxjs';
+import { MatTableDataSource } from '@angular/material/table';
+import { MatPaginator } from '@angular/material/paginator';
+import { Subscription } from 'rxjs';
 import { Session } from '../../interfaces/session'
-
+import {MatSort} from '@angular/material/sort';
 import { PantherGoComponent } from '../panther-go/panther-go.component';
-import { DataTableDirective } from 'angular-datatables';
+
+export interface FeatureSOM {
+	name: string,
+	bmu: number
+}
+
 
 @Component({
 	selector: 'samples-som',
@@ -21,15 +24,13 @@ import { DataTableDirective } from 'angular-datatables';
 	styleUrls: ['./samples-som.component.css']
 })
 export class SamplesSomComponent implements OnInit, OnDestroy {
-	dtTrigger: Subject<any> = new Subject();
 	@ViewChild(MatTabGroup, { static: true }) tab: MatTabGroup;
 	@ViewChild('mainPage', { static: true }) element: ElementRef;
-
-	@ViewChild(DataTableDirective, { static: false })
-	dtElement: DataTableDirective;
+	@ViewChild(MatPaginator, { static: false }) paginator: MatPaginator;
+	@ViewChild(MatSort, {static: false}) sort: MatSort;
 	isDtInitialized: boolean = false;
 
-	@HostListener('window:resize', ['$event']) onResize(event?) {
+	@HostListener('window:resize', ['$event']) onResize(event?: any) {
 		if (this.element) {
 			this.win = { height: this.element.nativeElement.offsetHeight, width: this.element.nativeElement.offsetWidth };
 			this.tiles = { height: this.win.width / 10, width: this.win.width / 9 };
@@ -37,11 +38,13 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 	}
 	constructor(private trackService: TracksService, public dialog: MatDialog, private _snackBar: MatSnackBar, private zone: NgZone, private uem: UemService) {
 	}
+  	
+	featureSource: MatTableDataSource<FeatureSOM> = new MatTableDataSource<FeatureSOM>([]);
 	win: { height: number, width: number };
 	tiles: { height: number, width: number };
 	mapsize: number;
 	somTabIndex: number;
-	features_per_node : number[];
+	features_per_node: number[];
 	subscriptions: Subscription[] = [];
 	session: Session;
 	data: any = {};
@@ -57,12 +60,23 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 	sampleFilterl: string[] = [];
 	hideOptions: boolean = false;
 	indices: any;
-	
-	tabChange(event : any){
-		if ( event.index == 2 ) {
-			this.refreshLabels();	
+
+	tabChange(event: any) {
+		if (this.somTabIndex == 2) {
+			this.featureSource.paginator = this.paginator;
+			this.featureSource.sort = this.sort;
+			this.updateFeatures();
 		}
-		
+	}
+	updateFeatures() {
+		this.featureSource.data = this.session ? this.session.files.som.info.features.filter((el) => {
+			return this.selectedNodes.length == 0 || this.selectedNodes.includes(el.bmu);
+		}) : [];
+
+	}
+	applyFilter(event: Event) {
+		const filterValue = (event.target as HTMLInputElement).value;
+		this.featureSource.filter = filterValue.trim();
 	}
 	ngOnInit() {
 		this.onResize();
@@ -70,6 +84,7 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 		this.normOption = "normByNode";
 		this.subscriptions.push(this.uem.getSession().subscribe((session) => {
 			this.session = session;
+			this.updateFeatures();
 			this.update();
 		}));
 	}
@@ -83,7 +98,6 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 		this.subscriptions.forEach((sub) => {
 			sub.unsubscribe();
 		});
-		this.dtTrigger.unsubscribe();
 
 	}
 
@@ -101,7 +115,7 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 			this.trackService.getData({ "data": "SOMimportance", "idmap": "importance" }).subscribe((resp) => {
 				console.log("SOMimportance")
 				this.data.mapimportance = resp;
-				this.features_per_node=this.data.mapimportance[1].projRAW;
+				this.features_per_node = this.data.mapimportance[1].projRAW;
 				this.data.graphImportance = {
 					data: [
 						{ x: Array.from(Array(this.data.mapimportance[0].projSOM.length)).map((e, i) => i + 1), y: this.data.mapimportance[0].projSOM, type: 'bar' },
@@ -142,18 +156,7 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 		});
 
 	}
-	
-	refreshLabels(){
-		if (this.isDtInitialized && this.dtElement && this.dtElement.dtInstance) {
-			this.dtElement.dtInstance.then((dtInstance: DataTables.Api) => {
-				dtInstance.destroy();
-				this.dtTrigger.next();
-			});
-		} else {
-			this.isDtInitialized = true;
-			this.dtTrigger.next();
-		}
-	}
+
 	hexaClick() {
 		let that = this;
 		return (d, i, ctrl) => {
@@ -171,8 +174,8 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 					that.selectedNodes = that.selectedNodes.filter((n) => { return n != i; });
 				}
 			}
-			if (that.somTabIndex == 2)that.refreshLabels();
-			
+			that.updateFeatures();
+
 			return that.selectedNodes;
 		}
 
@@ -245,16 +248,16 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 
 		});
 	}
-	
-	
+
+
 	requestGO() {
 		if (this.data.SOMkmers.kmers[0].genes) {
 			this.geneList = this.data.SOMkmers.kmers.map(el => el.genes);
 		} else {
 			this.geneList = this.data.SOMkmers.kmers.map(el => el.events[0].gene);
 		}
-		this.zone.run(()=>{
-				this.dialog.open(PantherGoComponent, { data: { geneList: this.geneList } });
+		this.zone.run(() => {
+			this.dialog.open(PantherGoComponent, { data: { geneList: this.geneList } });
 		})
 
 	}
@@ -280,12 +283,12 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 
 	createMapIndice(id: number) {
 		let sample = this.data.samplesSOM[id];
-		return { onClick: this.hexaClick(), group: sample.classnumber, title: sample.classori, subtitle: sample.labelsamples, width: this.tiles.width, height: this.tiles.height, MapColumns: this.mapsize, MapRows: this.mapsize, color: sample.projSOM, counts :this.features_per_node, sampleid: id };
+		return { onClick: this.hexaClick(), group: sample.classnumber, title: sample.classori, subtitle: sample.labelsamples, width: this.tiles.width, height: this.tiles.height, MapColumns: this.mapsize, MapRows: this.mapsize, color: sample.projSOM, counts: this.features_per_node, sampleid: id };
 	}
 
 	createMapAverage(id: number) {
 		let sample = this.data.mapaverage[id];
-		return { onClick: this.hexaClick(), group: sample.classnumber, title: sample.classori, subtitle: sample.labelsamples, width: this.tiles.width, height: this.tiles.height, MapColumns: this.mapsize, MapRows: this.mapsize, color: sample.projSOM, counts :this.features_per_node, sampleid: 2099 + id };
+		return { onClick: this.hexaClick(), group: sample.classnumber, title: sample.classori, subtitle: sample.labelsamples, width: this.tiles.width, height: this.tiles.height, MapColumns: this.mapsize, MapRows: this.mapsize, color: sample.projSOM, counts: this.features_per_node, sampleid: 2099 + id };
 	}
 
 	updateCluster() {
@@ -332,8 +335,8 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 				this.getSOMnodeImportance().then(() => {
 					this.zone.run(() => {
 						this.hexamappes.importances = [];
-						this.hexamappes.importances.push({ onClick: this.hexaClick(), title: "Features importance", width: this.tiles.width, height: this.tiles.height, MapColumns: this.mapsize, MapRows: this.mapsize, color: this.data.mapimportance[0].projSOM , counts :this.features_per_node, sampleid: 999 });
-						this.hexamappes.importances.push({ onClick: this.hexaClick(), title: "k-mers per node", width: this.tiles.width, height: this.tiles.height, MapColumns: this.mapsize, MapRows: this.mapsize, color: this.data.mapimportance[1].projSOM, counts :this.features_per_node , sampleid: 999 });
+						this.hexamappes.importances.push({ onClick: this.hexaClick(), title: "Features importance", width: this.tiles.width, height: this.tiles.height, MapColumns: this.mapsize, MapRows: this.mapsize, color: this.data.mapimportance[0].projSOM, counts: this.features_per_node, sampleid: 999 });
+						this.hexamappes.importances.push({ onClick: this.hexaClick(), title: "k-mers per node", width: this.tiles.width, height: this.tiles.height, MapColumns: this.mapsize, MapRows: this.mapsize, color: this.data.mapimportance[1].projSOM, counts: this.features_per_node, sampleid: 999 });
 					})
 				}).catch((err) => {
 					this.toastMessage(err, "ERROR!");

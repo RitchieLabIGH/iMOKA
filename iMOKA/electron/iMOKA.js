@@ -20,6 +20,12 @@ class iMOKA {
 				  }).catch(err=>{
 					  reject(err);
 				  });
+			  }else if(proc.name =="som"){
+				  this.som(proc.data).then((res)=>{
+					  resolve(res);
+				  }).catch(err=>{
+					  reject(err);
+				  })
 			  }else {
 				  reject({message : "Process " + proc.name + " not recognized." , success : false})
 			  }
@@ -28,10 +34,46 @@ class iMOKA {
 	 }
 	 
 	 timestamp(){
-		 let now= new Date(Date.now());
-		 return ""+now.getFullYear()+"_"+now.getMonth()+"_"+now.getDate()+"_"+now.getHours()+"_"+now.getMinutes()+"_"+now.getSeconds();
+		 return ""+Date.now();
+	 }
+	 som(data){
+		 return new Promise((resolve, reject)=>{
+				let req= data.context.getKmerTable({request: data.parameters.which_features == "all",file_type : "matrix"});
+			   	let out = { commands : [ ] , files : [] ,
+			   			copy_files: [] , success : true, uid : data.uid, 
+			   			errors : []}, matrix=[];
+			   	req.on("data", (line)=>{
+			   		matrix.push(line);
+			   	});
+			   	req.on("end", ()=>{
+			   		out.files.push({name : "matrix.tsv", content : matrix.join("")});
+			   		out.files.push({name : "info.json", content : JSON.stringify(data.parameters) });
+			   		let out_folder="${imoka_home}/experiments/"+data.parameters.matrix_uid+"/SOM/", timest= this.timestamp(), args = this.makeSOMargs(data);
+			   		out.commands.push("mkdir -p "+out_folder)
+			   		out.commands.push("mv ./matrix.tsv "+out_folder+timest+".matrix.tsv ")
+			   		out.commands.push("mv ./info.json "+out_folder+timest+".info.json ")
+			   		out.commands.push("singularity exec ${singularity_image} SOM.py "+out_folder+timest+".matrix.tsv "+out_folder+timest+" "+args);
+			   		out.commands.push("rm -f "+out_folder+timest+".matrix.tsv "+out_folder+timest+"/*/*.pkl "+out_folder+timest+"/*/*.npy "+out_folder+timest+"/*/*.png " )
+			   		out.memory = data.process.mem;
+			   		out.threads = data.process.cores;
+			   		resolve(out);
+			   	})
+			   	req.on("error", (err)=>{
+			   		reject(error);
+			   	})
+			 });
 	 }
 	 
+	 makeSOMargs(data){
+		 console.log(data)
+		 let args=" -cs "+data.parameters.csize;
+		 args+= " -i "+data.parameters.iterations;
+		 args+= " -lr "+data.parameters.learn_rate;
+		 args+= " -n "+data.parameters.nnsize;
+		 args+= " -ct "+data.parameters.cftype;
+		 args+= " -m "+ (data.parameters.norm ? "True" : "False");
+		 return args;
+	 }
 	 random_forest(data){
 		 return new Promise((resolve, reject)=>{
 			let req= data.context.getKmerTable({request: data.parameters.which_features == "all",file_type : "matrix"});
@@ -49,6 +91,7 @@ class iMOKA {
 		   		out.commands.push("mv ./matrix.tsv "+out_folder+timest+".matrix.tsv ")
 		   		out.commands.push("mv ./info.json "+out_folder+timest+".info.json ")
 		   		out.commands.push("singularity exec ${singularity_image} random_forest.py "+out_folder+timest+".matrix.tsv "+out_folder+timest+" "+args);
+		   		out.commands.push("rm -f "+out_folder+timest+".matrix.tsv")
 		   		out.memory = data.process.mem;
 		   		out.threads = data.process.cores;
 		   		resolve(out);

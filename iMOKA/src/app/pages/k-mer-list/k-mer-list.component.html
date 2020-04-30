@@ -1,230 +1,173 @@
-<mat-tab-group dynamicHeight mat-align-tabs="center"> <mat-tab
-	label="K-mer list">
+<mat-tab-group dynamicHeight mat-align-tabs="center"> <mat-tab label="K-mer list">
 <div class="tab-container">
-	<mat-card> <mat-card-content>
-	<div fxLayout="column" fxLayoutGap="32px">
-		<div fxFlex fxLayout.lt-sm="column" fxLayout="row wrap"
-			fxLayoutGap="32px" fxLayoutAlign="flex-start">
-			<mat-form-field fxFlex="0 1 calc(25% - 32px)"
-				fxFlex.lt-md="0 1 calc(33% - 32px)" fxFlex.lt-sm="100%">
-			<mat-select [(ngModel)]="dtOptions.displayedColumns"
-				placeholder="Show columns" multiple> <mat-option
-				value="importance" *ngIf="info.importance">Feature
-			importance</mat-option><mat-option
-				value="som" *ngIf="info.som">SOM node</mat-option> <mat-option value="best_rank">Best Rank </mat-option> <mat-option
-				value="kmer">Kmer </mat-option> <mat-option value="position">Genomic
-			position</mat-option> <mat-option value="genes">Overlapping genes</mat-option> <mat-option
-				value="events">Overlapping events</mat-option> <ng-container
-				*ngIf="info.kmers"> <ng-container
-				*ngFor="let g of info.kmers.groups_names; let i=index">
-			<mat-option value="mean_{{i}}"> {{g}} mean </mat-option> </ng-container> <ng-container
-				*ngFor="let p of info.kmers.predictors; let i=index">
-			<mat-option value="value_{{i}}"> {{p}} individual
-			accuracy </mat-option> <mat-option value="fc_{{i}}"> {{p}} fold
-			change </mat-option> <mat-option value="pval_{{i}}"> {{p}} p-value </mat-option> </ng-container>
+  <mat-card> <mat-card-content>
+  <div fxLayout="column" fxLayoutGap="12px">
+    <div fxFlex fxLayout="row wrap" fxLayoutGap="12px" fxLayoutAlign="flex-start">
+      <mat-form-field fxFlex="0 1 calc(25% - 12px)" fxFlex.lt-md="0 1 calc(33% - 12px)" fxFlex.lt-sm="100%">
+        <mat-select [(ngModel)]="dtOptions.displayedColumns" placeholder="Show columns" multiple>
+          <mat-option value="importance" *ngIf="info.importance">Feature importance</mat-option>
+          <mat-option value="som" *ngIf="info.som">SOM node</mat-option>
+          <mat-option value="best_rank">Best Rank </mat-option>
+          <mat-option value="kmer">Kmer </mat-option>
+          <mat-option value="position">Genomic position</mat-option>
+          <mat-option value="genes">Overlapping genes</mat-option>
+          <mat-option value="events">Overlapping events</mat-option>
+          <ng-container *ngIf="info.kmers"> 
+            <ng-container *ngFor="let g of info.kmers.groups_names; let i=index"> 
+              <mat-option value="mean_{{i}}"> {{g}} mean </mat-option>
+            </ng-container>
+            <ng-container *ngFor="let p of info.kmers.predictors; let i=index"> 
+              <mat-option value="value_{{i}}"> {{p}} individual accuracy </mat-option> 
+              <mat-option value="fc_{{i}}"> {{p}} fold change </mat-option> 
+              <mat-option value="pval_{{i}}"> {{p}} p-value </mat-option> 
+            </ng-container> 
+          </ng-container> 
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field fxFlex="0 1 calc(25% - 12px)" fxFlex.lt-md="0 1 calc(33% - 12px)" fxFlex.lt-sm="100%"> 
+        <mat-select [(ngModel)]="dtOptions.eventsFilter" placeholder="Events filter" (openedChange)="! $event && refreshTable('search')  " multiple> 
+          <mat-option *ngFor="let ev of dtOptions.stats.events" value="{{ev.name}}"> {{ev.name}} ({{ev.visible}}/{{ev.visible + ev.filtered}}) </mat-option> 
+        </mat-select> 
+      </mat-form-field>
+      <mat-form-field *ngIf="data.models" fxFlex="0 1 calc(25% - 12px)" fxFlex.lt-md="0 1 calc(25% - 12px)" fxFlex.lt-sm="50%"> 
+        <mat-select [(ngModel)]="this.dtOptions.subset" placeholder="Model filter" (openedChange)="! $event && refreshTable('search')  "> 
+          <mat-option value="">None</mat-option> 
+          <mat-option *ngFor="let mod of data.models; let i=index" value="{{mod.features}}">Model #{{i}} (Acc {{mod.acc | number}})</mat-option> 
+        </mat-select> 
+      </mat-form-field>
+      <mat-form-field *ngIf="info.som" fxFlex="0 1 calc(25% - 12px)" fxFlex.lt-md="0 1 calc(25% - 12px)" fxFlex.lt-sm="50%"> 
+        <mat-select [(ngModel)]="this.dtOptions.bmu" placeholder="SOM nodes" (openedChange)="! $event && refreshTable('search')" multiple> 
+          <mat-option *ngFor="let nfeat of info.som.nodes; let i=index" [value]="i">Node #{{i}} ({{nfeat}} features )</mat-option> 
+        </mat-select> 
+      </mat-form-field>
+    </div>
+    <div fxFlex fxLayout="row wrap" fxLayoutGap="12px" fxLayoutAlign="flex-start">
+      <mat-form-field fxFlex="0 1 calc(15% - 12px)" fxFlex.lt-md="0 1 calc(25% - 12px)" fxFlex.lt-sm="50%"> <input matInput placeholder="Minimum count" [(ngModel)]="dtOptions.minCount">
+      <button mat-icon-button matSuffix (click)="refreshTable('search')">
+        <mat-icon>autorenew</mat-icon>
+      </button>
+      <br />
+      </mat-form-field>
+      <mat-form-field fxFlex="0 1 calc(15% - 12px)" fxFlex.lt-md="0 1 calc(25% - 12px)" fxFlex.lt-sm="50%"> <input matInput placeholder="Minimum accuracy" [(ngModel)]="dtOptions.minPred">
+      <button mat-icon-button matSuffix (click)="refreshTable('search')">
+        <mat-icon>autorenew</mat-icon>
+      </button>
+      <br />
+      </mat-form-field>
+      <mat-form-field fxFlex="0 1 calc(15% - 12px)" fxFlex.lt-md="0 1 calc(25% - 12px)" fxFlex.lt-sm="50%"> <input matInput placeholder="Minimum abs FC" [(ngModel)]="dtOptions.minFC">
+      <button mat-icon-button matSuffix (click)="refreshTable('search')">
+        <mat-icon>autorenew</mat-icon>
+      </button>
+      <br />
+      </mat-form-field>
+      <mat-form-field fxFlex="0 1 calc(15% - 12px)" fxFlex.lt-md="0 1 calc(25% - 12px)" fxFlex.lt-sm="50%"> <input matInput placeholder="Max p-val" [(ngModel)]="dtOptions.minPval">
+      <button mat-icon-button matSuffix (click)="refreshTable('search')">
+        <mat-icon>autorenew</mat-icon>
+      </button>
+      <br />
+      </mat-form-field>
+    </div>
+    <div fxFlex fxLayout="row wrap" fxLayoutGap="12px">
+      <div fxFlex="0 1 calc(33% - 12px)" >
+        <mat-form-field style="width:100%"> <input matInput placeholder="Search" [(ngModel)]="dtOptions.search.value">
+        <button mat-icon-button matSuffix (click)="refreshTable('search')">
+          <mat-icon>search</mat-icon>
+        </button>
+        <br />
+        </mat-form-field>
+      </div>
+      <div fxFlex="0 1 calc(33% -12 px)"  class="button-list-h">
+          <button  mat-raised-button (click)="showGeneOntology();">Gene ontology</button>
+          <button  mat-raised-button (click)="extract();">Extract</button>
+          <button  mat-raised-button (click)="analyse();">Analyse</button>
+      </div>
+      <mat-paginator fxFlex="0 1 calc(33% - 12px)" [length]="dtOptions.recordsFiltered" [pageSize]="dtOptions.pageSize" [pageIndex]="dtOptions.pageIndex" (page)="refreshTable($event)" [pageSizeOptions]="[10, 15, 20]"></mat-paginator>
+    </div>
+  </div>
 
-			</ng-container> </mat-select> </mat-form-field>
-			<mat-form-field fxFlex="0 1 calc(25% - 32px)"
-				fxFlex.lt-md="0 1 calc(33% - 32px)" fxFlex.lt-sm="100%">
-			<mat-select [(ngModel)]="dtOptions.eventsFilter"
-				placeholder="Events filter"
-				(openedChange)="! $event && refreshTable('search')  " multiple>
-			<mat-option *ngFor="let ev of dtOptions.stats.events"
-				value="{{ev.name}}">{{ev.name}}
-			({{ev.visible}}/{{ev.visible + ev.filtered}})</mat-option> </mat-select> </mat-form-field>
-			<span fxFlex></span>
-			<div fxFlex="0 1 calc(25% - 32px)"
-				fxFlex.lt-md="0 1 calc(33% - 32px)" fxFlex.lt-sm="100%">
-				<mat-form-field> <input matInput
-					placeholder="Search" [(ngModel)]="dtOptions.search.value">
-				<button mat-icon-button matSuffix (click)="refreshTable('search')">
-					<mat-icon>search</mat-icon>
-				</button>
-				<br />
-				</mat-form-field>
-			</div>
-		</div>
-		<div fxFlex fxLayout.lt-sm="column" fxLayout="row wrap"
-			fxLayoutGap="32px" fxLayoutAlign="flex-start">
-			<mat-form-field fxFlex="0 1 calc(15% - 32px)"
-				fxFlex.lt-md="0 1 calc(25% - 32px)" fxFlex.lt-sm="50%">
-			<input matInput placeholder="Minimum count"
-				[(ngModel)]="dtOptions.minCount">
-			<button mat-icon-button matSuffix (click)="refreshTable('search')">
-				<mat-icon>autorenew</mat-icon>
-			</button>
-			<br />
-			</mat-form-field>
-			<mat-form-field fxFlex="0 1 calc(15% - 32px)"
-				fxFlex.lt-md="0 1 calc(25% - 32px)" fxFlex.lt-sm="50%">
-			<input matInput placeholder="Minimum accuracy"
-				[(ngModel)]="dtOptions.minPred">
-			<button mat-icon-button matSuffix (click)="refreshTable('search')">
-				<mat-icon>autorenew</mat-icon>
-			</button>
-			<br />
-			</mat-form-field>
-			<mat-form-field fxFlex="0 1 calc(15% - 32px)"
-				fxFlex.lt-md="0 1 calc(25% - 32px)" fxFlex.lt-sm="50%">
-			<input matInput placeholder="Minimum abs FC"
-				[(ngModel)]="dtOptions.minFC">
-			<button mat-icon-button matSuffix (click)="refreshTable('search')">
-				<mat-icon>autorenew</mat-icon>
-			</button>
-			<br />
-			</mat-form-field>
-			<mat-form-field fxFlex="0 1 calc(15% - 32px)"
-				fxFlex.lt-md="0 1 calc(25% - 32px)" fxFlex.lt-sm="50%">
-			<input matInput placeholder="Max p-val"
-				[(ngModel)]="dtOptions.minPval">
-			<button mat-icon-button matSuffix (click)="refreshTable('search')">
-				<mat-icon>autorenew</mat-icon>
-			</button>
-			<br />
-			</mat-form-field>
-		</div>
-		<div fxFlex fxLayout.lt-sm="column" fxLayout="row wrap"
-			fxLayoutGap="12px" fxLayoutAlign="flex-start">
-			<button fxFlex="0 1 calc(20% - 12px)"
-				fxFlex.lt-md="0 1 calc(25% - 12px)" fxFlex.lt-sm="50%"
-				mat-raised-button (click)="showGeneOntology();">Gene
-				ontology</button>
-			<button fxFlex="0 1 calc(20% - 12px)"
-				fxFlex.lt-md="0 1 calc(25% - 12px)" fxFlex.lt-sm="50%"
-				mat-raised-button (click)="extract();">Extract</button>
-			<button fxFlex="0 1 calc(10% - 12px)" *ngIf="session.profile.process_config.profiles.length > 0 && session.files.kmers.original_request != session.files.kmers.file"
-				fxFlex.lt-md="0 1 calc(12% - 12px)" fxFlex.lt-sm="25%"
-				mat-raised-button (click)="analyse('rf');">RF</button>
-			<button fxFlex="0 1 calc(10% - 12px)" *ngIf="session.profile.process_config.profiles.length > 0 && session.files.kmers.original_request != session.files.kmers.file"
-				fxFlex.lt-md="0 1 calc(12% - 12px)" fxFlex.lt-sm="25%"
-				mat-raised-button (click)="analyse('som');">SOM</button>
-			<mat-form-field *ngIf="data.models" fxFlex="0 1 calc(20% - 12px)"
-				fxFlex.lt-md="0 1 calc(25% - 12px)" fxFlex.lt-sm="50%">
-			<mat-select [(ngModel)]="this.dtOptions.subset" placeholder="Model filter" 
-				(openedChange)="! $event && refreshTable('search')  ">
-			<mat-option value="">None</mat-option> <mat-option
-				*ngFor="let mod of data.models; let i=index"
-				value="{{mod.features}}">Model #{{i}} (Acc {{mod.acc |
-			number}})</mat-option> </mat-select> </mat-form-field>
-			<mat-form-field *ngIf="info.som" fxFlex="0 1 calc(20% - 12px)"
-				fxFlex.lt-md="0 1 calc(25% - 12px)" fxFlex.lt-sm="50%" >
-			<mat-select [(ngModel)]="this.dtOptions.bmu" placeholder="SOM nodes" 
-				(openedChange)="! $event && refreshTable('search')" multiple>
-			<mat-option
-				*ngFor="let nfeat of info.som.nodes; let i=index"
-				[value]="i" >Node #{{i}} ({{nfeat}} features )</mat-option> </mat-select> </mat-form-field>
-
-		</div>
-	</div>
-	<div class="mat-elevation-z6 table-container" style="margin-top: 32px">
-		<table mat-table matSort (matSortChange)="refreshTable($event)"
-			[dataSource]="dataSource">
-			<ng-container matColumnDef="importance">
-			<th mat-header-cell *matHeaderCellDef mat-sort-header>Feature
-				importance</th>
-			<td mat-cell *matCellDef="let row">{{row.importance ? (
-				row.importance.mean | number ) : 'NA'}}</td>
-			</ng-container>
-			<ng-container matColumnDef="som">
-			<th mat-header-cell *matHeaderCellDef mat-sort-header>SOM node</th>
-			<td mat-cell *matCellDef="let row">{{(row.bmu | typeof) != 'undefined' ? (
-				row.bmu | number ) : 'NA' }}</td>
-			</ng-container>
-			<ng-container matColumnDef="best_rank">
-			<th mat-header-cell *matHeaderCellDef mat-sort-header>Best Rank</th>
-			<td mat-cell *matCellDef="let row">{{row.best_rank }}</td>
-			</ng-container>
-			<ng-container matColumnDef="kmer">
-			<th mat-header-cell *matHeaderCellDef mat-sort-header>Kmer</th>
-			<td mat-cell *matCellDef="let row"><button mat-icon-button
-					(click)="showInfo(row.kmer, 'kmers')">
-					<mat-icon>details</mat-icon>
-				</button>{{row.kmer}}</td>
-			</ng-container>
-			<ng-container matColumnDef="position">
-			<th mat-header-cell *matHeaderCellDef mat-sort-header>Alignment
-				position</th>
-			<td mat-cell *matCellDef="let row"><mat-list dense> <mat-list-item
-					*ngFor="let p of row.alignments">
-				<button mat-icon-button (click)="searchBrowser(p)"
-					title="Go to this location in the browser">
-					<mat-icon>explore</mat-icon>
-				</button>
-				{{p.chromosome}}:{{p.start}}-{{p.end}} ({{p.strand}})</mat-list-item></mat-list></td>
-			</ng-container>
-			<ng-container matColumnDef="genes">
-			<th mat-header-cell *matHeaderCellDef mat-sort-header>Overlapping
-				genes</th>
-			<td mat-cell *matCellDef="let row"><mat-list dense> <mat-list-item
-					*ngFor="let g of row.genes"> <a
-					*ngIf="g && g!='NA' && g.length > 1 " target='_blank'
-					href='https://www.genecards.org/cgi-bin/carddisp.pl?gene={{g}}'><mat-icon>link</mat-icon></a>
-				{{g}}</mat-list-item></mat-list></td>
-			</ng-container>
-			<ng-container matColumnDef="events">
-			<th mat-header-cell *matHeaderCellDef mat-sort-header>Overlapping
-				events</th>
-			<td mat-cell *matCellDef="let row"><mat-list dense> <mat-list-item
-					*ngFor="let ev of row.ev_types">{{ev}}</mat-list-item></mat-list></td>
-			</ng-container>
-			<ng-container *ngIf="info.kmers"> <ng-container
-				*ngFor="let grp of info.kmers.groups_names; let i=index ">
-			<ng-container matColumnDef="mean_{{i}}">
-			<th mat-header-cell *matHeaderCellDef mat-sort-header>{{grp}}
-				mean count</th>
-			<td mat-cell *matCellDef="let row"><span>{{row.means[i] |
-					number}} ( ± {{row.stdevs[i] | number}} ) </span></td>
-			</ng-container> </ng-container> <ng-container
-				*ngFor="let pred of info.kmers.predictors; let i=index ">
-			<ng-container matColumnDef="fc_{{i}}">
-			<th mat-header-cell *matHeaderCellDef mat-sort-header>{{pred}}
-				FC</th>
-			<td mat-cell *matCellDef="let row">{{row.fc[i] | number}}</td>
-			</ng-container> <ng-container matColumnDef="value_{{i}}">
-			<th mat-header-cell *matHeaderCellDef mat-sort-header>{{pred}}
-				accuracy</th>
-			<td mat-cell *matCellDef="let row">{{row.values[i] | number}}</td>
-			</ng-container> <ng-container matColumnDef="pval_{{i}}">
-			<th mat-header-cell *matHeaderCellDef mat-sort-header>{{pred}}
-				p-value</th>
-			<td mat-cell *matCellDef="let row">{{row.pvalues[i] | number}}</td>
-			</ng-container> </ng-container> </ng-container>
-
-			<tr mat-header-row
-				*matHeaderRowDef="dtOptions.displayedColumns;sticky : true;"></tr>
-			<tr mat-row cdk-row
-				*matRowDef="let row; columns: dtOptions.displayedColumns"></tr>
-		</table>
-	</div>
-	<mat-paginator [length]="dtOptions.recordsFiltered"
-		[pageSize]="dtOptions.pageSize" [pageIndex]="dtOptions.pageIndex"
-		(page)="refreshTable($event)" [pageSizeOptions]="[10, 15, 20]"></mat-paginator>
-	</mat-card-content> </mat-card>
+  <div class="mat-elevation-z6 table-container" style="margin-top: 12px">
+    <table mat-table matSort (matSortChange)="refreshTable($event)" [dataSource]="dataSource">
+      <ng-container matColumnDef="importance">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Feature importance</th>
+      <td mat-cell *matCellDef="let row">{{row.importance ? ( row.importance.mean | number ) : 'NA'}}</td>
+      </ng-container>
+      <ng-container matColumnDef="som">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>SOM node</th>
+      <td mat-cell *matCellDef="let row">{{(row.bmu | typeof) != 'undefined' ? ( row.bmu | number ) : 'NA' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="best_rank">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Best Rank</th>
+      <td mat-cell *matCellDef="let row">{{row.best_rank }}</td>
+      </ng-container>
+      <ng-container matColumnDef="kmer">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Kmer</th>
+      <td mat-cell *matCellDef="let row">
+        <button mat-icon-button (click)="showInfo(row.kmer, 'kmers')">
+          <mat-icon>details</mat-icon>
+        </button> {{row.kmer}}
+      </td>
+      </ng-container>
+      <ng-container matColumnDef="position">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Alignment position</th>
+      <td mat-cell *matCellDef="let row"><mat-list dense> <mat-list-item *ngFor="let p of row.alignments">
+        <button mat-icon-button (click)="searchBrowser(p)" title="Go to this location in the browser">
+          <mat-icon>explore</mat-icon>
+        </button>
+        {{p.chromosome}}:{{p.start}}-{{p.end}} ({{p.strand}})</mat-list-item></mat-list></td>
+      </ng-container>
+      <ng-container matColumnDef="genes">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Overlapping genes</th>
+      <td mat-cell *matCellDef="let row">
+        <mat-list dense>
+          <mat-list-item *ngFor="let g of row.genes"> 
+            <a *ngIf="g && g!='NA' && g.length > 1 " target='_blank' href='https://www.genecards.org/cgi-bin/carddisp.pl?gene={{g}}'> <mat-icon>link</mat-icon></a> {{g}}
+          </mat-list-item>
+         </mat-list>
+      </td>
+      </ng-container>
+      <ng-container matColumnDef="events">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Overlapping events</th>
+      <td mat-cell *matCellDef="let row"><mat-list dense> <mat-list-item *ngFor="let ev of row.ev_types">{{ev}}</mat-list-item> </mat-list></td>
+      </ng-container>
+      <ng-container *ngIf="info.kmers"> <ng-container *ngFor="let grp of info.kmers.groups_names; let i=index "> <ng-container matColumnDef="mean_{{i}}">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{grp}} mean count</th>
+      <td mat-cell *matCellDef="let row"><span>{{row.means[i] | number}} ( ± {{row.stdevs[i] | number}} ) </span></td>
+      </ng-container> </ng-container> <ng-container *ngFor="let pred of info.kmers.predictors; let i=index "> <ng-container matColumnDef="fc_{{i}}">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{pred}} FC</th>
+      <td mat-cell *matCellDef="let row">{{row.fc[i] | number}}</td>
+      </ng-container> <ng-container matColumnDef="value_{{i}}">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{pred}} accuracy</th>
+      <td mat-cell *matCellDef="let row">{{row.values[i] | number}}</td>
+      </ng-container> <ng-container matColumnDef="pval_{{i}}">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>{{pred}} p-value</th>
+      <td mat-cell *matCellDef="let row">{{row.pvalues[i] | number}}</td>
+      </ng-container> </ng-container> </ng-container>
+      <tr mat-header-row *matHeaderRowDef="dtOptions.displayedColumns;sticky : true;"></tr>
+      <tr mat-row cdk-row *matRowDef="let row; columns: dtOptions.displayedColumns"></tr>
+    </table>
+  </div>
+  </mat-card-content> </mat-card>
 </div>
 </mat-tab> <mat-tab label="IGV Genome Browser">
 <div class="tab-container">
-	<mat-card> <mat-card-content>
-	<div class="igv-root-div">
-		<div class="igvControlDiv">
-			<div class="igv-navbar">
-				<div class="igv-nav-bar-left-container"></div>
-				<div class="igv-nav-bar-right-container">
-					<div class="igv-nav-bar-toggle-button-container">
-						<div class="igv-nav-bar-button" (click)="loadExternalTrack()">Load</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-	<div id="igv-browser" style='min-height: 500px;'></div>
-	</mat-card-content> </mat-card>
+  <mat-card> <mat-card-content>
+  <div class="igv-root-div">
+    <div class="igvControlDiv">
+      <div class="igv-navbar">
+        <div class="igv-nav-bar-left-container"></div>
+        <div class="igv-nav-bar-right-container">
+          <div class="igv-nav-bar-toggle-button-container">
+            <div class="igv-nav-bar-button" (click)="loadExternalTrack()">Load</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="igv-browser" style='min-height: 500px;'></div>
+  </mat-card-content> </mat-card>
 </div>
 </mat-tab> <mat-tab label="File informations">
 <div class="tab-container">
-	<mat-card *ngIf="info.kmers">
-		<mat-card-content>
-			<app-file-kmer [info]="info.kmers"></app-file-kmer>
-		</mat-card-content>
-	</mat-card>
+  <mat-card *ngIf="info.kmers"> <mat-card-content> <app-file-kmer [info]="info.kmers"></app-file-kmer> </mat-card-content> </mat-card>
 </div>
 </mat-tab> </mat-tab-group>

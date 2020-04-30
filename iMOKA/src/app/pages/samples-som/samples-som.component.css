@@ -3,7 +3,9 @@
 	position:sticky;
 	top:0;
 	z-index:100;
+	width:100%;
 }
+
 .button-hide-container {
 	height:1px;
 	overflow:visible;
@@ -14,20 +16,20 @@
 	z-index:101;
 }
 .hidden-vertical {
-	max-height : 0px !important;
-	overflow-y : hidden;
+	height : 0px !important;
+	overflow-y : hidden !important;
 }
 .hidden-vertical-fade {
-	transition: max-height 0.5s;
-	max-height: 50vh;
-	overflow-y : auto;
+	transition: height 0.5s;
+	height: auto;
+	overflow-y:visible;
 	padding:0;
 	margin:0;
 	
 }
 
 .main {
-	height : 100%;
+	height : 95%;
 }
 
 .tab-content {

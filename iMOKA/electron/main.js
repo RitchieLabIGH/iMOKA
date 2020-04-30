@@ -182,6 +182,7 @@ ipcMain.on("getData" , (event, id, request) => {
     	}).catch((err)=>{
     		console.log(err);
     		win.webContents.send(event_id, { "message": err, code:1 } );
+    		mess.sendMessage({ "message": err, "type" : "error" } );
     	})
     }
 });
@@ -208,22 +209,31 @@ ipcMain.on("action" , (event, id, request) => {
     	let action = backend[request.action](request);
     	if (action instanceof Promise){
     		action.then((res)=>{
+    			console.log(res)
     			win.webContents.send("action-"+request.id, { "message": res , code:0} );
     		}).catch((err)=>{
-    			console.log(err)
+    			win.webContents.send("action-"+request.id, { "message": err , code:1} );
+    			mess.sendMessage({ "message": err, "type" : "error" } );
     		});
     	}else {
+    		let has_err=false;
     		action.subscribe((res)=>{
     			win.webContents.send("action-"+request.id, { "message": res , code:0} );
     		}, (err)=>{
+    			has_err=true;
     			if (err.message){
-    				win.webContents.send("action-"+request.id,  err );
+    				mess.sendMessage({ "message": err.message, "type" : "error" } );
     			} else {
-    				win.webContents.send("action-"+request.id, { "message": err , code:1} );
+    				mess.sendMessage({ "message": err, "type" : "error" } );
     			}
     			
     		},()=>{
-    			win.webContents.send("action-"+request.id, { "message": "COMPLETED", "code" : 0} );
+    			if (has_err){
+    				win.webContents.send("action-"+request.id, { "message": "COMPLETED", "code" : 1} );
+    			} else {
+    				win.webContents.send("action-"+request.id, { "message": "COMPLETED", "code" : 0} );
+    			}
+    			
     		})
     	}
     } else {

@@ -9,7 +9,7 @@ import { MatTabGroup } from '@angular/material/tabs';
 import { UemService } from '../../services/uem.service';
 import { FileService } from '../../services/file.service';
 import { Session } from '../../interfaces/session';
-import {KmerDataTableOptions} from '../../interfaces/kmer';
+import { KmerDataTableOptions } from '../../interfaces/kmer';
 
 
 import { OpenTrackComponent } from './dialog/open-track/open-track.component'
@@ -23,6 +23,7 @@ import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { Subscription } from 'rxjs';
 
 import { RandomForestComponent } from './dialog/random-forest/random-forest.component';
+import { NewSomComponent } from './dialog/som/new-som.component';
 
 import igv from '../../plugins/igv/igv.js';
 import * as $ from 'jquery';
@@ -151,13 +152,13 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		this.dataSource.loadKmer(this.dtOptions).then(() => this.cd.markForCheck());
 	}
 
-	initDtOptions() :KmerDataTableOptions{
+	initDtOptions(): KmerDataTableOptions {
 		return {
 			displayedColumns: ['best_rank', 'kmer', 'position', 'genes', 'events'],
 			search: { value: "" },
 			order: { name: 'best_rank', asc: true },
 			subset: [],
-			bmu : [] ,
+			bmu: [],
 			eventsFilter: [],
 			minCount: 0,
 			minPred: 0,
@@ -189,7 +190,7 @@ export class KMerListComponent implements OnInit, OnDestroy {
 
 	initSOM(): Promise<any> {
 		return new Promise<any>((resolve, reject) => {
-			if (! this.dtOptions.displayedColumns.includes("som")) {
+			if (!this.dtOptions.displayedColumns.includes("som")) {
 				this.dtOptions.displayedColumns.unshift("som");
 			}
 		});
@@ -198,10 +199,10 @@ export class KMerListComponent implements OnInit, OnDestroy {
 	initImportance() {
 		this.subscriptions.push(this.trackService.getData("importance_models").subscribe((resp) => {
 			this.data.models = [];
-			resp.forEach((mod)=>{
-				this.data.models.push({fetatures : mod.features, acc : mod.models[mod.best_model].acc})
+			resp.forEach((mod) => {
+				this.data.models.push({ fetatures: mod.features, acc: mod.models[mod.best_model].acc })
 			});
-			if (! this.dtOptions.displayedColumns.includes("importance")) {
+			if (!this.dtOptions.displayedColumns.includes("importance")) {
 				this.dtOptions.displayedColumns.unshift("importance");
 			}
 		}));
@@ -286,18 +287,34 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	analyse(what: string) {
-		this.zone.run(() => {
-			switch (what) {
+	analyse() {
+		let analyse_data = (args) => {
+			switch (args.what) {
 				case "rf":
-					this.zone.run(() => this.dialog.open(RandomForestComponent));
+					this.zone.run(() => {this.dialog.open(RandomForestComponent)});
 					break
 				case "som":
+					this.zone.run(()=>{this.dialog.open(NewSomComponent)});
 					break;
 				default:
-					this.toastMessage("Analysis " + what + " type not found.", "ERROR!")
+					this.toastMessage("Analysis " + args.what + " type not found.", "ERROR!")
 
 			}
+		}
+
+		let data = new InfoData("Analysis");
+		if (this.session.profile.process_config.profiles.length > 0 && this.session.files.kmers.original_request != this.session.files.kmers.file) {
+			data.information_list.push(new InfoListElement("Random Forest", undefined, analyse_data, {what : "rf", description : "Create prediction models using RF with a subset of k-mers."}))
+			data.information_list.push(new InfoListElement("SOM", undefined, analyse_data, {what : "som", description: "Aggregate the k-mers using a self organizing map and visualize the samples as aboundance maps"}))
+		} else {
+			if (this.session.profile.process_config.profiles.length == 0) {
+				data.information_list.push(new InfoListElement("You need to create a valid profile first."))
+			} else {
+				data.information_list.push(new InfoListElement("You need to import this k-mer list in the Experiments page."))
+			}
+		}
+		this.zone.run(() => {
+			this.bottomSheet.open(InfoComponent, { data: data });
 		});
 	}
 

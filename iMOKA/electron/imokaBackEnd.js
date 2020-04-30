@@ -67,14 +67,11 @@ class iMokaBE extends EventEmitter {
 		if (! this.processor){
 			throw "Processor not loaded";
 		}
-		request.info = this.clone(this.data.kmers.info); // / given that the
-															// file to import
-															// had been already
-															// opened
+		request.info = this.clone(this.data.kmers.info); 
+		// given that the file to import had been already opened
 		request.info.uid=this.makeid(10);
 		
 		return new Promise((resolve, reject)=>{
-			console.log("Updating matrices")
 			this.processor.importKmerList(request).catch((err)=>{
 				reject(err);
 			}).then((res)=>{
@@ -223,7 +220,15 @@ class iMokaBE extends EventEmitter {
 	
 	queueAction(request){
 		if ( request.subaction == "delete"){
-			return this.processor.delJob(request.uid);
+			return new Promise((resolve, reject)=>{
+				this.processor.delJob(request.uid).then((res)=>{
+					resolve(res);
+				}).catch((err)=>{
+					reject(err);
+				}).finally(()=>{
+					this.sendSession();
+				});
+			});
 		} else {
 			return new Promise((resolve, reject)=>{
 				reject("Subaction "+request.subaction+" unknown.")
@@ -316,6 +321,12 @@ class iMokaBE extends EventEmitter {
 							let names=file_name.split(" ");
 							if ( names[1] == "RF"){
 								this.processor.getModel(names[0], names[2]).then((model)=>{
+									resolve(model)
+								}).catch((err)=>{
+									reject(err);
+								});
+							}else if(names[1]=="SOM"){
+								this.processor.getSOM(names[0], names[2], parseInt(names[3])).then((model)=>{
 									resolve(model)
 								}).catch((err)=>{
 									reject(err);

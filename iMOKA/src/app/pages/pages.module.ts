@@ -35,6 +35,7 @@ import { PredictionModelsComponent } from './prediction-models/prediction-models
 import { ModelDisplayComponent } from './prediction-models/model-display/model-display.component';
 
 import { RandomForestComponent } from './k-mer-list/dialog/random-forest/random-forest.component';
+import {NewSomComponent} from './k-mer-list/dialog/som/new-som.component';
 import { CoreModule } from '../core/core.module';
 import { NodesInfoComponent } from './samples-som/nodes-info/nodes-info.component'
 import { HexamapComponent } from './samples-som/hexamap/hexamap.component';
@@ -71,6 +72,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
 		RandomForestComponent,
 		HexamapComponent,
 		AboutComponent,
+		NewSomComponent,
 	],
 	imports: [
 		CommonModule,
@@ -96,6 +98,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
 		ReduceComponent,
 		RandomForestComponent,
 		NodesInfoComponent,
+		NewSomComponent,
 	]
 })
 export class PagesModule { }

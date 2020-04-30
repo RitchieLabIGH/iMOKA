@@ -10,6 +10,6 @@
       </mat-panel-description>
     </mat-expansion-panel-header>
    	<div *ngIf="(el.content | typeof) === 'string'" [innerHTML]="el.content" style="max-height:200px;overflow:auto;" ></div>
-   	<div *ngIf="(el.content | typeof) === 'function'" ><button mat-raised-button (click)="el.content(el.args)">Click here </button></div>
+   	<div *ngIf="(el.content | typeof) === 'function'" ><p *ngIf="el.args.description">{{el.args.description}}</p><button mat-raised-button (click)="el.content(el.args)">{{el.args.title ? el.args.title : 'Select' }}</button></div>
   </mat-expansion-panel>
 </mat-accordion>

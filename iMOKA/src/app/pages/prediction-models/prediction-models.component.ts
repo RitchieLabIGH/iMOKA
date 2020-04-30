@@ -34,7 +34,7 @@ export class PredictionModelsComponent implements OnInit {
             this.initImportance();
         } ));
         this.subscriptions.push(this.trackService.getData("importance").subscribe((response)=>{
-            let fi={data_boxplot : [], data_barplot :[{showlegend:false, x:[], y:[], type:"scatter"}], display_data:[] ,layout : {title : "Relative Feature Importances" }, from_pos : 0 , to_pos : 20};
+            let fi={data_boxplot : [], data_barplot :[{showlegend:false, x:[], y:[], type:"scatter"}], display_data:[] ,layout : {autosize: true, title : "Relative Feature Importances" }, from_pos : 0 , to_display : 20};
             let sorted_keys=Object.keys(response);
             sorted_keys.sort((a,b)=>{return response[a].rank - response[b].rank});
             for ( let i=0 ; i < sorted_keys.length; i++){

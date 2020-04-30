@@ -144,7 +144,9 @@ div.row {
 .hide-scroll::-webkit-scrollbar {
   display: none;
 }
-
+.hide-scroll{
+	overflow:auto;
+}
 
 .banner-fab {
 	height : 28px !important;

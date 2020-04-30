@@ -97,7 +97,7 @@ export class PantherGoComponent implements OnInit, OnDestroy {
 					title: 'Number of genes',
 				},
 				yaxis: {
-					title: 'GO term',
+					title: '',
 					range: [data.length - 10, data.length],
 				}, margin : {l : 200}
 				
@@ -121,7 +121,7 @@ export class PantherGoComponent implements OnInit, OnDestroy {
 					title: 'p-value (-log10)'
 				},
 				yaxis: {
-					title: 'GO term',
+					title: '',
 					range: [data.length - 10, data.length]	
 				}, margin : {l : 200}
 			}

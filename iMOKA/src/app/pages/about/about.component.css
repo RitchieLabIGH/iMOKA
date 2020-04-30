@@ -6,7 +6,7 @@
 	padding : 0 10em;
 }
 p {
-	font-size: 1.5em;
+	font-size: 16px;
 }
 
 
@@ -16,7 +16,7 @@ p {
 }
 
 .logo-container img {
-	height : 10vh;
-	margin: 0 30px
+	height : 8vh;
+	margin: 0 15px
 	
 }
