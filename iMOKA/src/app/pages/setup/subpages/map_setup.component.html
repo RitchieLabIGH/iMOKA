@@ -6,7 +6,7 @@
   		<ng-container  *ngIf="setting.annotations && setting.annotations.length > 0">
   		<mat-form-field fxFlex="45%">
 			<mat-label>Map configurations in {{setting.setting_name}}</mat-label> 
-			<mat-select [(ngModel)]="current_ann" [disabled]="modify_ann"> 
+			<mat-select [(ngModel)]="current_ann" [value]="current_ann" [disabled]="modify_ann"> 
 			<mat-option
 				*ngFor="let ann of setting.annotations; let i=index"
 				value="{{i}}" > {{ ann.name }} </mat-option>
@@ -42,7 +42,7 @@
   		<ng-container  *ngIf="setting.mappers && setting.mappers.length > 0">
   		<mat-form-field fxFlex="45%">
 			<mat-label>Map configurations in {{setting.setting_name}}</mat-label> 
-			<mat-select [(ngModel)]="current_map" [disabled]="modify_mapper"> 
+			<mat-select [(ngModel)]="current_map" [value]="current_map" [disabled]="modify_mapper"> 
 			<mat-option
 				*ngFor="let map of setting.mappers; let i=index"
 				value="{{i}}" > {{ map.name }} </mat-option>

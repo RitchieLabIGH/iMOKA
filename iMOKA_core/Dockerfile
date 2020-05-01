@@ -55,10 +55,10 @@ RUN apt-get clean all && \
 	rm -fr ./gmap-2019-05-12 gmap-gsnap-2019-05-12.tar.gz && \
 ### SEQKIT 
 	cd /iMOKA/external/ && \
-	tar -zxvf seqkit_linux_amd64.tar.gz && chmod +x ./seqkit && \
+	tar -zxvf seqkit_linux_amd64.tar.gz && chmod +x ./seqkit && rm -f seqkit_linux_amd64.tar.gz && \
 ### SRATOOLKIT
 	cd /iMOKA/external/ && \
-	tar -zxvf sratoolkit.2.10.0-ubuntu64-light.tar.gz && \
+	tar -zxvf sratoolkit.2.10.0-ubuntu64-light.tar.gz && rm -f sratoolkit.2.10.0-ubuntu64-light.tar.gz && \
 ### Actual iMOKA
 	cd /iMOKA/Release && \
 	make clean && \

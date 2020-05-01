@@ -69,6 +69,9 @@
 							*ngIf="mainParam.value.connection_type == 'local'"
 							>folder</mat-icon></button> </mat-form-field>
 					</div>
+                    <div fxFlex="0 1 calc(33.3% - 32 px)" *ngIf="! isNewSetting">
+                        <mat-slide-toggle formControlName="update">Download the image again</mat-slide-toggle>
+                    </div>
 					<div fxFlex="100%">
 						<mat-form-field style="width:100%"> <input
 							matInput type="text" placeholder="Singularity image"
@@ -80,6 +83,7 @@
 							extended </strong> that will be copied in the workspace. </mat-hint> </mat-form-field>
 
 					</div>
+                    
 				</div>
 			</fieldset>
 		</form>

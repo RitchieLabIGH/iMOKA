@@ -23,7 +23,7 @@ export class MapConfiguration {
     flag_in :string=" ";
     flag_multi_thread : string="";
     flag_out : string=" ";
-	io_order : "io";
+	io_order : string = "io";
     options : string=" -out=pslx -stepSize=5 -repMatch=2253 -minScore=30 -minIdentity=90 /blat_ref/hg38.2bit ";
     output_type : string ="pslx";
     parallel : number=  -1 ;
@@ -52,6 +52,7 @@ export class Setting {
     annotations : AnnotationConfiguration[];
 	os ? : string;
 	max_cpu ? :number;
+	update : boolean = false;
 }
 
 

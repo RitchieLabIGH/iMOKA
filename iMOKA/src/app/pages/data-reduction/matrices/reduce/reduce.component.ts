@@ -1,8 +1,10 @@
 import { Component, OnInit, Inject , NgZone} from '@angular/core';
 import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
 import {Matrix} from '../../../../interfaces/samples';
+import {Setting} from '../../../../interfaces/session';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import { QueueService } from '../../../../services/queue.service';
+import { UemService } from '../../../../services/uem.service';
 
 @Component({
   selector: 'app-reduce',
@@ -16,14 +18,17 @@ export class ReduceComponent implements OnInit {
 error_message : string;
 loading_message : string;
   constructor( public dialogRef: MatDialogRef<ReduceComponent>,
-          @Inject(MAT_DIALOG_DATA) public matrix : Matrix,
+          @Inject(MAT_DIALOG_DATA) public matrix : Matrix, private uem: UemService,
           private queue : QueueService, private fb: FormBuilder, private zone : NgZone) { 
       
   }
 
   ngOnInit() {
+	 	this.uem.getSession().subscribe((session)=>{
+			let profile: Setting = session.profile.process_config.profiles[session.profile.process_config.current_profile];
+			let cpus= profile.max_cpu ? profile.max_cpu : 4;
       this.procControl = this.fb.group({
-          cores : [8,  [Validators.min(1), Validators.max(100)]],
+          cores : [cpus-1 ,  [Validators.min(1), Validators.max(cpus)]],
           mem : [16,  [Validators.min(1), Validators.max(100)]],
       });
       this.detailsControl = this.fb.group({
@@ -34,6 +39,7 @@ loading_message : string;
           entropyone : [0.25, [Validators.min(0.05), Validators.max(1)]],
           entropytwo : [0.05, [Validators.min(0.005), Validators.max(1)]],
       });
+		});
   }
   send(){
       this.loading_message = "Sending the process..."

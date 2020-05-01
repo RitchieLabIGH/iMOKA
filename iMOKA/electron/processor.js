@@ -309,7 +309,8 @@ class Processor {
 										(s_dir)
 										let mat = JSON.parse(fs.readFileSync(matrix_dir+"/"+s_dir.name+"/matrix.json"));
 										// TODO: Check that sample of the matrix
-										// exists, otherwise give an error message
+										// exists, otherwise give an error
+										// message
 										if ( fs.existsSync(matrix_dir+"/"+s_dir.name+"/reduced.matrix.json")) {
 											mat.reduced = JSON.parse(fs.readFileSync( matrix_dir+"/"+s_dir.name+"/reduced.matrix.json"));
 										}
@@ -811,6 +812,7 @@ class Processor {
 				this.options.storage_folder=storage_dir.replace("\n", "");
 				this.blocked = true;
 				console.log(this.options)
+				if ( !fs.existsSync(this.options.storage_folder+"/.singularity/iMOKA") || this.options.update ){
 				if ( this.options.remote_image){
 					const win = electron.BrowserWindow.getFocusedWindow();
 					console.log("Starting download of "+ this.options.original_image)
@@ -835,6 +837,7 @@ class Processor {
 						this.mess.sendMessage({type : "action", action :"release", message : "Singularity image copied"})
 						this.blocked = false;
 					});
+				}
 				}
 
 			} catch (err){

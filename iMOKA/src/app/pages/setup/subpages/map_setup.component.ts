@@ -82,6 +82,9 @@ export class MapSetupComponent implements OnInit {
       }
       this.current_profile=n;
       this.setting=JSON.parse(JSON.stringify(this.session.profile.process_config.profiles[n]));
+	  if (this.setting.update){
+		this.setting.update = false;
+      }
       this.modify_ann= false;
       this.modify_mapper= false;
   }

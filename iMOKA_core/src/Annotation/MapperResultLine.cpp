@@ -34,7 +34,7 @@ void MapperResultLine::parsePSLX(std::string line) {
 		blen = std::stoll(block_sizes[i]);
 		qs= std::stoll(qblocks[i]);
 		ts = std::stoll(tblocks[i]);
-		q_blocks.push_back(Segment(qs, qs+blen));
+		q_blocks.push_back(Segment(qs+1, qs+blen+1));
 		t_blocks.push_back(Segment(ts, ts+blen));
 		for (j=0; j< blen; j++){
 			if ( qbs[i][j] != tbs[i][j] ){
@@ -46,8 +46,8 @@ void MapperResultLine::parsePSLX(std::string line) {
 					mut+=qbs[i][j];
 				}
 				signatures.push_back(AlignmentDerivedFeature("mutation",
-												Segment(ts+j-ref.size(), ts+j),
-												Segment(qs+j-ref.size(), qs+j),
+												Segment(1+ts+j-ref.size(), 1+ts+j),
+												Segment(1+qs+j-ref.size(), 1+qs+j),
 												chromosome,
 												ref + ">" + mut));
 			}
@@ -64,11 +64,9 @@ void MapperResultLine::parsePSLX(std::string line) {
 			}
 		} else {
 			signatures.push_back(AlignmentDerivedFeature("insertion", Segment(t_blocks[i-1].end , t_blocks[i].start), Segment(q_blocks[i-1].end,q_blocks[i].start ),
-																			chromosome, "+"+std::to_string(t_blocks[i].start - t_blocks[i-1].end)+"nt"));
+																			chromosome, "+"+std::to_string(q_blocks[i].start - q_blocks[i-1].end)+"nt"));
 		}
 	}
-
-
 }
 void MapperResultLine::parseSAM(std::string line) {
 	std::vector<std::string> content;

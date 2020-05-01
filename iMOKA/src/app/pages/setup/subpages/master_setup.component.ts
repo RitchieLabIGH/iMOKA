@@ -20,6 +20,7 @@ export class MasterSetupComponent implements OnInit {
 	err_message: string;
 	loading_message: string;
 	current_profile: number = 0;
+	isNewSetting:boolean = true;
 	constructor(private uem: UemService, private fb: FormBuilder,private zone: NgZone, private snack: MatSnackBar, private fs : FileService) { }
 	ngOnInit() {
 		if (this.uem.electron) {
@@ -27,10 +28,12 @@ export class MasterSetupComponent implements OnInit {
 				this.zone.run(() => {
 					console.log(response);
 					this.session = response;
+					this.isNewSetting=true;
 					if (typeof this.session.profile.process_config.current_profile != "undefined" && this.session.profile.process_config.profiles.length > 0) {
 						this.current_profile = this.session.profile.process_config.current_profile;
 						this.setProfile(this.current_profile);
 						this.modify = false;
+						this.isNewSetting=false;
 					} 
 					this.loading = false;
 					this.updateParam();
@@ -109,6 +112,9 @@ export class MasterSetupComponent implements OnInit {
 		if (new_setting) {
 			this.current_profile = this.session.profile.process_config.profiles.length;
 			this.modify = true;
+			this.isNewSetting=true;
+		} else {
+			this.isNewSetting=false;
 		}
 		this.setting = new Setting();
 		this.updateParam();
@@ -128,7 +134,7 @@ export class MasterSetupComponent implements OnInit {
 			connection_type : [this.setting.connection_type, Validators.required],
 			storage_folder : [this.setting.storage_folder, Validators.required],
 			original_image : [this.setting.original_image, Validators.required],
-			
+			update : [false]
 		})
 		this.remoteParam = this.fb.group({
 			ssh_address :[this.setting.ssh_address , Validators.required ],
@@ -146,6 +152,7 @@ export class MasterSetupComponent implements OnInit {
 		if (typeof n == 'undefined') {
 			n = this.session.profile.process_config.current_profile;
 		}
+		this.isNewSetting=false;
 		this.current_profile = n;
 		this.setting = JSON.parse(JSON.stringify(this.session.profile.process_config.profiles[n]));
 		this.updateParam();

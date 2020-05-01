@@ -41,9 +41,15 @@ export class QueueSource implements DataSource<any> {
 	renderRequest():boolean{
 		if (this.queue && this.last_request){
                     let out = [] , request=this.last_request;
-                    this.queue.sort((joba, jobb)=>{
-                        return joba[request.order.name] < jobb[request.order.name]; 
-                    });
+					if ( ["added", "completed", "started"].includes(request.order.name) ) {
+						this.queue.sort((joba, jobb)=>{
+                        	return joba.times[request.order.name] < jobb.times[request.order.name]; 
+                    	});
+					} else {
+						this.queue.sort((joba, jobb)=>{
+                        	return joba[request.order.name] < jobb[request.order.name]; 
+                    	});	
+					}
                     if (!request.order.asc){
                         this.queue = this.queue.reverse();
                     }

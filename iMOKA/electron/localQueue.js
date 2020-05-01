@@ -217,7 +217,7 @@ class LocalQueue {
 				console.log("----------- JOB completed -----------");
 				console.log(job);
 				console.log("----------- JOB completed -----------");
-				child_process.exec("rm -fr "+job.job.wd);
+				/*child_process.exec("rm -fr "+job.job.wd);*/
 				this.current_queue.data.running.splice(i, 1);
 				this.current_queue.save();
 			}

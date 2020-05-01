@@ -52,7 +52,7 @@
 		<div fxFlex="20%">
 			<h3>{{current_matrix.name}}</h3>
               <div class="button-list-v">
-                <button mat-raised-button color="primary"
+                <button mat-raised-button color="primary" [disabled]="! current_matrix.aggregated"
                     (click)="openFile(current_matrix.uid)">Open this k-mer
                   list</button>
                 <button mat-raised-button (click)="showInfoMatrix()">Details</button>
