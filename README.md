@@ -1,5 +1,5 @@
 # iMOKA 
-## **i**nteractive **M**ulti **O**bjective **K**-mer **A**nalysis
+#### **i**nteractive **M**ulti **O**bjective **K**-mer **A**nalysis
 
 iMOKA is a software that enables a comprehensive analysis of sequencing data from large cohorts to generate robust classification models or explore specific genetic elements associated with disease etiology. iMOKA uses a fast and accurate feature reduction step that combines a Naïve Bayes Classifier augmented by an adaptive Entropy filter and a graph-based filter to rapidly reduce the search space. By using a flexible file format and distributed indexing, iMOKA can easily integrate data from multiple experiments and also reduces disk space requirements.
 
