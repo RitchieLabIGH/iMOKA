@@ -27,7 +27,7 @@ export class DialogNewComponent implements OnInit {
 		});
 		this.detailsControl = this.fb.group({
 			k_len: [31, [Validators.min(4), Validators.max(150)]],
-			minCounts: [5, [Validators.min(0), Validators.max(10000)]],
+			minCount: [5, [Validators.min(0), Validators.max(10000)]],
 			libraryType: ["NULL"],
 			fastqc: [true],
 			keepRaw: [false]

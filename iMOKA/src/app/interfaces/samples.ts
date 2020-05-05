@@ -8,13 +8,23 @@ export class Sample {
     k_len: number;
     name : string;
     id : string;
+	source : string[];
+	predictions? : Prediction[];
     profile_id : string;
     prefix_size : number;
     total_count : number;
     total_suffix : number;
     total_predix : number;
-    min_counts : number;
+    minCount : number;
     library_type : string;
+	free_text: string="";
+	libType : string;
+}
+export class Prediction {
+	experiment : string;
+	model : string;
+	probabilities : number[][];
+	classnames : string[];
 }
 
 export class Metadata {
@@ -24,9 +34,8 @@ export class Metadata {
 
 export class Matrix {
     count_files ? : string[] = [];
-    groups ? : string[] | number[]=[];
+    groups ? :string[]=[];
     groups_names ? : string[]=[];
-    groups_full_names ? : string[]=[];
     groups_count ? : any;
     group_tag_key ? : string;
     names ? : string[]=[];

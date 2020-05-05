@@ -1,8 +1,6 @@
 import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
 
-import { UemService } from '../../../services/uem.service';
 import { TracksService } from '../../../services/tracks.service';
-import { FileService } from '../../../services/file.service';
 import { SamplesService } from '../../../services/samples.service';
 
 import { MatrixTableSource } from '../../../data/matrix-table.source';
@@ -16,7 +14,6 @@ import { ReduceComponent } from './reduce/reduce.component';
 import { AggregateComponent } from './aggregate/aggregate.component';
 import { InfoComponent, InfoData, InfoListElement } from '../../../core/info/info.component';
 import {MatBottomSheet} from '@angular/material/bottom-sheet';
-import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-matrices',
@@ -41,10 +38,9 @@ export class MatricesComponent implements OnInit {
           recordsFiltered: 0,
           stats: {}
       };
-  constructor(private uem: UemService, private sampleService : SamplesService, private trackService : TracksService,
-          private fileService : FileService,
+  constructor( private sampleService : SamplesService, private trackService : TracksService,
           private zone: NgZone, private snack: MatSnackBar , public dialog: MatDialog
-          , private cd: ChangeDetectorRef, private bottomSheet: MatBottomSheet, private router: Router ) { }
+          , private cd: ChangeDetectorRef, private bottomSheet: MatBottomSheet ) { }
 
   ngOnInit() {
       this.matrixSource = new MatrixTableSource(this.trackService);
@@ -109,7 +105,7 @@ export class MatricesComponent implements OnInit {
   reduce(row : Matrix){
       this.dialog.open(ReduceComponent, {data : row}).afterClosed().subscribe(()=>{
       }, (err)=>{
-          
+          console.log(err);
       }, ()=>{
           this.refreshTable(undefined, true);
       });
@@ -170,7 +166,6 @@ export class MatricesComponent implements OnInit {
               data.information_list.push(new InfoListElement("RAM", "memory RAM used", "After reading: "+ aggr.mem_after_reading +"<br/>After winner recover: "+aggr.mem_after_winner));
           }
       }
-      console.log(data);
       this.zone.run(()=>{
           this.bottomSheet.open(InfoComponent, {data : data });
       });

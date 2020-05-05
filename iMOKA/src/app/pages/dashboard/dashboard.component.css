@@ -15,3 +15,7 @@ table {
 	max-height: 200px;
 	overflow: auto;
 }
+
+.main > div {
+	padding: 15px;
+}

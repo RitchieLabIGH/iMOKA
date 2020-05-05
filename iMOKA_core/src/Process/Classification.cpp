@@ -19,7 +19,7 @@ bool Classification::run(int argc, char** argv) {
 			options.add_options()("i,input", "The input matrix JSON header",
 					cxxopts::value<std::string>())("o,output",
 					"Output matrix file", cxxopts::value<std::string>())(
-					"h,help", "Show this help")("l,legacy", "Legacy mode ( lower RAM requirements )")(
+					"h,help", "Show this help")(
 					"a,accuracy", "Minimum of accuracy",
 					cxxopts::value<double>()->default_value("65"))(
 					"t,test-percentage",
@@ -47,8 +47,7 @@ bool Classification::run(int argc, char** argv) {
 			std::vector<double> adjustments(2);
 			adjustments[0] = parsedArgs["e"].as<double>();
 			adjustments[1] = parsedArgs["E"].as<double>();
-			if (parsedArgs.count("legacy") == 0) {
-				return classificationFilterMulti(parsedArgs["input"].as<std::string>(),
+			return classificationFilterMulti(parsedArgs["input"].as<std::string>(),
 									parsedArgs["output"].as<std::string>(),
 									"NBC",
 									parsedArgs["batch"].as<std::string>(),
@@ -57,17 +56,6 @@ bool Classification::run(int argc, char** argv) {
 									parsedArgs["accuracy"].as<double>(),
 									parsedArgs["test-percentage"].as<double>(),
 									adjustments);
-			} else {
-				return classificationFilter(parsedArgs["input"].as<std::string>(),
-									parsedArgs["output"].as<std::string>(),
-									"NBC",
-									parsedArgs["batch"].as<std::string>(),
-									parsedArgs["cross-validation"].as<uint64_t>(),
-									parsedArgs["standard-deviation"].as<double>(),
-									parsedArgs["accuracy"].as<double>(),
-									parsedArgs["test-percentage"].as<double>(),
-									adjustments);
-			}
 
 		}
 
@@ -177,174 +165,7 @@ bool Classification::run(int argc, char** argv) {
 	}
 	return false;
 }
-/// @param file_in
-/// @param file_out
-/// @param method
-/// @param batch
-/// @param cross_validation
-/// @param sd
-/// @param min_acc
-/// @param perc_test
-/// @param adjustments
-bool Classification::classificationFilter(std::string file_in,
-		std::string file_out, std::string method, std::string batch,
-		uint64_t cross_validation,double sd,  double min_acc, double perc_test,
-		std::vector<double> adjustments) {
-	BinaryMatrix mat(file_in, true);
-	std::ofstream ofs(file_out);
-	std::vector<KmerMatrixLine> buffer;
-	uint64_t bufferSize = 500000 ;
-	if ( getenv("IMOKA_BUFFER_SIZE")){
-		try {
-			bufferSize = std::stoll(getenv("IMOKA_BUFFER_SIZE"));
-		} catch (std::exception & e) {
-			log << "WARNING: environmental IMOKA_BUFFER_SIZE " << getenv("IMOKA_BUFFER_SIZE") << " has to be an integer number.\n" << e.what() << "\n";
-			log << "Using the default value.\n";
 
-		}
-
-	}
-	log << "Buffer size: " << bufferSize << "\n";
-	std::function<std::vector<double>(const std::vector<std::vector<double>> &,
-					const std::vector<uint64_t>,
-					const std::map<uint64_t, uint64_t>, const uint64_t, const double, double)> fun;
-	if (method == "LR") {
-		log << "Using logistic regression\n";
-		fun = MLpack::logisticRegressionClassifier;
-	} else if (method == "NBC") {
-		fun = MLpack::pairwiseNaiveBayesClassifier;
-		log << "Using naive Bayes Classifier\n";
-	} else {
-		throw "ERROR! method " + method
-				+ " not recognized. Choose between LR and NBC";
-	}
-	json info = { { "cross_validation", cross_validation }, {"standard_deviation", sd},
-			{ "method", method }, { "min_acc", min_acc }, { "perc_test",
-					perc_test }, { "adjustments", adjustments }, {
-					"file_in", file_in }, { "file_out", file_out } };
-	log << info.dump(2) <<"\n";
-	ofs << "kmer";
-	for (uint64_t g = 0; g < mat.group_map.size(); g++) {
-		for (uint64_t h = g + 1; h < mat.group_map.size(); h++) {
-			ofs << "\t" << mat.unique_groups[g] << "_x_"
-					<< mat.unique_groups[h];
-		}
-	}
-	ofs << "\tentropy\n";
-	ofs.flush();
-	std::vector<uint64_t> groups = mat.groups;
-	std::map<uint64_t, uint64_t> group_counts = mat.group_counts;
-	std::vector<std::string> out_buffer(bufferSize);
-	int64_t from_batch = 0, to_batch = -1, current_batch = 0;
-	if (batch != "all") {
-		from_batch = std::stoll(batch.substr(0, batch.find("-")));
-		to_batch = std::stoll(batch.substr(batch.find("-") + 1));
-		log << "Analyzing batches from " << from_batch << " to "
-				<< to_batch << " included\n";
-	}
-	mlpack::Log::Warn.ignoreInput = true;
-	double max_entropy = 1000000.00;
-	double minEntropy = 0;
-	uint64_t tot_lines = 0;
-	std::cout << "Batch\tTotLines\tKeptLines\tPerc\tReadingTime\tProcessTime\tTimeSinceStart\tExpectedRemainingTime\tNewMinEntropy\tBatchMinimumEntropy\tMemoryUsage\n";
-	std::cout.flush();
-	auto b_start = std::chrono::high_resolution_clock::now() , start = std::chrono::high_resolution_clock::now();
-	bool running = mat.getBatch(buffer, bufferSize);
-	std::string expected_end, reading_time, total_time, process_time, log_file_json = file_out+".json";
-	std::ofstream jsonLog;
-	jsonLog.open(log_file_json);
-	jsonLog << "{\"message\":\"Starting...\"}\n";
-	jsonLog.close();
-	uint64_t kept = 0;
-	json json_batch;
-
-	while (running) {
-		if (current_batch >= from_batch ) {
-			reading_time=IOTools::format_time(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - b_start).count());
-			b_start = std::chrono::high_resolution_clock::now();
-			std::vector<double> localMinEntropy(omp_get_max_threads(),
-					max_entropy);
-#pragma omp parallel  for schedule(guided, 8)
-				for (uint64_t i = 0; i < buffer.size(); i++) {
-					std::ostringstream final("");
-					double entropy = Stats::entropy(buffer[i].count);
-					if (entropy >= minEntropy) {
-						std::vector<double> res = fun( { buffer[i].count },
-								groups, group_counts, cross_validation, sd,
-								perc_test);
-						bool keep = false;
-						for (double v : res)
-							keep = keep || v > min_acc;
-						if (keep) {
-							final  << std::fixed << std::setprecision(3);
-							localMinEntropy[omp_get_thread_num()] =
-									localMinEntropy[omp_get_thread_num()] < entropy ?
-											localMinEntropy[omp_get_thread_num()] : entropy;
-							final << buffer[i].getKmer();
-							for (double v : res)
-								final << "\t" << v;
-
-							final << "\t" << entropy << "\n";
-						}
-					}
-					out_buffer[i] = final.str();
-				}
-			double new_lower = localMinEntropy[0];
-			for (double v : localMinEntropy) {
-				new_lower = new_lower < v ? new_lower : v;
-			}
-			if (new_lower != max_entropy) {
-				minEntropy =
-						minEntropy == 0 ?
-								new_lower - (new_lower * adjustments[0] * 2) :
-						new_lower - (new_lower * adjustments[0]) < minEntropy ?
-								minEntropy - (new_lower * adjustments[0]) :
-								minEntropy + (new_lower * adjustments[1]);
-			}
-			tot_lines += buffer.size();
-			process_time=IOTools::format_time(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - b_start).count()) ;
-			expected_end="NA";
-			if (mat.perc() > 0 ){
-				double seconds_till_now=std::chrono::duration_cast<std::chrono::seconds>( std::chrono::high_resolution_clock::now() - start).count();
-				uint64_t time_to_end=std::round(( (seconds_till_now * 100 )/ mat.perc() ) - seconds_till_now);
-				expected_end= IOTools::format_time(time_to_end);
-			}
-
-			for (uint64_t i = 0; i < buffer.size(); i++) {
-					ofs << out_buffer[i];
-					if ( out_buffer[i].size() > 1){
-						kept++;
-					}
-			}
-			ofs.flush();
-			total_time=IOTools::format_time(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - start).count());
-
-			std::cout << current_batch << "\t" << tot_lines << "\t" << kept<< "\t"<< mat.perc() << "\t" << reading_time << "\t" <<process_time << "\t"
-					<< total_time << "\t" << expected_end << "\t" << minEntropy << "\t" << new_lower<< "\t" <<IOTools::format_space_human(IOTools::getCurrentProcessMemory())  << "\n";
-			std::cout.flush();
-			json_batch= { {"batch", current_batch}, {"processed", tot_lines} , {"kept", kept}, {"perc", mat.perc()}, {"reading_time", reading_time},
-					 {"total_time", total_time},  {"expected_end", expected_end},  {"minEntropy", minEntropy}, {"lowest_entropy", new_lower} ,{"memory", IOTools::format_space_human(IOTools::getCurrentProcessMemory()) } };
-			jsonLog.open(log_file_json);
-			jsonLog << json_batch.dump() << "\n";
-			jsonLog.close();
-			b_start = std::chrono::high_resolution_clock::now();
-			buffer.clear();
-		}
-		current_batch+=1;
-		if (current_batch > to_batch && to_batch >= 0 ){
-			running = false;
-		} else {
-			running = mat.getBatch(buffer, bufferSize) ;
-		}
-
-	};
-	ofs.close();
-	jsonLog.open(log_file_json);
-	json_batch["info"]=info;
-	jsonLog.close();
-	log << "done.\n";
-	return true;
-};
 
 /// @param file_in
 /// @param file_out
@@ -363,10 +184,21 @@ bool Classification::classificationFilterMulti(std::string file_in,
 	BinaryMatrix bm(file_in, true);
 	mlpack::Log::Warn.ignoreInput = true;
 	const uint64_t k_len = bm.k_len, batch_size = std::floor(((std::pow(4, bm.k_len))-1) / omp_get_max_threads());
+	std::stringstream header;
+	header << "kmer";
+	for (uint64_t g = 0; g < bm.group_map.size(); g++) {
+			for (uint64_t h = g + 1; h < bm.group_map.size(); h++) {
+				header << "\t" << bm.unique_groups[g] << "_x_"
+						<< bm.unique_groups[h];
+			}
+		}
 	bm.clear();
 	std::cerr << "Memory occupied: " << IOTools::format_space_human(IOTools::getCurrentProcessMemory())  << ".\n";
 	std::cerr << "Reducing with " << omp_get_max_threads() << " threads, each analysing a maximum total of " << batch_size << " k-mers.\n";
 	std::cerr.flush();
+	json info = { { "cross_validation", cross_validation }, {"standard_deviation", sd},
+			{ "method", method }, { "min_acc", min_acc }, { "perc_test", perc_test },
+			{ "adjustments", adjustments }, { "file_in", file_in }, { "file_out", file_out } };;
 #pragma omp parallel firstprivate(cross_validation, sd, min_acc, perc_test, adjustments )
 {
 	std::function<std::vector<double>(const std::vector<std::vector<double>> &,
@@ -376,24 +208,11 @@ bool Classification::classificationFilterMulti(std::string file_in,
 	std::this_thread::sleep_for(std::chrono::milliseconds(thr*1000));
 	auto start = std::chrono::high_resolution_clock::now();
 	BinaryMatrix mat(file_in, true);
-	std::string file_out_thr =thr== 0 ?file_out : file_out + std::to_string(thr);
+	std::string file_out_thr =file_out + std::to_string(thr);
 	std::string expected_end, reading_time, total_time, process_time;
 	std::ofstream ofs(file_out_thr), tlog(file_out_thr+".log");
 
 	ofs  << std::fixed << std::setprecision(3);
-	if ( thr == 0 ){
-		ofs << "kmer";
-		for (uint64_t g = 0; g < mat.group_map.size(); g++) {
-			for (uint64_t h = g + 1; h < mat.group_map.size(); h++) {
-				ofs << "\t" << mat.unique_groups[g] << "_x_"
-						<< mat.unique_groups[h];
-			}
-		}
-		/*ofs << "\tentroypy" ;*/
-		ofs << "\n";
-		ofs.flush();
-	}
-
 	std::vector<uint64_t> groups = mat.groups;
 	std::map<uint64_t, uint64_t> group_counts = mat.group_counts;
 	double max_entropy = 1000000.00, entropy , perc;
@@ -461,37 +280,32 @@ bool Classification::classificationFilterMulti(std::string file_in,
 	tlog.flush();
 	tlog.close();
 } // parallel end
-	std::ofstream final_ofs(file_out, std::ofstream::out | std::ofstream::app);
+	std::ofstream final_ofs(file_out);
 	std::ifstream ifs;
 	uint64_t total_kmers=0, total_kmers_kept = 0;
 	std::vector<std::string> lines, infos;
-	lines = IOTools::getLinesFromFile(file_out + std::string(".log") );
-	boost::split(infos, lines[lines.size()-1], boost::is_any_of("\t"));
-	total_kmers+=std::stoll(infos[1]);
-	total_kmers_kept+=std::stoll(infos[2]);
-	for ( int i =1; i < omp_get_max_threads() ; i++){
+	for ( int i =0; i < omp_get_max_threads() ; i++){
+		lines = IOTools::getLinesFromFile(file_out +std::to_string(i) + std::string(".log") );
+		boost::split(infos, lines[lines.size()-1], boost::is_any_of("\t"));
+		total_kmers+=std::stoll(infos[1]);
+		total_kmers_kept+=std::stoll(infos[2]);
+	}
+	info["processed"] =total_kmers;
+	info["kept"]=total_kmers_kept;
+	final_ofs << header.str() << "\n";
+	final_ofs << "#" << info.dump() << "\n";
+	for ( int i =0; i < omp_get_max_threads() ; i++){
 		ifs.open(file_out + std::to_string(i));
 		final_ofs << ifs.rdbuf();
 		ifs.close();
 		if ( remove(std::string(file_out + std::to_string(i)).c_str()) != 0 ) {
 			std::cerr << "Error removing " << file_out << i << "\n";
 		}
-		ifs.close();
-		lines = IOTools::getLinesFromFile(file_out +std::to_string(i) + std::string(".log") );
-		boost::split(infos, lines[lines.size()-1], boost::is_any_of("\t"));
-		total_kmers+=std::stoll(infos[1]);
-		total_kmers_kept+=std::stoll(infos[2]);
 	}
 	final_ofs.close();
-	json info = { { "cross_validation", cross_validation }, {"standard_deviation", sd},
-				{ "method", method }, { "min_acc", min_acc }, { "perc_test",
-						perc_test }, { "adjustments", adjustments }, {
-						"file_in", file_in }, { "file_out", file_out }
-	, {"processed" , total_kmers }, {"kept" , total_kmers_kept }};
 	final_ofs.open(file_out+".json");
 	final_ofs << info.dump() <<"\n";
 	final_ofs.close();
-
 	return true;
 };
 
@@ -529,7 +343,7 @@ bool Classification::clusterizationFilter(std::string input, std::string output,
 		};
 		info["epsilon"] = epsilon;
 	} else if (method == "KMEANS") {
-		fun= [clusters, min_dim, max_cluster](const std::vector<std::vector<double>> & data){
+		fun= [min_dim, max_cluster](const std::vector<std::vector<double>> & data){
 			return MLpack::KMEANS(data, max_cluster, min_dim);
 		};
 		log << "Using KMeans algorithm\n";

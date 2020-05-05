@@ -26,6 +26,12 @@ class iMOKA {
 				  }).catch(err=>{
 					  reject(err);
 				  })
+			  } else if (proc.name =="predict"){
+				  this.predict(proc.data).then((res)=>{
+					  resolve(res)
+				  }).catch((err)=>{
+					 reject(err)  
+				  })
 			  }else {
 				  reject({message : "Process " + proc.name + " not recognized." , success : false})
 			  }
@@ -35,6 +41,31 @@ class iMOKA {
 	 
 	 timestamp(){
 		 return ""+Date.now();
+	 }
+	 predict(data){
+		 console.log(data)
+		 
+		return new Promise((resolve, reject)=>{
+			let out = { commands : [ ] , files : [] ,
+		   			copy_files: [] , success : true, uid : data.uid, 
+		   			errors : []}, model = data.model.split(" "), sample_dir = "${imoka_home}/samples/"+data.sample+"/";
+			let matrix_bin= sample_dir+data.sample+".tsv.sorted.bin" ,
+			model_base = "${imoka_home}/experiments/"+model[0]+"/RF/"+model[1];
+			out.commands.push("echo \""+matrix_bin+"\tsample\tNA\" > ./matrix.tsv")
+			out.commands.push("singularity exec ${singularity_image} iMOKA_core create -i ./matrix.tsv -o ./matrix.json")
+			out.commands.push("cat "+model_base+"_models/*.features | sort | uniq > ./features.ls ")
+			out.commands.push("singularity exec ${singularity_image} iMOKA_core extract -s ./matrix.json -i ./features.ls -o ./topredict.tsv")
+			out.commands.push("for model in "+model_base+"_models/*.pickle ; do singularity exec ${singularity_image} predict.py ./topredict.tsv ${model} ./tmp | awk ' NR > 1 {print}' >> ./predictions.tsv; done \n echo 'predictions completed' ")
+			out.commands.push("mkdir -p "+sample_dir+"PRED/")
+			out.commands.push("echo '{ \"experiment\" : \""+model[0]+"\" ,  \"model\": \""+model[1]+"\", ' > ./output ")
+			out.commands.push("singularity exec ${singularity_image} awk ' /classnames/ { print; while ( (getline line ) > 0 && line !~ /]/ )  { print line } print line } ' ./tmp  >> ./output ")
+			out.commands.push("echo '\"probabilities\" : [ ' >> ./output ")
+			out.commands.push("singularity exec ${singularity_image} awk -F '\t' ' NR > 1 { print \",\" }  { line= \"[ \" $4 ; for (i = 5; i <= NF; i++ ) { line = line  \", \" $i  } ; print line \"]\" } END {print \" ] }\"}' ./predictions.tsv >> ./output ")
+			out.commands.push("mv ./output "+sample_dir+"/PRED/"+model[0]+"_"+model[1]+".json")
+			out.memory = data.process.mem;
+			out.threads = data.process.cores;
+			resolve(out);
+		});
 	 }
 	 som(data){
 		 return new Promise((resolve, reject)=>{
@@ -49,11 +80,11 @@ class iMOKA {
 			   		out.files.push({name : "matrix.tsv", content : matrix.join("")});
 			   		out.files.push({name : "info.json", content : JSON.stringify(data.parameters) });
 			   		let out_folder="${imoka_home}/experiments/"+data.parameters.matrix_uid+"/SOM/", timest= this.timestamp(), args = this.makeSOMargs(data);
+			   		out.commands.push("singularity exec ${singularity_image} SOM.py ./matrix.tsv ./"+timest+" "+args);
+			   		out.commands.push("rm -f ./matrix.tsv ./"+timest+"/*/*.pkl ./"+timest+"/*/*.npy ./"+timest+"/*/*.png " )
 			   		out.commands.push("mkdir -p "+out_folder)
-			   		out.commands.push("mv ./matrix.tsv "+out_folder+timest+".matrix.tsv ")
 			   		out.commands.push("mv ./info.json "+out_folder+timest+".info.json ")
-			   		out.commands.push("singularity exec ${singularity_image} SOM.py "+out_folder+timest+".matrix.tsv "+out_folder+timest+" "+args);
-			   		out.commands.push("rm -f "+out_folder+timest+".matrix.tsv "+out_folder+timest+"/*/*.pkl "+out_folder+timest+"/*/*.npy "+out_folder+timest+"/*/*.png " )
+			   		out.commands.push("mv ./"+timest+" "+out_folder);
 			   		out.memory = data.process.mem;
 			   		out.threads = data.process.cores;
 			   		resolve(out);
@@ -87,11 +118,11 @@ class iMOKA {
 		   		out.files.push({name : "matrix.tsv", content : matrix.join("")});
 		   		out.files.push({name : "info.json", content : JSON.stringify(data.parameters) });
 		   		let out_folder="${imoka_home}/experiments/"+data.parameters.matrix_uid+"/RF/", timest= this.timestamp(), args = this.makeRFargs(data);
+		   		out.commands.push("singularity exec ${singularity_image} random_forest.py ./matrix.tsv ./"+timest+" "+args);
+		   		out.commands.push("rm -f ./matrix.tsv")
 		   		out.commands.push("mkdir -p "+out_folder)
-		   		out.commands.push("mv ./matrix.tsv "+out_folder+timest+".matrix.tsv ")
 		   		out.commands.push("mv ./info.json "+out_folder+timest+".info.json ")
-		   		out.commands.push("singularity exec ${singularity_image} random_forest.py "+out_folder+timest+".matrix.tsv "+out_folder+timest+" "+args);
-		   		out.commands.push("rm -f "+out_folder+timest+".matrix.tsv")
+		   		out.commands.push("mv ./"+timest+" "+out_folder+timest+".info.json ")
 		   		out.memory = data.process.mem;
 		   		out.threads = data.process.cores;
 		   		resolve(out);
@@ -147,14 +178,14 @@ class iMOKA {
 			 input_file+=sam.name + "\t-\t"+sam.source.join(";")+"\n";
 			 sam.k_len = proc.details.k_len;
 			 sam.libType = proc.details.libraryType;
-			 sam.minCount = proc.details.minCounts;
+			 sam.minCount = proc.details.minCount;
 			 out.files.push({name : sam.name+".metadata.json", content : JSON.stringify(sam)})
 			 out.commands.push("mkdir -p ${imoka_home}/samples/"+sam.name+"/ && rm -fr ${imoka_home}/samples/"+sam.name+"/* && cp ./"+sam.name+".metadata.json ${imoka_home}/samples/"+sam.name+"/" );
 		 });
 		 out.files.push({"name" : "preprocess_input.tsv", "content" : input_file });
 		 let command = "singularity exec ${singularity_image} preprocess.sh -i preprocess_input.tsv " + 
 		 	"-o ${imoka_home}/samples/ -k "+proc.details.k_len+" -l "+ proc.details.libraryType+ " -t ${threads} -r ${max_mem_gb} " +
-		 	"-m "+ proc.details.minCounts +" ";
+		 	"-m "+ proc.details.minCount +" ";
 		 if ( proc.details.keepRaw ) command+=" -K ";
 		 if ( proc.details.fastqc ) command+=" -q  ";
 		 out.commands.push(command);
@@ -174,6 +205,8 @@ class iMOKA {
 		 out.threads = proc.process.cores;
 		return out;
 	 }
+	 
+	
 	 
 	 aggregate(proc){
 		 let out = { commands : [ ] , files : [] , copy_files: [] , success : true, uid : proc.uid, errors : []} ,

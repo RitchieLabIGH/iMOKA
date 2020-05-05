@@ -41,12 +41,13 @@ export class QueueSource implements DataSource<any> {
 	renderRequest():boolean{
 		if (this.queue && this.last_request){
                     let out = [] , request=this.last_request;
+					
 					if ( ["added", "completed", "started"].includes(request.order.name) ) {
-						this.queue.sort((joba, jobb)=>{
+						this.queue = this.queue.sort((joba, jobb)=>{
                         	return joba.times[request.order.name] < jobb.times[request.order.name]; 
                     	});
 					} else {
-						this.queue.sort((joba, jobb)=>{
+						this.queue = this.queue.sort((joba, jobb)=>{
                         	return joba[request.order.name] < jobb[request.order.name]; 
                     	});	
 					}
@@ -55,6 +56,9 @@ export class QueueSource implements DataSource<any> {
                     }
                     request.recordsTotal = this.queue.length;
                     request.recordsFiltered = this.queue.length;
+					this.all_queue=this.queue;
+					console.log(request.order.name)
+					console.log(this.queue)
                     if ( request.search.value.lenght > 2 ){
                         this.queue = this.queue.filter((job)=>{
                             return JSON.stringify(job).includes(request.search.value)
@@ -68,7 +72,7 @@ export class QueueSource implements DataSource<any> {
                     for ( let i = from_n ; i < to_n; i++){
                         out.push(this.queue[i]);
                     }
-                    this.all_queue=this.queue;
+                    
                     this.queueSubject.next(out);
                     return true;
                 } else {

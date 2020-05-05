@@ -60,6 +60,7 @@ export class Message {
 	constructor(message? : string){
 		this.message=message;
 	}
+	title ? : string;
     error ? : any;
     code ? : number;
     message ?: any;

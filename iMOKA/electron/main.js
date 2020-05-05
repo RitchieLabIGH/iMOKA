@@ -39,7 +39,6 @@ function createWindow () {
   
   conf.frame=true;
   conf.icon = './dist/assets/images/256x256.png';
-  console.log(conf);
   mess = new Messenger();
   win = new BrowserWindow(conf);
   function saveWindowBounds() {
@@ -209,7 +208,6 @@ ipcMain.on("action" , (event, id, request) => {
     	let action = backend[request.action](request);
     	if (action instanceof Promise){
     		action.then((res)=>{
-    			console.log(res)
     			win.webContents.send("action-"+request.id, { "message": res , code:0} );
     		}).catch((err)=>{
     			win.webContents.send("action-"+request.id, { "message": err , code:1} );

@@ -35,7 +35,7 @@ class iMokaBE extends EventEmitter {
  
 	saveSample(request){
 		if (this.processor){
-			this.processor.setSample(request.data);
+			return this.processor.setSample(request.data);
 		} else {
 			throw "Processor not loaded";
 		}
@@ -43,7 +43,7 @@ class iMokaBE extends EventEmitter {
 
 	runJob(request) {
 		if (this.processor ){
-			request.data.uid= this.makeid(20);
+			request.data.uid= this.makeid();
 			request.data.context = this;
 			return this.processor.run(request);
 		} else {
@@ -55,8 +55,7 @@ class iMokaBE extends EventEmitter {
 	
 	setMatrix(request){
 		if (this.processor){
-			if ( ! request.data.uid ) request.data.uid=this.makeid(10);
-			console.log(request)
+			if ( ! request.data.uid ) request.data.uid=this.makeid();
 			return this.processor.setMatrix(request.data);
 		} else {
 			throw "Processor not loaded";
@@ -69,7 +68,7 @@ class iMokaBE extends EventEmitter {
 		}
 		request.info = this.clone(this.data.kmers.info); 
 		// given that the file to import had been already opened
-		request.info.uid=this.makeid(10);
+		request.info.uid=this.makeid();
 		
 		return new Promise((resolve, reject)=>{
 			this.processor.importKmerList(request).catch((err)=>{
@@ -176,17 +175,22 @@ class iMokaBE extends EventEmitter {
 	}
 	
 	updateSession(){
-		this.updateMatrices().then(()=>{
-			this.sendSession();
-		}).catch((err)=>{
-			this.mess.sendMessage(err);
-		})
+		return new Promise((resolve, rejcect)=>{
+			this.updateMatrices().then(()=>{
+				resolve("Updated")
+				this.sendSession();
+			}).catch((err)=>{
+				reject(err);
+				this.mess.sendMessage(err);
+			})
+		});
+		
 	}
 	updateMatrices(){
 		console.log("Updating matrices")
 		return new Promise((resolve, reject)=>{
 			if ( this.processor){
-				this.processor.getMatrices().then((matrices)=>{
+				this.processor.getMatrices(true).then((matrices)=>{
 					if (this.user_session.data.files.kmers && this.user_session.data.files.kmers.original_request){
 						let curr_mat=this.user_session.data.files.kmers.original_request;
 						matrices.forEach((mat)=>{
@@ -226,7 +230,7 @@ class iMokaBE extends EventEmitter {
 				}).catch((err)=>{
 					reject(err);
 				}).finally(()=>{
-					this.sendSession();
+					this.sendQueue();
 				});
 			});
 		} else {
@@ -422,7 +426,6 @@ class iMokaBE extends EventEmitter {
 					})
 				} else {
 					fs.readFile( file_name, 'utf-8', (err, content)=>{
-						console.log(file_name)
 				        if (err){
 				            reject(err);
 				            return;
@@ -584,7 +587,6 @@ class iMokaBE extends EventEmitter {
 	getSOMexpressionByNode(request){
 		return new Promise((resolve, reject)=>{
 			if (! this.data.som) reject("SOM file not opened correctly.")
-			console.log(request)
 			let nodesindexint=request.nodesIds;
 			
 			if (! this.data.som.samplesSOM )
@@ -1074,7 +1076,6 @@ class iMokaBE extends EventEmitter {
 	loadProfileFiles(){
 		return new Promise((resolve, reject)=>{
 			this.updateMatrices().then((err)=>{
-				console.log(err)
 				if (this.user_session.data.files ){
 			        Object.keys(this.user_session.data.files).forEach(file_type => {
 			           let fname = this.user_session.data.files[file_type].original_request;
@@ -1224,11 +1225,11 @@ class iMokaBE extends EventEmitter {
 				   }, ()=>{
 					   if ( with_error==0 ){
 						   if ( request.profile_number == this.user_session.data.profile.process_config.profiles.length ){
-							   request.profile.id =this.makeid(20); 
+							   request.profile.id =this.makeid(); 
 							   this.user_session.data.profile.process_config.profiles.push(request.profile);
 						   } else {
 							   if (!this.user_session.data.profile.process_config.profiles[request.profile_number].id ){
-								   request.profile.id =this.makeid(20);
+								   request.profile.id =this.makeid();
 							   }else {
 								   request.profile.id=this.user_session.data.profile.process_config.profiles[request.profile_number].id
 							   }
@@ -1269,14 +1270,8 @@ class iMokaBE extends EventEmitter {
 
 	
 	
-	makeid(length) {
-	   var result           = '';
-	   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-	   var charactersLength = characters.length;
-	   for ( var i = 0; i < length; i++ ) {
-	      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-	   }
-	   return result;
+	makeid() {
+	   return ""+Date.now();;
 	}
 }
 

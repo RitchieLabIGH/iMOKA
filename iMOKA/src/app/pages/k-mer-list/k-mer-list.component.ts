@@ -56,7 +56,6 @@ export class KMerListComponent implements OnInit, OnDestroy {
 	cols: any = {};
 	session: Session;
 	hasKmer: boolean = false;
-	subset_to_show: any = [];
 	groups: any;
 	predictors: any;
 	externalTracks: ExternalTrack[];
@@ -177,8 +176,9 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		this.info[file_type] = info;
 		if (file_type == "kmers") {
 			this.dtOptions = this.initDtOptions();
-			console.log(info)
 			info.events.forEach(ev => this.dtOptions.eventsFilter.push(ev.name));
+			console.log(this.session);
+			console.log(this.info.kmers);
 		} else if (file_type == "som") {
 			this.initSOM();
 		} else if (file_type == "importance") {
@@ -200,7 +200,7 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		this.subscriptions.push(this.trackService.getData("importance_models").subscribe((resp) => {
 			this.data.models = [];
 			resp.forEach((mod) => {
-				this.data.models.push({ fetatures: mod.features, acc: mod.models[mod.best_model].acc })
+				this.data.models.push({ features: mod.features, acc: mod.models[mod.best_model].acc })
 			});
 			if (!this.dtOptions.displayedColumns.includes("importance")) {
 				this.dtOptions.displayedColumns.unshift("importance");

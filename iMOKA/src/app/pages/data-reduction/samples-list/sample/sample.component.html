@@ -1,0 +1,53 @@
+<h1 mat-dialog-title>Sample {{sam.name}}</h1>
+<div mat-dialog-content class="main-dialog">
+  <div fxLayout="row wrap" fxLayout.lt-md="column" fxLayoutAlign="start start">
+    <div fxFlex="50%" fxLayout="column" fxLayoutAlign="start start">
+      <div class="tile-container" fxFlex>
+        <mat-card>
+        <mat-card-title>Details</mat-card-title> <mat-card-content> <mat-list dense> <mat-list-item>
+        <strong>Original source</strong>: {{sam.source[0]}}</mat-list-item> <mat-list-item>
+        <strong>k-mer size</strong>: {{sam.k_len}}</mat-list-item> <mat-list-item>
+        <strong>Library type</strong>: {{sam.libType}}</mat-list-item> <mat-list-item>
+        <strong>Number of different k-mers</strong>: {{sam.total_suffix}}</mat-list-item> <mat-list-item>
+        <strong>Sum of counts</strong>: {{sam.total_count}}</mat-list-item> <mat-list-item>
+        <strong>Noise threshold </strong>: {{sam.minCount}}</mat-list-item> <mat-list-item>
+        <strong>Count file</strong>: {{sam.count_file}}</mat-list-item> <mat-list-item>
+        <strong>FASTQC</strong> : <a [href]="sam.fastqc" target="_blank" *ngIf="sam.fastqc">
+          <button mat-icon-button title="View fastQC">
+            <mat-icon>pageview</mat-icon>
+          </button>
+        </a> <span *ngIf="!sam.fastqc">Not produced</span> </mat-list-item> </mat-list> </mat-card-content> </mat-card>
+      </div>
+      <div fxFlex class="tile-container">
+        <mat-card>
+        <mat-card-title>User notes</mat-card-title>
+        <mat-card-content>
+        <div class="button-list-h">
+          <button *ngIf="!mod" mat-raised-button color="primary" (click)="mod=true;">Modify</button>
+          <button *ngIf="mod" (click)="saveSample()" mat-raised-button color="primary">Save</button>
+          <span *ngIf="err_mess">{{err_mess}}</span>
+        </div>
+        <mat-form-field style="width:100%; height:100%;min-height:400px;"> <mat-label>User notes</mat-label> <textarea style="width: 100%; height: 100%;" [disabled]="!mod" matInput placeholder="Ex. Patient with a severe immunodepression..." [(ngModel)]="sam.free_text"></textarea> </mat-form-field> </mat-card-content></mat-card>
+      </div>
+    </div>
+
+    <div fxFlex="50%" fxLayout="column">
+      <div class="tile-container" fxFlex>
+        <mat-card> <mat-card-title>Predictions</mat-card-title> <mat-card-content fxLayout="column">
+        <div fxFlex *ngFor="let pred of predictions">
+            <mat-divider *ngIf="pred.index > 0"></mat-divider>
+            <h3>Matrix {{pred.matrix.name}}</h3>
+            <ng-container *ngFor="let mod of pred.models">
+              <h4>Model {{mod.description}} ({{mod.name | date}})</h4>
+              <button mat-raised-button *ngIf="! mod.prediction" (click)="runPrediction(pred.matrix.uid + ' '+ mod.name )">Predict using this model</button>
+              <plotly-plot *ngIf="mod.prediction" [useResizeHandler]="true" [data]="mod.prediction.data" [layout]="mod.prediction.layout"></plotly-plot>
+            </ng-container>
+            
+        </div> 
+        </mat-card-content></mat-card>
+      </div>
+    </div>
+
+  </div>
+</div>
+

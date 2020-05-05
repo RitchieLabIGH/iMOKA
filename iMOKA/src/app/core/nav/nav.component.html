@@ -10,11 +10,11 @@
       <mat-divider></mat-divider>
       <ng-container *ngIf="session && session.profile.process_config.profiles.length > 0">
       	<h3 matSubheader >Preprocess</h3>
-      	<a mat-list-item routerLink="dred"><mat-icon fontSet="fa" fontIcon="fa-database" matListIcon ></mat-icon>Data reduction</a>
+      	<a mat-list-item routerLink="dred"><mat-icon fontSet="fa" fontIcon="fa-database" matListIcon ></mat-icon>Workspace</a>
       </ng-container>
       <mat-divider></mat-divider>
       <h3 matSubheader>Data analysis</h3>
-      <a mat-list-item routerLink="files"><mat-icon matListIcon>folder_open</mat-icon>Experiments</a>
+      <a mat-list-item routerLink="files"><mat-icon matListIcon>folder_open</mat-icon>File explorer</a>
       <a mat-list-item routerLink="klist" *ngIf="session && session.files.kmers" ><mat-icon matListIcon>table-chart</mat-icon>K-mer list</a>
       <a mat-list-item routerLink="models" *ngIf="session && session.files.importance"><mat-icon fontSet="fa"  fontIcon="fa-project-diagram" matListIcon ></mat-icon> Prediction models</a>
       <a mat-list-item routerLink="som" *ngIf="session && session.files.som"><mat-icon matListIcon>map</mat-icon> Samples SOM</a>

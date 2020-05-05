@@ -1,8 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DataSource, CollectionViewer } from '@angular/cdk/collections'
-import { Observable, BehaviorSubject, of, pipe } from 'rxjs';
-import { catchError, finalize } from 'rxjs/operators';
-import { IpcRenderer } from 'electron';
+import { Observable, BehaviorSubject} from 'rxjs';
 import { TracksService } from '../services/tracks.service';
 import { Matrix } from '../interfaces/samples';
 
@@ -32,20 +30,16 @@ export class MatrixTableSource implements DataSource<Matrix> {
 			this.trackService.getDataTable({ data: "matrix" }).subscribe(matrices => {
 				matrices.forEach((mat: Matrix) => {
 					mat.stats = [];
-					if (mat.imported) {
-						mat.groups_names.forEach((gn, i) => mat.stats.push({ short_name: gn, name: gn, samples: [] }));
-						mat.groups.forEach((grp, i) => {
-							mat.stats[grp].samples.push({ name: "-", total_count: 0 });
-						});
-					} else {
-						mat.groups_names.forEach((gn, i) => mat.stats.push({ short_name: gn, name: mat.groups_full_names[i], samples: [] }));
-						mat.groups.forEach((grp, i) => {
-							mat.stats[mat.groups_names.indexOf(grp)].samples.push({ name: mat.names[i], total_count: mat.total_counts[i] });
-						});
+					mat.groups_names.forEach((gn, i) =>{
+						let obj={ name: gn, samples: 0 };
+						mat.groups.forEach((g)=>{
+							if ( g == gn) obj.samples+=1;
+						})	 
+						mat.stats.push(obj)						
 					}
-
+						
+					);
 				});
-				console.log(matrices)
 				this.all_matrices = matrices;
 				resolve();
 			}, (err) => { reject(err); });
@@ -67,7 +61,6 @@ export class MatrixTableSource implements DataSource<Matrix> {
 	}
 
 	filter(request, subject: Matrix[]): Matrix[] {
-		console.log(request);
 		return subject.filter((mat) => {
 			let keep = true;
 			if (request.search.value.length > 2) {

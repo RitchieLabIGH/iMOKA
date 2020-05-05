@@ -120,6 +120,7 @@ class Processor {
 
 	setQueue(que){
 		this.queue=que;
+		this.queue.messanger = this.mess;
 	}
 	getQueue(){
 		return new Promise((resolve, reject)=>{
@@ -451,7 +452,9 @@ class Processor {
 	importKmerList(request){
 		return new Promise((resolve, reject)=>{
 			let agg = request.info;
-			let new_matrix = {k_len  : agg.k_len, name : request.new_name, imported: true , uid : agg.uid , groups : agg.groups, groups_names : agg.groups_names};
+			let new_matrix = {k_len  : agg.k_len, name : request.new_name, imported: true , uid : agg.uid , groups : agg.groups, 
+					groups_names : agg.groups_names, names : agg.samples_names};
+			new_matrix.groups=new_matrix.groups.map((n)=>new_matrix.groups_names[n]);
 			let mat_dir =this.options.storage_folder+"/experiments/"+new_matrix.uid;
 			if (this.options.connection_type == 'local'){
 				fs.mkdirSync(mat_dir);
@@ -619,6 +622,12 @@ class Processor {
 									if (fqfs.length == 1 ){
 										sample.fastqc = "file://"+samples_dir+s_dir.name+"/fastqc/"+fqfs[0]
 									}
+								}
+								if ( fs.existsSync(samples_dir+s_dir.name+"/PRED/") ){
+									sample.predictions= [];
+									fs.readdirSync(samples_dir+s_dir.name+"/PRED/").forEach((pred)=>{
+										sample.predictions.push(JSON.parse(fs.readFileSync(samples_dir+s_dir.name+"/PRED/"+pred)));
+									});
 								}
 								samples.push(sample);
 							}
@@ -811,7 +820,6 @@ class Processor {
 				let storage_dir= child_process.execSync("mkdir -p "+this.options.storage_folder + "/.singularity/ && realpath "+this.options.storage_folder ).toString();
 				this.options.storage_folder=storage_dir.replace("\n", "");
 				this.blocked = true;
-				console.log(this.options)
 				if ( !fs.existsSync(this.options.storage_folder+"/.singularity/iMOKA") || this.options.update ){
 				if ( this.options.remote_image){
 					const win = electron.BrowserWindow.getFocusedWindow();

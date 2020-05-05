@@ -11,7 +11,7 @@ import { Matrix, Sample} from '../../../interfaces/samples';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogNewComponent } from './dialog-new/dialog-new.component';
-
+import {SampleComponent} from './sample/sample.component';
 
 @Component( {
     selector: 'app-samples-list',
@@ -30,7 +30,7 @@ export class SamplesListComponent implements OnInit {
     possibleTags : any;
     matrix_error_messages : string[];
     dtOptions: any = {
-        displayedColumns: ["cbs", "name", "tags",  "edit"],
+        displayedColumns: ["cbs", "name", "tags",  "edit", "info"],
         search: { value: "" },
         order: { name: 'name', asc: true },
         metadataKeyFilter: [],
@@ -63,7 +63,7 @@ export class SamplesListComponent implements OnInit {
     newSample() {
         this.dialog.open( DialogNewComponent, {} );
     }
-    cancelEdit( row: { name: string | number; } ) {
+    cancelEdit( row: Sample ) {
         this.edit[row.name] = undefined;
     }
     editSample( row: Sample ) {
@@ -78,9 +78,10 @@ export class SamplesListComponent implements OnInit {
         } ).catch(( err ) => {
             this.snackMessage({ title: "ERROR!", message: err, opts: {} });
         } );
-        
     }
-
+	infoSample(sample :Sample){
+		this.dialog.open(SampleComponent, {data : sample});
+	}
     newBulkMod(){
         if ( this.bulk_mod){
             this.bulk_mod.push( { new_key: "", new_value: "", keep: true, samples: this.bulk_mod_samples });
@@ -202,7 +203,6 @@ export class SamplesListComponent implements OnInit {
         this.updatePossibleTags();
     }
     updatePossibleTags() {
-        console.log(this.dtOptions.stats.metadata);
         this.possibleTags= JSON.parse(JSON.stringify(this.dtOptions.stats.metadata.filter((met: { values: string | any[]; }) =>{
             return met.values.length > 0;
         })));
@@ -245,12 +245,10 @@ export class SamplesListComponent implements OnInit {
         let cmet=this.dtOptions.stats.metadata.find((met: { key: string; })=>{
            return met.key == this.matrixTag; 
         });
-        let messages = [], groups = {};
+        let messages = [];
         cmet.values.sort((va: { value: number; }, vb: { value: number; })=> {return va.value < vb.value;});
-        cmet.values.forEach((v: { value: string; }, i: string)=>{
-            matrix.groups_names.push("G"+i);
-            matrix.groups_full_names.push(v.value);
-            groups[v.value]="G"+i;
+        cmet.values.forEach((v: { value: string; }, i: number)=>{
+            matrix.groups_names.push(v.value.replace(/\s/, "_"));
         });
         
         matrix.group_tag_key = this.matrixTag;
@@ -264,7 +262,7 @@ export class SamplesListComponent implements OnInit {
                let s_met =sam.metadata.find((met)=>{return met.key == this.matrixTag});
                if ( s_met ){
                    matrix.count_files.push(sam.count_file);
-                   matrix.groups.push(groups[s_met.value]);
+                   matrix.groups.push(s_met.value.replace(/\s/, "_"));
                    matrix.total_counts.push(sam.total_count);
                    matrix.names.push(sam.name);
                } else {
@@ -276,7 +274,7 @@ export class SamplesListComponent implements OnInit {
             this.matrix_error_messages = messages;
         } else {
             matrix.rescale_factor = 1e9;
-            matrix.name = this.matrixName; /*this.matrixTag + ": " + matrix.groups_full_names.join(" x ")*/
+            matrix.name = this.matrixName; 
             this.sampleService.setMatrix(matrix).then(()=>{
                 this.snackMessage({ title: "Matrix " + matrix.name + " created successfully.", message: "SUCCESS", opts: {} });
             }).catch((err)=>{

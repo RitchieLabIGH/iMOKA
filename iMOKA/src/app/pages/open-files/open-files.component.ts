@@ -30,12 +30,12 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 	status: any[];
 	new_name:string;
 	ngOnInit() {
-		
+		this.uem.refreshSession();
 		this.subscription = this.uem.getSession().subscribe((new_session) => {
 			this.zone.run(() => {
+				new_session.matrices.sort((mata, matb)=>{return mata.name < matb.name? -1 : 1});	
 				this.session = new_session;
 				this.status = [];
-				console.log(new_session);
 				[{ tid: "kmers", des: "K-mer list" }, { tid: "importance", des: "Random Forest importance" }, { tid: "som", des: "Self Organizing Map" }].forEach((ft) => {
 					let k = ft.tid, external=true;
 					if (this.session.files[k]) {
@@ -64,7 +64,7 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 	}
 	
 	saveExternal(){
-		if ( this.new_name && this.new_name.length > 3){
+		if ( this.new_name && this.new_name.length >= 3){
 			this.fileService.importKmerList({original_request : this.session.files.kmers.original_request, new_name : this.new_name}).then(()=>{
 				this.toastMessage("File imported", "Done");
 			}).catch((err)=>{
@@ -80,24 +80,13 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 			this.current_matrix.groups_count = [];
 			this.current_matrix.groups_names.forEach((gn, idx) => {
 				let count=0;
-				if ( mat.imported ){
-					this.current_matrix.groups.forEach((c)=> c==idx ? count=count+1 : count=count );
-					this.current_matrix.groups_count.push({
-						name: gn,
-						full_name:  gn,
-						count: count
-					});
-				} else {
-					this.current_matrix.groups.forEach((c)=> c==gn ? count=count+1 : count=count );
-					this.current_matrix.groups_count.push({
-						name: gn,
-						full_name: (this.current_matrix.groups_full_names ? this.current_matrix.groups_full_names[idx] : gn),
-						count: count
-					});	
-				}
-				
+				this.current_matrix.groups.forEach((c)=> c==gn ? count=count+1 : count=count );
+				this.current_matrix.groups_count.push({
+					name: gn,
+					full_name:  gn,
+					count: count
+				});
 			});
-
 		});
 	}
 	loadData(): Promise<any> {

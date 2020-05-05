@@ -9,7 +9,7 @@ const Store  = require('./store.js');
 class LocalQueue {
 	
 	tick_time = 5000;
-	
+	messanger;
 	constructor(opts){
 		this.options = opts;
 		this.current_queue=new Store({configName : "queue", defaults : { queue :[] , running :[] , completed : [] } });
@@ -78,7 +78,6 @@ class LocalQueue {
 				  stream.write(content);
 				  stream.end();
 				  resolve(output_file);
-				  
 			  });
 			  stream.once('error', (err)=>{
 				  reject(err);
@@ -152,8 +151,9 @@ class LocalQueue {
 	
 	run(job){
 		job.result = "Running";
-		console.log("RUNNING!");
-		console.log(job);
+		if (this.messanger){
+			this.messanger.sendMessage({ message  : job.job.original_request.name +" running", title : "Queue updates"})
+		}
 		let lock=this.locker+"/"+job.job.uid;
 		var stream = fs.createWriteStream(lock+".sh");
 		stream.once('open', function(fd) {
@@ -217,9 +217,12 @@ class LocalQueue {
 				console.log("----------- JOB completed -----------");
 				console.log(job);
 				console.log("----------- JOB completed -----------");
-				/*child_process.exec("rm -fr "+job.job.wd);*/
+				child_process.exec("rm -fr "+job.job.wd);
 				this.current_queue.data.running.splice(i, 1);
 				this.current_queue.save();
+				if (this.messanger){
+					this.messanger.sendMessage({ message  : job.job.original_request.name +" completed: "+job.result, title : "Job Completed"})
+				}
 			}
 		}
 		

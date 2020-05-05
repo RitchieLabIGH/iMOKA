@@ -54,7 +54,7 @@ def predict(file_input, file_output, file_model):
         try:
             support.append(dimensions.index(d))
         except:
-            print("ERROR! Feature {} is not in the input matrix.")
+            print("ERROR! Feature {} is not in the input matrix.".format(d))
             exit(1)
     acc = 0
     
@@ -92,7 +92,7 @@ def predict(file_input, file_output, file_model):
 def main():
     parser = argparse.ArgumentParser(description="Predict the class of samples using k-mer features.");
     parser.add_argument("input", help="Input file, containing the k-mer or feature matrix. First line have to contain the samples names, the second line the corresponding groups, or NA if unknown. The first column has to be the feaures names. The matrix is then organized with features on the rows and samples on the columns.")
-    parser.add_argument("model", help="The model obtained from feature_reduction.py")
+    parser.add_argument("model", help="The model obtained from random_forest.py")
     parser.add_argument("output", help="Output file in json format")
     parser.add_argument("-t", "--threads", default=-1, type=int, help="The number of threads to use. Default: -1 (automatic)")
     args = parser.parse_args();

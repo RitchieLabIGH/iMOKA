@@ -44,13 +44,13 @@ export class NavComponent {
 						if (message.action == "release"){
 							this.blocked = undefined;
 							this.messages.push(message);
-							this.showAlert(message.message, "Done!");
+							this.showAlert(message.message,"Done!");
 							break;
 						}
 					}
 					default: {
 						this.messages.push(message)
-						this.showAlert(message.message, "Warning!");
+						this.showAlert(message.message, message.title ? message.title : "Warning!");
 					}
 				}
 			}

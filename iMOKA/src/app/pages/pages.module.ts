@@ -41,6 +41,7 @@ import { NodesInfoComponent } from './samples-som/nodes-info/nodes-info.componen
 import { HexamapComponent } from './samples-som/hexamap/hexamap.component';
 
 import {AboutComponent} from './about/about.component';
+import {SampleComponent} from './data-reduction/samples-list/sample/sample.component';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 
@@ -73,6 +74,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
 		HexamapComponent,
 		AboutComponent,
 		NewSomComponent,
+		SampleComponent,
 	],
 	imports: [
 		CommonModule,
@@ -99,6 +101,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
 		RandomForestComponent,
 		NodesInfoComponent,
 		NewSomComponent,
+		SampleComponent,
 	]
 })
 export class PagesModule { }

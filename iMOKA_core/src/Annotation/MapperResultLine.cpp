@@ -63,8 +63,11 @@ void MapperResultLine::parsePSLX(std::string line) {
 																"^"+std::to_string(t_blocks[i].start - t_blocks[i-1].end)+"nt"));
 			}
 		} else {
-			signatures.push_back(AlignmentDerivedFeature("insertion", Segment(t_blocks[i-1].end , t_blocks[i].start), Segment(q_blocks[i-1].end,q_blocks[i].start ),
-																			chromosome, "+"+std::to_string(q_blocks[i].start - q_blocks[i-1].end)+"nt"));
+			if ( q_blocks[i].start - q_blocks[i-1].end <= 10 ){
+				signatures.push_back(AlignmentDerivedFeature("insertion", Segment(t_blocks[i-1].end , t_blocks[i].start), Segment(q_blocks[i-1].end,q_blocks[i].start ),
+																							chromosome, "+"+std::to_string(q_blocks[i].start - q_blocks[i-1].end)+"nt"));
+			}
+
 		}
 	}
 }

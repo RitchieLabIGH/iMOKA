@@ -2,6 +2,7 @@ import { Component, OnInit, NgZone, OnDestroy, ChangeDetectorRef } from '@angula
 import { UemService } from '../../services/uem.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Session } from '../../interfaces/session';
+import { Matrix } from '../../interfaces/samples';
 import { Subscription, timer } from 'rxjs';
 import { QueueSource } from '../../data/queue.source';
 import { QueueService } from '../../services/queue.service';
@@ -24,6 +25,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	refreshTime: number = -1;
 	refreshRequest: Subscription;
 	error: string;
+	current_matrix: Matrix;
+	revisions : {matrix : number} = {matrix : 0};
+	plots: { matrices?: { layout: any, data: any }, matrix?: { layout: any, data: any } } = {};
 
 	constructor(private uem: UemService, private zone: NgZone,
 		private sb: MatSnackBar, private queueService: QueueService, private cd: ChangeDetectorRef
@@ -33,31 +37,73 @@ export class DashboardComponent implements OnInit, OnDestroy {
 		this.sub_session = this.uem.getSession().subscribe(observer => {
 			this.zone.run(() => {
 				this.session = observer;
+				if (this.session && this.session.matrices && this.session.matrices.length > 0) {
+					this.plots.matrices = { data: [{ values: [], labels: [], type: 'pie' }], layout: {
+						 title: "Samples per matrix in your Workspace", height: 350 ,
+					legend: {
+   						 x: 1,
+    					xanchor: 'right',
+    					y: 1
+  					} } }
+					this.session.matrices.forEach((mat) => {
+						this.plots.matrices.data[0].values.push(mat.groups.length)
+						this.plots.matrices.data[0].labels.push(mat.name)
+					})
+					this.current_matrix = this.session.matrices[0];
+					this.updateCurrentMatrix();
+				}
 				if (!this.dataSource && this.session && this.session.profile.process_config.profiles.length > 0) {
 					this.dataSource = new QueueSource(this.queueService);
-					this.dataSource.onRefresh=()=>{
+					this.dataSource.onRefresh = () => {
 						this.zone.run(() => { this.cd.markForCheck() });
 						return;
 					};
-					setTimeout(()=>{this.refreshTable()}, 1000);
+					setTimeout(() => { this.refreshTable() }, 1000);
 				}
-				
+
 			});
 		}, err => {
 			console.log(err);
 		});
 	}
-
+	selectMatrix(event: any) {
+		if (event.points && event.points.length == 1) {
+			this.current_matrix = this.session.matrices.find((m) => { return m.name == event.points[0].label; })
+			this.updateCurrentMatrix();
+		}
+	}
+	updateCurrentMatrix() {
+		let mat = this.current_matrix;
+		this.plots.matrix = { data: [{ values: [], labels: mat.groups_names, type: 'pie' }], layout: {
+			 title: "Matrix " + mat.name + (mat.group_tag_key ? " ("+mat.group_tag_key+")" : ""), height: 350 ,
+		legend: {
+   						 x: 1,
+    					xanchor: 'right',
+    					y: 1	
+  					}
+		} }
+		mat.groups_names.forEach((n, i) => {
+			let count = 0;
+			mat.groups.forEach((g)=>{
+				if ( g == n ) count+=1;
+			})
+			this.plots.matrix.data[0].values.push(count)
+		})
+		this.zone.run(()=>{
+			this.revisions.matrix+=1;
+			console.log(this.revisions)	
+		})
+		
+	}
 	updateRefresh() {
 		if (this.refreshRequest) this.refreshRequest.unsubscribe();
-		if ( this.refreshTime > 0 ){
+		if (this.refreshTime > 0) {
 			this.refreshRequest = timer(0, this.refreshTime).subscribe(() => {
-			this.zone.run(()=>{this.refreshTable();})
-		});	
+				this.zone.run(() => { this.refreshTable(); })
+			});
 		} else {
-			this.zone.run(()=>{this.refreshTable();})
+			this.zone.run(() => { this.refreshTable(); })
 		}
-		
 	}
 
 	ngOnDestroy() {
@@ -66,7 +112,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
 	}
 	jobInfo(job: any) {
-		console.log(job);
 		let data = new InfoData("Job " + job.job.original_request.name + " informations");
 		let times = new InfoListElement("Times");
 		let time = new Date(job.times.added);
