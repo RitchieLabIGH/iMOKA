@@ -73,10 +73,15 @@
 						[value]="val.value" title="{{val.value}} ({{val.count}})">{{val.value}} ({{val.count}})
 						</mat-option> 
 					</mat-select>
-					
-					
 				</mat-form-field>
 				</ng-container>
+                <mat-form-field fxFlex="15" >
+                  <mat-label>Search</mat-label>
+                  <input matInput [(ngModel)]="dtOptions.search.value"  >
+                   <button mat-icon-button matSuffix (click)="refreshTable('search')">
+                    <mat-icon>search</mat-icon>
+                   </button>
+                </mat-form-field>
 			</div>
 			<div fxFlex fxLayout.lt-md="column" fxLayout="row" fxLayoutGap="12px"
 				fxLayoutAlign="flex-start">

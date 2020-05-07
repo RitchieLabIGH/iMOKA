@@ -66,6 +66,7 @@ export class Message {
     message ?: any;
 	type ? :string;
 	action ?:string;
+	details ? : string;
 }
 
 

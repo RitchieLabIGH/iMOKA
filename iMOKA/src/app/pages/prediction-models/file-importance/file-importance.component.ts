@@ -47,8 +47,11 @@ export class FileImportanceComponent implements OnInit, AfterContentInit {
 			graph.samples = samples.sort((a, b) => { return a.name < b.name ? -1 : 1; });
 			this.data.samples_eval.push(graph)
 		});
-		this.updateFI();
-		this.updateSample();
+		setTimeout(()=>{
+			this.updateFI();
+			this.updateSample();	
+		}, 500);
+		
 	}
 	updateFI() {
 		let fi = this.data.feature_importance;

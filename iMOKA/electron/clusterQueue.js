@@ -131,7 +131,7 @@ class ClusterQueue {
 				  
 			  }, (err)=>{
 				  observer.error({message : "Error during the environment setup", code : 1 , error: err });
-				  this.ssh.execCommand("rm "+job.wd).catch((err)=>{
+				  this.ssh.execCommand("rm -fr "+job.wd).catch((err)=>{
 					  console.log(err);
 				  })
 				  observer.complete();
@@ -197,23 +197,27 @@ class ClusterQueue {
 								job.result=job.cluster_info.info;
 								job.completed=false;
 							} else {
-								job.completed=true;
 								this.ssh.execCommand(this.settings.check_completed_job+job.uid).then((response)=>{
 									let completed_job_cluster = this.settings.completed_job_parse(response.stdout);
+									console.log(completed_job_cluster)
 									if (completed_job_cluster && completed_job_cluster.length > 0){
 										job.cluster_info = completed_job_cluster[0];
-										job.result = job.cluster_info.state
+										job.result = job.cluster_info.state ; 
 										job.times.completed = job.cluster_info.times.completed;
 										job.times.started = job.cluster_info.times.started;
+										job.type=job.cluster_info.type;
 									} else {
+										job.type = "queue";
 										job.result = "No info";
 										job.code = 1;
 									}
-									job.type="completed";
 									this.current_queue.save();
-									this.ssh.execCommand("rm -fr "+job.job.wd +" ").catch(err=>{
-										console.log(err);
-									});
+									if ( job.type == "completed" ){
+										job.completed=true;
+										this.ssh.execCommand("rm -fr "+job.job.wd +" ").catch(err=>{
+											console.log(err);
+										});
+									}
 								}).catch(err=>{
 									console.log(err);
 								})

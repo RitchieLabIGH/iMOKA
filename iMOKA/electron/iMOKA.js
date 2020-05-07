@@ -122,7 +122,7 @@ class iMOKA {
 		   		out.commands.push("rm -f ./matrix.tsv")
 		   		out.commands.push("mkdir -p "+out_folder)
 		   		out.commands.push("mv ./info.json "+out_folder+timest+".info.json ")
-		   		out.commands.push("mv ./"+timest+" "+out_folder+timest+".info.json ")
+		   		out.commands.push("mv ./"+timest+"* "+out_folder+"/ ")
 		   		out.memory = data.process.mem;
 		   		out.threads = data.process.cores;
 		   		resolve(out);

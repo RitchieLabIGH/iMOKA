@@ -18,8 +18,8 @@ const {download} = require('electron-dl');
 const clusterCommands = {
 		"slurm" : {
 			"exec" : "sbatch ", 
-			"check_job" : "squeue -o \"%i\t%P\t%j\t%u\t%T\t%M\t%l\t%D\t%C\t%m\t%Q\t%R\t%g\t%S\" -A $USER  -j ",
-			"check_all" : "squeue -o \"%i\t%P\t%j\t%u\t%T\t%M\t%l\t%D\t%C\t%m\t%Q\t%R\t%g\t%S\" -A $USER ",
+			"check_job" : "squeue -o \"%i\t%P\t%j\t%u\t%T\t%M\t%l\t%D\t%C\t%m\t%Q\t%R\t%g\t%S\"  -j ",
+			"check_all" : "squeue -o \"%i\t%P\t%j\t%u\t%T\t%M\t%l\t%D\t%C\t%m\t%Q\t%R\t%g\t%S\" | grep $USER ",
 			"check_completed_job" : "sacct --format=JobID,partition,state,time,start,end,elapsed,nodelist -j " ,
 			"completed_job_parse" : (stdout)=>{
 				let tmp= stdout.split("\n");
@@ -298,7 +298,7 @@ class Processor {
 				resolve(this.matrices)
 			} else {
 				if ( this.isInit()){
-					let matrix_dir=this.options.storage_folder+"/experiments/", mod_dir, som_dir;
+					let matrix_dir=this.options.storage_folder+"/experiments/", mod_dir;
 					if (this.options.connection_type == 'local'){
 						if (! fs.existsSync(matrix_dir) ) fs.mkdirSync(matrix_dir);
 						fs.readdir(matrix_dir, {withFileTypes : true}, (err, files)=>{
@@ -371,7 +371,7 @@ class Processor {
 						this.getSSH().then((ssh)=>{
 							this.getRemoteMatrices(ssh).then((matrices)=>{
 								resolve(matrices);
-							});
+							})
 							
 						}).catch((err)=>{
 							reject(err);  
@@ -385,13 +385,14 @@ class Processor {
 		});
 	}
 
-	async getRemoteMatrices(){
+	async getRemoteMatrices(ssh){
 		try {
+			let matrix_dir=this.options.storage_folder+"/experiments/";
 			let res= await ssh.execCommand("mkdir -p "+matrix_dir+" && ls -l "+matrix_dir +" | awk '/^d/ {print $NF}'");
 			this.matrices=[];
 			if (res.code == 0 && res.stdout.length > 1){
 				let muids= res.stdout.split("\n"), muid;
-				for (i=0; i<muids.length; i++){
+				for (let i=0; i<muids.length; i++){
 					muid=muids[i];
 					let res = await ssh.execCommand("cat "+matrix_dir+"/"+muid+"/matrix.json");
 					if (res.code == 0 && res.stdout.length > 0){
@@ -405,7 +406,7 @@ class Processor {
 							curr_matrix.aggregated = JSON.parse(res.stdout);
 						}
 						let mod_dir=matrix_dir+muid+"/RF/";
-						let cmd="mkdir -p "+mod_dir+" && ls -l "+mod_dir+"*.json.info | awk '{n=split($NF, arr, \"/\"); getline line < $NF;  print arr[n] \"\t\" line}' ";
+						let cmd="mkdir -p "+mod_dir+" && ls -l "+mod_dir+"*.info.json | awk '{n=split($NF, arr, \"/\"); getline line < $NF;  print arr[n] \"\t\" line}' ";
 						res = await ssh.execCommand(cmd)
 						curr_matrix.models = [];
 						if (res.code == 0 && res.stdout.length > 0 ){
@@ -420,7 +421,7 @@ class Processor {
 							});
 						}
 						mod_dir=matrix_dir+muid+"/SOM/";
-						cmd="mkdir -p "+mod_dir+" && ls -l "+mod_dir+"*.json.info | awk '{n=split($NF, arr, \"/\"); getline line < $NF;  print arr[n] \"\t\" line}' ";
+						cmd="mkdir -p "+mod_dir+" && ls -l "+mod_dir+"*.info.json | awk '{n=split($NF, arr, \"/\"); getline line < $NF;  print arr[n] \"\t\" line}' ";
 						res = await ssh.execCommand(cmd)
 						curr_matrix.som = [];
 						if (res.code == 0 && res.stdout.length > 0 ){
@@ -443,9 +444,9 @@ class Processor {
 					}
 				};
 			}
-			resolve(this.matrices);
+			return this.matrices;
 		} catch(e){
-			reject(e);
+			throw e
 		}
 	}
 
@@ -533,6 +534,20 @@ class Processor {
 		});
 	}
 
+	async setSampleRemote(ssh, samples){
+		let sam, res, sample_dir, log = samples.length > 10;
+		for (let i=0; i< samples.length; i++){
+			if ( log ) this.mess.sendMessage({type : "action", action : "block", progress : Math.round((i*100)/samples.length) , message : "Saving the samples ("+i+"/"+samples.length+")... Don't close the software!" })
+			sam = samples[i];
+			sample_dir = this.options.storage_folder+"/samples/"+sam.name;
+			res = await ssh.execCommand("ls "+sample_dir)
+			if (res.code != 0 || res.stderr.length > 1){
+				throw res.stderr
+			} 
+			ssh.execCommand("echo '"+JSON.stringify(sam)+"' > "+sample_dir+"/"+sam.name+".metadata.json")
+		};
+		return true;
+	}
 	setSample(samples){
 		return new Promise((resolve, reject)=>{
 			if (this.isInit()){
@@ -553,32 +568,9 @@ class Processor {
 					}
 				}else {
 					this.getSSH().then((ssh)=>{
-						let reduction = samples.reduce(async (prevPromise, sam)=>{
-							await prevPromise; 
-							return new Promise((resolve, reject)=>{
-								let sample_dir = this.options.storage_folder+"/samples/"+sam.name;
-								ssh.execCommand("ls "+sample_dir).then((res)=>{
-									if (res.code != 0 || res.stderr.length > 1){
-										resolve(res.stderr);
-									} else {
-										ssh.execCommand("echo '"+JSON.stringify(sam)+"' > "+sample_dir+"/"+sam.name+".metadata.json").catch((err)=>{reject(err);});
-										resolve();
-									}
-								});
-							})}, Promise.resolve());
-						reduction.then((values)=>{
-							values.forEach((el)=>{
-								if (el){
-									messages.push(el)
-								}
-							});
-							if ( messages.length > 0){
-								reject(messages)
-							} else {
-								resolve("Samples updated correctly");
-							}
-
-						});
+						this.setSampleRemote(ssh, samples).then(()=>{
+							resolve("Samples updated correctly")
+						})
 					});
 				}
 			} else {
@@ -636,69 +628,8 @@ class Processor {
 					});
 				} else {
 					this.getSSH().then((ssh)=>{
-						ssh.execCommand("mkdir -p "+samples_dir+" && ls -l "+samples_dir+" | awk '/^d/ {print $NF}' ").then((res)=>{
-							if ( res.code == 0 ){
-								let files=res.stdout.split("\n").filter((fname)=>{return fname.length > 0}), samples=[];
-
-								let reduction = files.reduce(async (prevProm , s_dir) =>{
-									await prevProm;
-									return new Promise((resolve, reject)=>{
-										let fname= samples_dir+s_dir+"/"+s_dir+".metadata.json", sample;
-										ssh.execCommand("[[ -f "+fname+" ]] && cat "+fname ).then((res)=>{
-											if ( res.stdout.length > 0 ){
-												sample= JSON.parse(res.stdout);
-											} else {
-												sample = {name : s_dir.name, libType : "NA", minCount : "NA", metadata : [], source : [], message : "Empty folder"}
-											}
-											fname=samples_dir+s_dir+"/"+s_dir+".json"
-											ssh.execCommand("[[ -f "+fname+" ]] &&  cat "+fname).then((res)=>{
-												if ( res.code == 0 && res.stdout.length > 1){
-													let tmp_j = JSON.parse(res.stdout);
-													sample.count_file = tmp_j.count_files[0];
-													sample.prefix_size = tmp_j.prefix_size[0];
-													sample.total_count = tmp_j.total_counts[0];
-													sample.total_prefix = tmp_j.total_prefix[0];
-													sample.total_suffix = tmp_j.total_suffix[0];
-													ssh.execCommand("echo '"+JSON.stringify(sample)+"' > "+samples_dir+s_dir+"/"+s_dir+".metadata.json").catch((err)=>{
-														reject(err);
-													});
-												} else {
-													if ( sample.message == "Empty folder" ) {
-														sample.message = "In process";
-													}
-												}
-												fname=samples_dir+"/"+s_dir+"/fastqc/"+s_dir+"_fastqc.html"
-												ssh.execCommand("[[ -f "+fname+" ]] && cat "+fname).then((res)=>{
-													fname=electron.app.getPath('userData')+"/tmp_fastqc_"+s_dir+".html"
-													if (res.code == 0 &&  res.stdout.length > 1){
-														sample.fastqc = "file://"+fname;
-														if (! fs.existsSync(fname)){
-															fs.writeFileSync(fname, res.stdout);
-														}
-													}
-													samples.push(sample);
-													resolve();
-												}).catch((err)=>{
-													reject(err);
-												})
-
-											}).catch((err)=>{
-												reject(err);
-											}) 
-
-										}).catch((err)=>{
-											reject(err);
-										})
-									})}, Promise.resolve());
-								reduction.then((_)=>{
-									resolve(samples);
-								});
-							} else {
-								reject(res.stderr)
-							}
-
-						}).catch(err=>{
-							reject(err);
+						this.getRemoteSamples(ssh).then((samples)=>{
+							resolve(samples)
 						})
 					}).catch((err)=>{
 						reject(err);
@@ -711,7 +642,56 @@ class Processor {
 		});
 
 	}
-
+	
+	async getRemoteSamples(ssh){
+		let samples= [], samples_dir = this.options.storage_folder+"/samples/";
+		let res = await ssh.execCommand("mkdir -p "+samples_dir+" && ls -l "+samples_dir+" | awk '/^d/ {print $NF}' ")
+		if ( res.code == 0 ){
+			let files=res.stdout.split("\n").filter((fname)=>{return fname.length > 0});
+			let meta = await ssh.execCommand("cat "+samples_dir+"/*/*.metadata.json")
+			if ( meta.stdout.length > 0 ){
+				meta.stdout.split("\n").forEach((el)=>{
+					if (el.length > 0 ){
+						samples.push(JSON.parse(el));		
+					}
+				})
+			}
+			files = files.filter((fname)=>{return samples.find((e)=>{return e.name == fname})? false : true;})
+			if ( files.length == 0 ){
+				return samples;
+			}
+			let s_dir;
+			for ( let i=0; i<files.length ; i++){
+				s_dir = files[i];
+				this.mess.sendMessage({type : "action", action : "block", progress : Math.round((i*100)/files.length) , message : "Checking the samples ("+i+"/"+files.length+")... Don't close the software!" })
+				let fname=samples_dir+s_dir+"/"+s_dir+".json", sample;
+				sample = {name : s_dir, libType : "NA", minCount : "NA", metadata : [], source : [], message : "In process"}
+				res = await ssh.execCommand("[[ -f "+fname+" ]] &&  cat "+fname)
+				if ( res.code == 0 && res.stdout.length > 1){
+					let tmp_j = JSON.parse(res.stdout);
+					sample.count_file = tmp_j.count_files[0];
+					sample.prefix_size = tmp_j.prefix_size[0];
+					sample.total_count = tmp_j.total_counts[0];
+					sample.total_prefix = tmp_j.total_prefix[0];
+					sample.total_suffix = tmp_j.total_suffix[0];
+					sample.message = "Imported";
+					fname=samples_dir+"/"+s_dir+"/fastqc/"+s_dir+"_fastqc.html"
+					res = await ssh.execCommand("[[ -f "+fname+" ]] && cat "+fname)
+					if (res.code == 0 &&  res.stdout.length > 1){
+						sample.fastqc = "remote://"+fname;
+					}
+					ssh.execCommand("echo '"+JSON.stringify(sample)+"' > "+samples_dir+s_dir+"/"+s_dir+".metadata.json")
+					samples.push(sample);
+				} else {
+					samples.push(sample);
+				}
+			};
+			this.mess.sendMessage({type : "action", action :"release", message : "Done!"})
+			return samples;
+		} else {
+			return samples;
+		}
+	}
 
 	isInit(){
 		if ( typeof this.options ==  'undefined'){
@@ -793,6 +773,7 @@ class Processor {
 			this.error_message = "You need a version of Singularity >= 3 "
 				return false;
 		}
+		this.options.singularity_version = singularity_version;
 		return true;
 	}
 
@@ -857,10 +838,10 @@ class Processor {
 	}
 
 	encrypt(password){
-		return crypt.encrypt(password);
+		return "enc::"+crypt.encrypt(password);
 	}
 	decrypt(password){
-		return crypt.decrypt(password);
+		return crypt.decrypt(password.replace(/^enc::/, ""));
 	}
 
 	getSSH(){
@@ -911,52 +892,61 @@ class Processor {
 			this.getSSH().then((ssh)=>{
 				ssh.execCommand("mkdir -p "+this.options.storage_folder + "/.singularity/ && realpath "+this.options.storage_folder).then((result)=>{
 					let promise;
-					if ( this.options.remote_image){
-						promise=ssh.execCommand("wget "+this.options.original_image+" -O "+this.options.storage_folder + "/.singularity/iMOKA").catch((err)=>{
-							console.log("Error copying the singularity image");
-							this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Error copying the singularity image"})
-							reject(err);
-						})
-					} else {
-						promise=ssh.putFile(this.options.original_image, this.options.storage_folder + "/.singularity/iMOKA").catch((err)=>{
-							console.log("Error copying the singularity image");
-							this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Error copying the singularity image"})
-							reject(err);
+					if ( this.options.update ){
+						if ( this.options.remote_image){
+							promise=ssh.execCommand("wget "+this.options.original_image+" -O "+this.options.storage_folder + "/.singularity/iMOKA").catch((err)=>{
+								console.log("Error copying the singularity image");
+								this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Error copying the singularity image"})
+							})
+						} else {
+							promise=ssh.putFile(this.options.original_image, this.options.storage_folder + "/.singularity/iMOKA").catch((err)=>{
+								console.log("Error copying the singularity image");
+								this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Error copying the singularity image"})
+							});
+						}
+						this.mess.sendMessage({type : "action", action :"block", progress : -1 , message : "Downloading singularity image on "+this.options.ssh_address+". Don't close the software!"})
+						promise.then((res)=>{
+							if ( res.code == 0 ){
+								this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Image copied successfully!"})
+							} else {
+								this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Error copying the image", details : res.stderr})
+							}
+							
 						});
 					}
-					this.mess.sendMessage({type : "action", action :"block", progress : -1 , message : "Downloading singularity image on "+this.options.ssh_address+". Don't close the software!"})
-					promise.then(()=>{
-						this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Image copied successfully!"})
-					});
 					if (result.code != 0){
 						reject(result.stderr);
 						return;
 					}
 					this.options.storage_folder = result.stdout;
-					let result_promise;
-					if (this.options.connection_type == "cluster"){
-						result_promise = this.execOnCluster("singularity --version", ssh, {}).toPromise();
-					} else {
-						result_promise = ssh.execCommand("singularity --version");
-					}
-
-					result_promise.then((result)=>{
-						if ( result.code != 0 ){
-							reject(result.stderr)
-						};
-						if (this.checkSingularityVersion(result.stdout)) {
-							resolve();
+					if (! this.options.singularity_version ){
+						let result_promise;
+						if (this.options.connection_type == "cluster"){
+							result_promise = this.execOnCluster("singularity --version", ssh, {}).toPromise();
 						} else {
-							reject(this.error_message)
-						};
-					}).catch((err)=>{console.log("Error in version detection");reject(err)});
+							result_promise = ssh.execCommand("singularity --version");
+						}
+						result_promise.then((result)=>{
+							if ( result.code != 0 ){
+								reject(result.stderr)
+							};
+							if (this.checkSingularityVersion(result.stdout)) {
+								resolve();
+							} else {
+								reject(this.error_message)
+							};
+						}).catch((err)=>{console.log("Error in version detection");reject(err)});
+					} else {
+						resolve();
+					}
+					
 				}).catch((err)=>{console.log("Error in environment setup ssh connection"); console.log(err);reject(err)});
 			}).catch((err)=>{console.log("Error in getting ssh connection");reject(err)});
 		});
 	}
 
 	checkOptions(opts){
-		if (opts.password){
+		if (opts.password && ! opts.password.match(/^enc::/)){
 			opts.password = this.encrypt(opts.password);
 		}
 		this.options=opts
@@ -988,7 +978,7 @@ class Processor {
 			if (! this.checkOS() ){
 				observer.error(this.error_message) ;
 			} else {
-				observer.next("Local system settings chekced correctly");
+				observer.next("Local system settings work correctly");
 			}
 			if (this.options.connection_type != "local"  ) {
 				observer.next("Checking remote configurations...");
@@ -999,10 +989,11 @@ class Processor {
 					} else {
 						observer.next(message);  
 					}
-					observer.complete()
-
+					console.log("COMPLETED")
+					observer.complete();
 				}).catch((err)=>{observer.error(err); console.log(err);observer.complete();});
 			}else {
+				console.log("COMPLETED")
 				observer.complete();
 			}
 		});
@@ -1070,12 +1061,14 @@ class Processor {
 				let tick= function() {
 					ssh.execCommand(command).then((response)=>{
 						if (response.code == 0){
+							console.log(response.stdout)
 							let result = setting.parse_jobs(response.stdout);
+							console.log(result)
 							if ( result ){
 								observer.next(result[0]);
 								setTimeout(tick, 2000);
 							} else {
-								ssh.execCommand("cat "+remote_script+".out && cat "+remote_script+".err >&2 ").then((response)=>{
+								ssh.execCommand("sleep 1 && cat "+remote_script+".out && cat "+remote_script+".err >&2 && rm "+remote_script+"*").then((response)=>{
 									observer.next(response);
 									observer.complete();
 								}).catch(observer.error);

@@ -79,6 +79,7 @@ export class MasterSetupComponent implements OnInit {
 		if (this.modify) {
 			this.updateSetting();
 			tosend.profile = this.setting;
+			
 		}
 		this.uem.saveProfile(tosend).subscribe(
 			result => {
@@ -93,7 +94,6 @@ export class MasterSetupComponent implements OnInit {
 					} else {
 						this.err_message = JSON.stringify(error);
 					}
-
 				});
 			}, () => {
 				this.zone.run(() => {
@@ -101,6 +101,11 @@ export class MasterSetupComponent implements OnInit {
 					this.modify = false;
 					this.setProfile();
 				});
+				setTimeout(()=>{
+						this.zone.run(()=>{
+							this.err_message=undefined;
+						})
+					}, 2000)
 			}
 		);
 		if (event) {
@@ -127,6 +132,9 @@ export class MasterSetupComponent implements OnInit {
 		Object.keys(this.remoteParam.value).forEach((k)=>{
 			this.setting[k]=this.remoteParam.value[k]
 		});
+		if ( this.isNewSetting ){
+			this.setting.update=true;
+		}
 	}
 	updateParam(){
 		this.mainParam = this.fb.group({

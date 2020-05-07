@@ -25,7 +25,21 @@
 }
 
 
+.blocked-message {
+	color : white;
+}
 
+.waiting-container{
+	position : fixed;
+	left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background : rgba(0,0,0,0.8);
+	border-radius: 10px;
+	border : 2px solid black;
+	z-index:100001;
+	text-align:center;
+}
 
 .message-container {
 	position:fixed;
@@ -35,6 +49,7 @@
 	height:calc(100vw - 70px);
 	z-index:100001;
 	text-align:center;
+	
 }
 
 .message-container-bg {

@@ -11,7 +11,7 @@ COPY ./external /iMOKA/external
 
 ENV PATH="/iMOKA/external:/iMOKA/external/bin:/iMOKA/python/:/iMOKA/scripts/:$PATH"
 ENV LD_LIBRARY_PATH="/usr/local/lib/:$LD_LIBRARY_PATH"
-
+ENV PYTHONNOUSERSITE="true"
 
 ### All the dependencies
 RUN apt-get clean all && \
@@ -23,11 +23,11 @@ RUN apt-get clean all && \
     	libarmadillo-dev libboost-test-dev \
     	libboost-dev libboost-system-dev libboost-math-dev \
     	libboost-program-options-dev libboost-serialization-dev \
-    	python3 python3-numpy python3-scipy python3-sklearn python3-pandas \
+    	python3  \
     	fastqc samtools python3-pip libxml-libxml-perl curl \
     	bedtools libxml-parser-perl  \
     	gzip gawk libz-dev wget cmake perl graphviz locales && \
-    pip3 install --no-cache-dir  SimpSOM && \
+    pip3 install --no-cache-dir  SimpSOM numpy scipy sklearn pandas && \
 ### mlpack v3.0.4
 ### wget http://www.mlpack.org/files/mlpack-3.0.4.tar.gz
 	cd /iMOKA/external/ && \

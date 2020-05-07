@@ -1,9 +1,7 @@
 import { Component, OnInit,  NgZone } from '@angular/core';
 import {UemService} from '../../services/uem.service';
-import {Session, Setting, Profile} from '../../interfaces/session';
-import {NgForm} from '@angular/forms';
+import {Session, Profile} from '../../interfaces/session';
 import {MatSnackBar} from '@angular/material/snack-bar';
-import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-setup',
