@@ -1,11 +1,11 @@
-import { Component, OnInit,  OnDestroy, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { FileService } from '../../services/file.service';
 import { Matrix } from '../../interfaces/samples';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { InfoComponent, InfoData, InfoListElement } from '../../core/info/info.component';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
-import { Session} from '../../interfaces/session';
+import { Session } from '../../interfaces/session';
 import { UemService } from '../../services/uem.service';
 import { Subscription } from 'rxjs';
 
@@ -28,46 +28,51 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 	session: Session;
 	subscription: Subscription;
 	status: any[];
-	new_name:string;
+	new_name: string;
+	loading: boolean;
 	ngOnInit() {
-		this.uem.refreshSession();
 		this.subscription = this.uem.getSession().subscribe((new_session) => {
-			this.zone.run(() => {
-				new_session.matrices.sort((mata, matb)=>{return mata.name < matb.name? -1 : 1});	
+			if (!this.loading) {
+				this.loading = true
+				if (new_session.matrices) new_session.matrices.sort((mata, matb) => { return mata.name < matb.name ? -1 : 1 });
 				this.session = new_session;
 				this.status = [];
 				[{ tid: "kmers", des: "K-mer list" }, { tid: "importance", des: "Random Forest importance" }, { tid: "som", des: "Self Organizing Map" }].forEach((ft) => {
-					let k = ft.tid, external=true;
+					let k = ft.tid, external = true;
 					if (this.session.files[k]) {
 						let name = this.session.files[k].file.split("/").pop();
 						if (this.session.files[k].original_request && k == "kmers") {
-							if ( this.session.matrices ){
+							if (this.session.matrices) {
 								let omat = this.session.matrices.find((m) => { return m.uid == this.session.files[k].original_request });
 								if (omat) {
 									name = omat.name;
-									external=false;
-								}	
+									external = false;
+									this.openExperiment(omat);
+								}
 							}
 						}
-						this.status.push({ name: name, file: this.session.files[k].file, ftype: k, des: ft.des, external : external });
+						this.status.push({ name: name, file: this.session.files[k].file, ftype: k, des: ft.des, external: external });
 					} else {
 						this.status.push({ ftype: k, des: ft.des });
 					}
 				})
-			});
+				if ( ! this.current_matrix &&  this.session.matrices.length > 0 ){
+					this.openExperiment(this.session.matrices[0]);
+				}
+				this.loading = false;
+			}
 		});
-		this.uem.updateSession();
 	}
 
 	ngOnDestroy() {
 		this.subscription.unsubscribe();
 	}
-	
-	saveExternal(){
-		if ( this.new_name && this.new_name.length >= 3){
-			this.fileService.importKmerList({original_request : this.session.files.kmers.original_request, new_name : this.new_name}).then(()=>{
+
+	saveExternal() {
+		if (this.new_name && this.new_name.length >= 3) {
+			this.fileService.importKmerList({ original_request: this.session.files.kmers.original_request, new_name: this.new_name }).then(() => {
 				this.toastMessage("File imported", "Done");
-			}).catch((err)=>{
+			}).catch((err) => {
 				this.toastMessage(err.message, "ERROR");
 			})
 		}
@@ -79,11 +84,11 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 			this.current_matrix = mat;
 			this.current_matrix.groups_count = [];
 			this.current_matrix.groups_names.forEach((gn, idx) => {
-				let count=0;
-				this.current_matrix.groups.forEach((c)=> c==gn ? count=count+1 : count=count );
+				let count = 0;
+				this.current_matrix.groups.forEach((c) => c == gn ? count = count + 1 : count = count);
 				this.current_matrix.groups_count.push({
 					name: gn,
-					full_name:  gn,
+					full_name: gn,
 					count: count
 				});
 			});
@@ -93,11 +98,9 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 		return new Promise<any>((resolve, reject) => {
 			this.fileService.getFileName({ properties: ["openFile"], filters: [{ name: 'JSON', extension: ['json', 'JSON'] }] }).then((data_file) => {
 				if (!data_file || data_file.canceled) {
-					console.log("No file selected")
 					this.toastMessage("No file selected", "Warning");
 					return;
 				} else {
-					console.log("Sent request")
 					this.openFile(data_file.filePaths[0]).then((resp) => {
 						this.toastMessage(resp.message, "Done");
 						resolve();
@@ -116,7 +119,7 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 				resolve(resp);
 			}).catch((err) => {
 				reject(err);
-				
+
 			});
 		});
 	}
@@ -140,11 +143,14 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 
 	closeFile(ftype: string) {
 		this.fileService.closeData(ftype).then((message) => {
-			console.log(message);
 		});
 	}
 	toastMessage(message: string, title: string) {
 		this._snackBar.open(message, title, { duration: 2000 })
+	}
+	
+	refresh(){
+		this.uem.refreshSession();
 	}
 
 }

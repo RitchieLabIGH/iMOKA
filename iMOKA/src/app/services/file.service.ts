@@ -29,7 +29,6 @@ export class FileService {
         this.requests+=1;
         openDialogPropriety.action = "getFile";
         return new Promise<any>(( resolve, reject ) => {
-            console.log("sending")
             this.ipc.once( "action-"+id, ( event, arg ) => {
                 resolve(arg);
             } );
@@ -85,7 +84,6 @@ export class FileService {
         this.requests+=1;
         return new Promise<string>(( resolve, reject ) => {
             this.ipc.once( "action-"+id, ( event, arg ) => {
-				console.log(arg);
                 resolve( arg );
             } );
 			request.action="importKmerList";

@@ -71,7 +71,6 @@ export class TracksService {
         
         return new Observable<any>(observer => {
             this.ipc.once( "getData-" + id, ( event, arg ) => {
-                console.log(arg);
                 if (arg.code != 0 ){
 					observer.error(arg.message)
 				}else{

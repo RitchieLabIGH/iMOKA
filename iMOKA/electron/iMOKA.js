@@ -1,8 +1,4 @@
 
-function getFilename(str){
-	return str.split(/(\\|\/)/g).pop();
-}
-
 class iMOKA {
 	
 	 createJob(proc){
@@ -57,7 +53,7 @@ class iMOKA {
 			out.commands.push("singularity exec ${singularity_image} iMOKA_core extract -s ./matrix.json -i ./features.ls -o ./topredict.tsv")
 			out.commands.push("for model in "+model_base+"_models/*.pickle ; do singularity exec ${singularity_image} predict.py ./topredict.tsv ${model} ./tmp | awk ' NR > 1 {print}' >> ./predictions.tsv; done \n echo 'predictions completed' ")
 			out.commands.push("mkdir -p "+sample_dir+"PRED/")
-			out.commands.push("echo '{ \"experiment\" : \""+model[0]+"\" ,  \"model\": \""+model[1]+"\", ' > ./output ")
+			out.commands.push("echo '{ \"experiment\" : \""+model[0]+"\" ,  \"model\": \""+model[1]+"\", \"sample\" : \""+data.sample+"\" , ' > ./output ")
 			out.commands.push("singularity exec ${singularity_image} awk ' /classnames/ { print; while ( (getline line ) > 0 && line !~ /]/ )  { print line } print line } ' ./tmp  >> ./output ")
 			out.commands.push("echo '\"probabilities\" : [ ' >> ./output ")
 			out.commands.push("singularity exec ${singularity_image} awk -F '\t' ' NR > 1 { print \",\" }  { line= \"[ \" $4 ; for (i = 5; i <= NF; i++ ) { line = line  \", \" $i  } ; print line \"]\" } END {print \" ] }\"}' ./predictions.tsv >> ./output ")
@@ -78,7 +74,7 @@ class iMOKA {
 			   	});
 			   	req.on("end", ()=>{
 			   		out.files.push({name : "matrix.tsv", content : matrix.join("")});
-			   		out.files.push({name : "info.json", content : JSON.stringify(data.parameters) });
+			   		out.files.push({name : "info.json", content : JSON.stringify(data.parameters)+"\n" });
 			   		let out_folder="${imoka_home}/experiments/"+data.parameters.matrix_uid+"/SOM/", timest= this.timestamp(), args = this.makeSOMargs(data);
 			   		out.commands.push("singularity exec ${singularity_image} SOM.py ./matrix.tsv ./"+timest+" "+args);
 			   		out.commands.push("rm -f ./matrix.tsv ./"+timest+"/*/*.pkl ./"+timest+"/*/*.npy ./"+timest+"/*/*.png " )
@@ -116,7 +112,7 @@ class iMOKA {
 		   	});
 		   	req.on("end", ()=>{
 		   		out.files.push({name : "matrix.tsv", content : matrix.join("")});
-		   		out.files.push({name : "info.json", content : JSON.stringify(data.parameters) });
+		   		out.files.push({name : "info.json", content : JSON.stringify(data.parameters)+"\n" });
 		   		let out_folder="${imoka_home}/experiments/"+data.parameters.matrix_uid+"/RF/", timest= this.timestamp(), args = this.makeRFargs(data);
 		   		out.commands.push("singularity exec ${singularity_image} random_forest.py ./matrix.tsv ./"+timest+" "+args);
 		   		out.commands.push("rm -f ./matrix.tsv")
@@ -179,7 +175,7 @@ class iMOKA {
 			 sam.k_len = proc.details.k_len;
 			 sam.libType = proc.details.libraryType;
 			 sam.minCount = proc.details.minCount;
-			 out.files.push({name : sam.name+".metadata.json", content : JSON.stringify(sam)})
+			 out.files.push({name : sam.name+".metadata.json", content : JSON.stringify(sam)+"\n"})
 			 out.commands.push("mkdir -p ${imoka_home}/samples/"+sam.name+"/ && rm -fr ${imoka_home}/samples/"+sam.name+"/* && cp ./"+sam.name+".metadata.json ${imoka_home}/samples/"+sam.name+"/" );
 		 });
 		 out.files.push({"name" : "preprocess_input.tsv", "content" : input_file });

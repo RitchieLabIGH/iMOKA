@@ -6,7 +6,7 @@ const Store  = require('./store.js');
 
 class ClusterQueue {
 	
-	tick_time = 5000;
+	tick_time = 10000;
 	
 	constructor(ssh, settings, name){
 		this.ssh = ssh;
@@ -80,67 +80,66 @@ class ClusterQueue {
 		});
 	}
 	
-	runJob(job, observer){
-		  this.ssh.execCommand("mkdir -p "+job.wd).then((result)=>{
-			  if ( result.code != 0 ){
-				  observer.error(result);
-				  observer.complete();
-				  return;
-			  }
-			  let promises=[];
-			  if ( job.files ) {
-				  let writing_process= job.files.reduce( async (prevPromise,file)=>{
-					  await prevPromise;
-					  return this.writeFile(file.content, job.wd+file.name)  
-				  }, Promise.resolve());
-				  promises.push(new Promise((resolve, reject)=>{
-					  writing_process.then(()=>{
-						  resolve();
-					  })
-				  }));
-			  }
-			  if (job.copy_files){
-				  let copy_process = job.copy_files.reduce(async (prevPromise, file)=>{
-					  await prevPromise;
-						 if ( file.copy_file ){
-							 return this.ssh.execCommand("cp "+file.origin_file+" "+job.wd+file.destination_file);
-						 }  else {
-							 return this.ssh.execCommand("ln -s "+file.origin_file+" "+job.wd+file.destination_file);
-						 }
+	runJob(job){
+		return new Promise((resolve, reject)=>{
+			this.ssh.execCommand("mkdir -p "+job.wd).then((result)=>{
+				  if ( result.code != 0 ){
+					  reject(result)
+					  return;
+				  }
+				  let promises=[];
+				  if ( job.files ) {
+					  let writing_process= job.files.reduce( async (prevPromise,file)=>{
+						  await prevPromise;
+						  return this.writeFile(file.content, job.wd+file.name)  
 					  }, Promise.resolve());
-				  promises.push(new Promise((resolve, reject)=>{
-					  copy_process.then(()=>{
-						  resolve();
+					  promises.push(new Promise((resolve, reject)=>{
+						  writing_process.then(()=>{
+							  resolve();
+						  })
+					  }));
+				  }
+				  if (job.copy_files){
+					  let copy_process = job.copy_files.reduce(async (prevPromise, file)=>{
+						  await prevPromise;
+							 if ( file.copy_file ){
+								 return this.ssh.execCommand("cp "+file.origin_file+" "+job.wd+file.destination_file);
+							 }  else {
+								 return this.ssh.execCommand("ln -s "+file.origin_file+" "+job.wd+file.destination_file);
+							 }
+						  }, Promise.resolve());
+					  promises.push(new Promise((res, rej)=>{
+						  copy_process.then(()=>{
+							  res();
+						  })
+					  }));
+				  }
+				  Promise.all(promises).then((values)=>{
+					  job.files=undefined; /// save up some space
+					  let script_file = job.wd+"/runscript.sh";
+					  this.writeFile(job.script, script_file).then((script_file)=>{
+						  this.ssh.execCommand("chmod +x "+script_file).then(result=>{
+							  this.run({command : script_file  , job : job });
+							  resolve();
+						  });
+					  }).catch((err)=>{
+						  reject(err);
 					  })
-				  }));
-			  }
-			  observer.next({message :  "Setting up the environment" , code : 0 } )
-			  Promise.all(promises).then((values)=>{
-				  job.files=undefined; /// save up some space
-				  let script_file = job.wd+"/runscript.sh";
-				  this.writeFile(job.script, script_file).then((script_file)=>{
-					  this.ssh.execCommand("chmod +x "+script_file).then(result=>{
-						  this.run({command : script_file  , job : job });
-						  observer.next({message: "Job added to the queue" , code : 0});
-						  observer.complete(); 
-					  });
-				  }).catch((err)=>{
-					  observer.error({message : "Error", code : 1 , error: err });
-					  observer.complete();
-				  })
-				  
-			  }, (err)=>{
-				  observer.error({message : "Error during the environment setup", code : 1 , error: err });
-				  this.ssh.execCommand("rm -fr "+job.wd).catch((err)=>{
-					  console.log(err);
-				  })
-				  observer.complete();
+					  
+				  }, (err)=>{
+					  this.ssh.execCommand("rm -fr "+job.wd).catch((err)=>{
+						  console.log(err);
+					  })
+					  reject(err);
+				  });
 			  });
-		  });
+		})
+		  
 	}
 	
 	run(job){
 		job.times = { added : Date.now() };
+		
 		let run_command = this.buildClusterCommand(job.command, job.job);
 		this.ssh.execCommand(run_command).then((result)=>{
 			if (result.code == 0 && result.stdout && result.stdout.length > 0 ){
@@ -199,7 +198,6 @@ class ClusterQueue {
 							} else {
 								this.ssh.execCommand(this.settings.check_completed_job+job.uid).then((response)=>{
 									let completed_job_cluster = this.settings.completed_job_parse(response.stdout);
-									console.log(completed_job_cluster)
 									if (completed_job_cluster && completed_job_cluster.length > 0){
 										job.cluster_info = completed_job_cluster[0];
 										job.result = job.cluster_info.state ; 
@@ -230,7 +228,7 @@ class ClusterQueue {
 				});
 				resolve();
 			}).catch((err)=>{
-				reject();
+				reject(err);
 			});
 		})
 	}
@@ -250,11 +248,6 @@ class ClusterQueue {
 		}
 		this.tick_on=true;
 		this.updateQueue().then(()=>{
-			if ( this.current_queue.data.queue.length == 0 ){
-				this.tick_on=false;
-				console.log("nothing to do")
-				return;
-			} 
 			if (this.isAlive) { 
 				setTimeout(()=>{this.tick()}, this.tick_time);
 			}

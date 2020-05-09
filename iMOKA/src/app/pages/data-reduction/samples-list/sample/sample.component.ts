@@ -38,8 +38,6 @@ export class SampleComponent implements OnInit , OnDestroy {
 	ngOnInit(){
 		this.subs.push(this.uem.getSession().subscribe((session)=>{
 				this.session=session;
-				console.log(this.sam);
-				console.log(session);
 				this.predictions=[];
 				this.session.matrices.forEach((mat : Matrix, idx)=>{
 					if ( mat.models.length > 0 ){
@@ -62,8 +60,8 @@ export class SampleComponent implements OnInit , OnDestroy {
 											values=p;
 										}
 									})
-									let max=Math.max(...values);
-									mod.prediction.data[0].values=values.map((v)=>Math.round((v*100)/max));
+									let tot=values.reduce((x, prev)=> x+prev, 0);
+									mod.prediction.data[0].values=values.map((v)=>Math.round((v*100)/tot));
 								}
 							}
 							pred.models.push(mod);
@@ -97,7 +95,7 @@ export class SampleComponent implements OnInit , OnDestroy {
 	}
 	
 	runPrediction(which:string){
-		this.subs.push(this.queue.sendJob({name : "predict", data : {model : which , sample : this.sam.name , process:{cores : 1 , mem : 4}}}).subscribe());
+		this.queue.sendJob({name : "predict", data : {model : which , sample : this.sam.name , process:{cores : 1 , mem : 4}}});
 	}
 	
 }

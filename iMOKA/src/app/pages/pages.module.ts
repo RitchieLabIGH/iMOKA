@@ -42,7 +42,7 @@ import { HexamapComponent } from './samples-som/hexamap/hexamap.component';
 
 import {AboutComponent} from './about/about.component';
 import {SampleComponent} from './data-reduction/samples-list/sample/sample.component';
-
+import {VideoComponent} from './dashboard/video/video.component';
 PlotlyModule.plotlyjs = PlotlyJS;
 
 
@@ -75,6 +75,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
 		AboutComponent,
 		NewSomComponent,
 		SampleComponent,
+		VideoComponent,
 	],
 	imports: [
 		CommonModule,

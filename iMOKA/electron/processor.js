@@ -208,10 +208,13 @@ class Processor {
 				}
 			} else {
 				this.getSSH().then((ssh)=>{
+					this.mess.block({message : "Retrieving the remote matrix..."})
 					ssh.execCommand("cat "+matrix_file).then((res)=>{
 						if (res.code == 0){
+							this.mess.block({message : "Downloaded, opening..."})
 							let mat=JSON.parse(res.stdout);
 							mat.file_name = matrix_file;
+							this.mess.release({message : "Completed"})
 							resolve(mat);
 						} else {
 							reject("File doesn't exists!")
@@ -249,6 +252,7 @@ class Processor {
 					reject("File doesn't exists!");
 				}
 			} else {
+				this.mess.block({message : "Retrieving the remote SOM..."})
 				this.getSSH().then((ssh)=>{
 					ssh.execCommand("cat "+fname).then((res)=>{
 						if (res.code == 0){
@@ -258,7 +262,9 @@ class Processor {
 						} else {
 							reject("File doesn't exists!")
 						}
-					}).catch((err)=>{reject(err);})
+					}).catch((err)=>{reject(err);}).finally(()=>{
+						this.mess.release({message : "Done"})
+					})
 				})
 
 			}    
@@ -276,6 +282,7 @@ class Processor {
 					reject("File doesn't exists!");
 				}
 			} else {
+				this.mess.block({message : "Retrieving the remote Model..."})
 				this.getSSH().then((ssh)=>{
 					ssh.execCommand("cat "+model_file).then((res)=>{
 						if (res.code == 0){
@@ -285,14 +292,16 @@ class Processor {
 						} else {
 							reject("File doesn't exists!")
 						}
-					}).catch((err)=>{reject(err);})
+					}).catch((err)=>{reject(err);}).finally(()=>{
+						this.mess.release({message : "Done"})
+					})
 				})
 
 			}    
 		});
 	}
 
-	getMatrices(update=true){
+	getMatrices(update=false){
 		return new Promise((resolve, reject)=>{
 			if (this.matrices && ! update){
 				resolve(this.matrices)
@@ -387,6 +396,7 @@ class Processor {
 
 	async getRemoteMatrices(ssh){
 		try {
+			this.mess.block({message : "Loading remote matrices..."})
 			let matrix_dir=this.options.storage_folder+"/experiments/";
 			let res= await ssh.execCommand("mkdir -p "+matrix_dir+" && ls -l "+matrix_dir +" | awk '/^d/ {print $NF}'");
 			this.matrices=[];
@@ -444,6 +454,7 @@ class Processor {
 					}
 				};
 			}
+			this.mess.release({message : "Done!"})
 			return this.matrices;
 		} catch(e){
 			throw e
@@ -471,12 +482,14 @@ class Processor {
 						if (res.code == 0){
 							fs.writeFileSync(this.tmp_dir+"/matrix.json", JSON.stringify(new_matrix));
 							fs.writeFileSync(this.tmp_dir+"/aggregated.info.json", JSON.stringify(agg));
+							this.mess.block({ message : "Importing "+new_matrix.name})
 							ssh.putFiles([{local: request.original_request, remote: mat_dir+"/aggregated.json"}, 
 								{local:this.tmp_dir+"/matrix.json", remote : mat_dir+"/matrix.json" }, 
 								{local : this.tmp_dir+"/aggregated.info.json", remote : mat_dir+"/aggregated.info.json"}]).catch((err)=>{
 									reject(err)
 								}).then(()=>{
 									resolve("Matrix imported correctly.")
+									this.mess.sendMessage({type : "action", action :"release", message : "Done!"})
 								})
 						}else {
 							reject(res.stderr);
@@ -535,9 +548,10 @@ class Processor {
 	}
 
 	async setSampleRemote(ssh, samples){
-		let sam, res, sample_dir, log = samples.length > 10;
+		
+		let sam, res, sample_dir, log = samples.length > 5;
 		for (let i=0; i< samples.length; i++){
-			if ( log ) this.mess.sendMessage({type : "action", action : "block", progress : Math.round((i*100)/samples.length) , message : "Saving the samples ("+i+"/"+samples.length+")... Don't close the software!" })
+			if ( log ) this.mess.block({ progress : Math.round((i*100)/samples.length) , message : "Saving the samples ("+i+"/"+samples.length+")... Don't close the software!" })
 			sam = samples[i];
 			sample_dir = this.options.storage_folder+"/samples/"+sam.name;
 			res = await ssh.execCommand("ls "+sample_dir)
@@ -545,7 +559,9 @@ class Processor {
 				throw res.stderr
 			} 
 			ssh.execCommand("echo '"+JSON.stringify(sam)+"' > "+sample_dir+"/"+sam.name+".metadata.json")
+			
 		};
+		if ( log ) this.mess.sendMessage({type : "action", action :"release", message : "Done!"})
 		return true;
 	}
 	setSample(samples){
@@ -578,9 +594,12 @@ class Processor {
 			}
 		});
 	}
-
-	getSamples(){
+	current_samples;
+	getSamples(request){
 		return new Promise((resolve, reject)=>{
+			if ( ! request.update && this.current_samples) {
+				resolve(this.current_samples);
+			} else {
 			if (this.isInit()){
 				let samples= [], samples_dir = this.options.storage_folder+"/samples/";
 				if (this.options.connection_type == 'local'){
@@ -638,58 +657,84 @@ class Processor {
 			} else {
 				reject("Projector not initialized");
 			}
-
+			}
 		});
 
 	}
 	
 	async getRemoteSamples(ssh){
+		
+		try {
 		let samples= [], samples_dir = this.options.storage_folder+"/samples/";
 		let res = await ssh.execCommand("mkdir -p "+samples_dir+" && ls -l "+samples_dir+" | awk '/^d/ {print $NF}' ")
 		if ( res.code == 0 ){
 			let files=res.stdout.split("\n").filter((fname)=>{return fname.length > 0});
+			this.mess.block({message : "Retrieving remote samples 0/"+files.length, progress : 0})
 			let meta = await ssh.execCommand("cat "+samples_dir+"/*/*.metadata.json")
 			if ( meta.stdout.length > 0 ){
 				meta.stdout.split("\n").forEach((el)=>{
 					if (el.length > 0 ){
-						samples.push(JSON.parse(el));		
+						samples.push(JSON.parse(el));
+						this.mess.block({message : "Retrieving remote samples "+ samples.length+ "/"+ files.length, progress : Math.round((samples.lenght *100)/ files.length)})
 					}
 				})
 			}
-			files = files.filter((fname)=>{return samples.find((e)=>{return e.name == fname})? false : true;})
-			if ( files.length == 0 ){
-				return samples;
-			}
-			let s_dir;
-			for ( let i=0; i<files.length ; i++){
-				s_dir = files[i];
-				this.mess.sendMessage({type : "action", action : "block", progress : Math.round((i*100)/files.length) , message : "Checking the samples ("+i+"/"+files.length+")... Don't close the software!" })
-				let fname=samples_dir+s_dir+"/"+s_dir+".json", sample;
-				sample = {name : s_dir, libType : "NA", minCount : "NA", metadata : [], source : [], message : "In process"}
-				res = await ssh.execCommand("[[ -f "+fname+" ]] &&  cat "+fname)
-				if ( res.code == 0 && res.stdout.length > 1){
-					let tmp_j = JSON.parse(res.stdout);
-					sample.count_file = tmp_j.count_files[0];
-					sample.prefix_size = tmp_j.prefix_size[0];
-					sample.total_count = tmp_j.total_counts[0];
-					sample.total_prefix = tmp_j.total_prefix[0];
-					sample.total_suffix = tmp_j.total_suffix[0];
-					sample.message = "Imported";
-					fname=samples_dir+"/"+s_dir+"/fastqc/"+s_dir+"_fastqc.html"
-					res = await ssh.execCommand("[[ -f "+fname+" ]] && cat "+fname)
-					if (res.code == 0 &&  res.stdout.length > 1){
-						sample.fastqc = "remote://"+fname;
+			
+			files = files.filter((fname)=>{return samples.find((e)=>{return e.name == fname && e.count_file})? false : true;})
+			if ( files.length != 0 ){
+				let s_dir;
+				for ( let i=0; i<files.length ; i++){
+					s_dir = files[i];
+					let fname=samples_dir+s_dir+"/"+s_dir+".json", sample;
+					sample = {name : s_dir, libType : "NA", minCount : "NA", metadata : [], source : [], message : "In process"}
+					res = await ssh.execCommand("[[ -f "+fname+" ]] &&  cat "+fname)
+					if ( res.code == 0 && res.stdout.length > 1){
+						let tmp_j = JSON.parse(res.stdout);
+						sample.count_file = tmp_j.count_files[0];
+						sample.prefix_size = tmp_j.prefix_size[0];
+						sample.total_count = tmp_j.total_counts[0];
+						sample.total_prefix = tmp_j.total_prefix[0];
+						sample.total_suffix = tmp_j.total_suffix[0];
+						sample.k_len = tmp_j.k_len;
+						sample.message = "Imported";
+						fname=samples_dir+"/"+s_dir+"/fastqc/"+s_dir+"_fastqc.html"
+						res = await ssh.execCommand("[[ -f "+fname+" ]] && cat "+fname)
+						if (res.code == 0 &&  res.stdout.length > 1){
+							sample.fastqc = "remote://"+fname;
+						}
+						ssh.execCommand("echo '"+JSON.stringify(sample)+"' > "+samples_dir+s_dir+"/"+s_dir+".metadata.json")
+						samples = samples.filter((s)=>{
+							return s.name != sample.name;
+						});
+						samples.push(sample);
+					} else {
+						samples.push(sample);
 					}
-					ssh.execCommand("echo '"+JSON.stringify(sample)+"' > "+samples_dir+s_dir+"/"+s_dir+".metadata.json")
-					samples.push(sample);
-				} else {
-					samples.push(sample);
-				}
-			};
-			this.mess.sendMessage({type : "action", action :"release", message : "Done!"})
+					this.mess.block({message : "Retrieving remote samples "+ samples.length+ "/"+ files.length, progress : Math.round((samples.lenght *100)/ files.length)})
+				};
+			}
+			let preds = await ssh.execCommand("cat "+samples_dir+"/*/PRED/*.json")
+			if ( preds.stdout.length > 0 ){
+				preds.stdout.split("}\n").forEach((pr)=>{
+					if ( pr.length > 0){
+						if (! pr.match(/}$/)) pr+="}";
+						let pred = JSON.parse(pr);
+						let idx=samples.findIndex((s)=>{return s.name == pred.sample});
+						if (! samples[idx].predictions ) samples[idx].predictions=[];
+						samples[idx].predictions.push(pred);
+					}
+				})
+			}
+			this.mess.release({ message : "Done!"})
 			return samples;
 		} else {
 			return samples;
+		}
+		}catch (err){
+			console.log(err)
+			this.mess.release({message : "An error occurred"})
+			this.mess.sendMessage({message : err , type : "aler"})
+			return [];
 		}
 	}
 
@@ -715,36 +760,33 @@ class Processor {
 	}
 
 	run(proc){
-		return new Observable(observer=>{
+		return new Promise((resolve, reject)=>{
 			if (! this.isInit() ){
-				observer.error({"message" : "Processor not initialized", code : 1});
-				observer.complete();
+				reject({"message" : "Processor not initialized", code : 1});
 				return;
 			}
 			let runJob = (pr)=>{
-				imoka.createJob(pr).then((job)=>{
-					pr.data.context = undefined;
-					job.original_request = pr;
-					if ( job.success ){
-						if ( job.errors ){
-							observer.next({"message" :job.errors.join("</br>"), code : 0 });
+				return new Promise((res, rej)=>{
+					imoka.createJob(pr).then((job)=>{
+						pr.data.context = undefined;
+						job.original_request = pr;
+						if ( job.success ){
+							job.wd =this.options.storage_folder + "/jobs/" + job.uid+"/" ;
+							job.script = this.createScript(job.commands.join(" && ")+"\n", job)
+							this.queue.runJob(job).then(()=>{
+								res()
+							}).catch((err)=>{
+								rej(err);
+							});
+						} else {
+							rej(job.message);
 						}
-						job.wd =this.options.storage_folder + "/jobs/" + job.uid+"/" ;
-						job.script = this.createScript(job.commands.join(" && ")+"\n", job)
-						this.queue.runJob(job, observer);
-					} else {
-						observer.error({"message" : job.message, code : 1});
-						return;
-					}
-				}).catch((err)=>{
-					observer.error(err);
-					observer.complete();
-				}).finally(()=>{
-					observer.complete();
+					}).catch((err)=>{
+						rej(err);
+					});
 				});
-
 			}
-
+			let promises = [];
 			if (proc.data && proc.data.process && proc.data.process.njobs > 1 ){
 				let raw_file_lines= proc.data.source.raw_file.split("\n").filter((l)=>l.length > 0);
 				let l_per_file=Math.ceil(raw_file_lines.length / proc.data.process.njobs), procs=[];
@@ -756,11 +798,17 @@ class Processor {
 					let spr = JSON.parse(JSON.stringify(proc));
 					spr.data.uid=spr.data.uid+"_"+idx;
 					spr.data.source.raw_file=raw_f.join("\n");
-					runJob(spr);
+					promises.push(runJob(spr));
 				});
+				
 			} else {
-				runJob(proc);
+				promises.push(runJob(proc));
 			}
+			Promise.all(promises).then(()=>{
+				resolve();
+			}).catch((err)=>{
+				reject(err);
+			});
 		});
 	}
 
@@ -806,12 +854,12 @@ class Processor {
 					const win = electron.BrowserWindow.getFocusedWindow();
 					console.log("Starting download of "+ this.options.original_image)
 					download(win , this.options.original_image, {directory : this.options.storage_folder +"/.singularity/", filename : "iMOKA", onProgress : (prg)=>{
-						this.mess.sendMessage({type : "action", action : "block", progress : Math.round(prg.percent*100) , message : "Downloading singularity image "+Math.round(prg.transferredBytes/1000000)+" Mb of "+Math.round(prg.totalBytes/1000000)+" Mb . Don't close the software!" })  
+						this.mess.sendMessage({type : "action", action : "block", progress : Math.round(prg.percent*100) , message : "Downloading singularity image "+Math.round(prg.transferredBytes/1000000)+" Mb of "+Math.round(prg.totalBytes/1000000)+" Mb.\n Don't close the software!" })  
 					}, onCancel :(it)=>{
 						this.mess.sendMessage({type : "action", action :"release", message : "Error! Download was canceled! "})
 						this.blocked = false;
 					} , onStarted : (it)=>{
-						this.mess.sendMessage({type : "action", action :"block", progress : 0 , message : "Downloading singularity image. Don't close the software!"})
+						this.mess.sendMessage({type : "action", action :"block", progress : 0 , message : "Downloading singularity image.\n Don't close the software!"})
 					}} ).then((it)=>{
 						this.mess.sendMessage({type : "action", action :"release", message : "Singularity image downloaded"})
 						this.blocked = false;
@@ -820,9 +868,9 @@ class Processor {
 						this.blocked = false;
 					});
 				} else {
-					this.mess.sendMessage({type : "action", action :"block", progress : -1 , message : "Copying singularity image. Don't close the software!"})
-					child_process.exec("cp "+this.options.original_image+" "+this.options.storage_folder +"/.singularity/iMOKA" , {} , (err)=>{
-						console.log(err);Erro
+					this.mess.sendMessage({type : "action", action :"block", progress : -1 , message : "Copying singularity image.\n Don't close the software!"})
+					child_process.exec("cp -f "+this.options.original_image+" "+this.options.storage_folder +"/.singularity/iMOKA" , {} , (err)=>{
+						console.log(err);
 						this.mess.sendMessage({type : "action", action :"release", message : "Singularity image copied"})
 						this.blocked = false;
 					});

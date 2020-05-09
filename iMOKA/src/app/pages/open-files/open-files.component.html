@@ -2,16 +2,18 @@
 <div fxFlex="50%" >
 <mat-card  style="height:27vh;">
 	<mat-card-content>
-      <mat-list>
-        <mat-list-item  *ngFor="let file of status">
-          <div matLine>
-          <strong>{{file.des}}</strong>
-	      <span *ngIf="file.name"> : {{file.name}}</span>
-          <button class="push-right" *ngIf="file.name" mat-icon-button color="warn" (click)="closeFile(file.ftype)"
+      <mat-list class="folder-list">
+        <h3 matSubheader>Current files</h3>
+        <mat-list-item dense *ngFor="let file of status">
+          <div matLine style="height:2em;">
+          <button  *ngIf="file.name" mat-icon-button color="warn" (click)="closeFile(file.ftype)"
               title="Close this file">
            <mat-icon>close</mat-icon>
           </button>
-          <button class="push-right" title="Open a new file" *ngIf="!file.name" mat-icon-button color="primary" (click)="loadData()"><mat-icon>open_in_browser</mat-icon></button>
+          <button  title="Open a new file" *ngIf="!file.name" mat-icon-button color="primary" (click)="loadData()"><mat-icon>open_in_browser</mat-icon></button>
+          <strong>{{file.des}}</strong>
+	      <span *ngIf="file.name"> : {{file.name}}</span>
+          
           </div>
             <div matLine>
               <ng-container *ngIf="file.external && file.ftype == 'kmers' && session.profile.process_config.profiles.length > 0 ">
@@ -35,9 +37,11 @@
 </div><div fxFlex="50%">
 <mat-card  style="height:27vh;">
   <mat-card-content>
+  
   <p *ngIf="! session || ! session.matrices">There are no experiments
     to show</p>
   <mat-list class="folder-list" *ngIf="session && session.matrices">
+       <h3 matSubheader><button (click)="refresh()" mat-raised-button color="primary" style="width:100%;">Refresh</button></h3>
   <mat-list-item *ngFor="let mat of session.matrices"
     class="folder-list-element" (click)="openExperiment(mat)"
     title="Click to open"> <mat-icon matListIcon
@@ -45,7 +49,8 @@
   <mat-icon matListIcon
     *ngIf="! current_matrix || current_matrix.uid != mat.uid">folder</mat-icon>
   <h4>{{mat.name}}</h4>
-  </mat-list-item> </mat-list> </mat-card-content> 
+  </mat-list-item> </mat-list> 
+</mat-card-content> 
 </mat-card></div><div fxFlex="100%"> 
 <mat-card  style="height:50vh;"> 
   <mat-card-content fxLayout="row wrap"  *ngIf="current_matrix" >

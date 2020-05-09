@@ -113,7 +113,6 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 	getSOMnodeImportance(): Promise<any> {
 		return new Promise<any>((resolve, reject) => {
 			this.trackService.getData({ "data": "SOMimportance", "idmap": "importance" }).subscribe((resp) => {
-				console.log("SOMimportance")
 				this.data.mapimportance = resp;
 				this.features_per_node = this.data.mapimportance[1].projRAW;
 				this.data.graphImportance = {

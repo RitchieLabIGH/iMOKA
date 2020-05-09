@@ -5,6 +5,7 @@ export class Session {
     files : any;
     matrices : Matrix[];
 	last_kmer_table_request :  KmerDataTableOptions;
+	version : number;
 }
 
 export class Profile {
@@ -67,6 +68,7 @@ export class Message {
 	type ? :string;
 	action ?:string;
 	details ? : string;
+	progress ? : number;
 }
 
 

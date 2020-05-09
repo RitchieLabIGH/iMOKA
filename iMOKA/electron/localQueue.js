@@ -85,7 +85,8 @@ class LocalQueue {
 		  });
 	  }	
 	
-	runJob(job, observer){
+	runJob(job){
+		return new Promise((resolve, reject)=>{
 		  let job_dir = job.wd;
 		  child_process.exec("mkdir -p "+job_dir, {}, (error, stout, stderr)=>{
 			  let promises=[];
@@ -124,27 +125,24 @@ class LocalQueue {
 					 }
 				  });
 			  }
-			  observer.next({message :  "Setting up the environment" , code : 0 } )
 			  Promise.all(promises).then((values)=>{
 				  job.files = undefined;
 				  let script_file=job_dir+"/runscript.sh"
 				  this.writeFile(job.script, script_file).then((local_script)=>{
 					  child_process.exec("chmod +x "+local_script, {}, ()=>{
 						  this.add({command : local_script  , job : job });
-						  observer.next({message: "Job added to the queue" , code : 0});
-						  observer.complete();
+						  resolve();
 					  });
 				  }).catch((err)=>{
-					  observer.error({message : "Error", code : 1 , error: err });
-					  observer.complete();
+					  reject(err);
 				  })
 				  
 			  }, (err)=>{
-				  observer.error({message : "Error during the environment setup", code : 1 , error: err });
+				  reject(err);
 				  child_process.exec("rm -fr "+job_dir)
-				  observer.complete();
 			  });
 		  });
+		});
 	}
 	
 	

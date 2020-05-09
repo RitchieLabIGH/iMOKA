@@ -27,10 +27,9 @@ export class UemService {
         } else {
             console.warn( "Could not load electron ipc" );
        }
-        console.log("CREATING SESSION OBSERVABLE")
         this.ipc.on("getSession", (event, response) => {
             if ( response.message == "SUCCESS"){
-                this.session.next(response.session);
+				this.session.next(response.session);	
             } else {
                 this.session.error(response.message);
             }
@@ -38,7 +37,7 @@ export class UemService {
         this.ipc.on("message", (event, response)=>{
             this.messages.next(response);
         });
-		this.updateSession();
+		this.refreshSession();
     }
     
     getSession() : Observable<Session>{

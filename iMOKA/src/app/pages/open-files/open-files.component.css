@@ -32,12 +32,10 @@
 }
 
 
-.push-right {
-	position: absolute;
-	right : 0;
-	
-}
 
+.mat-list-base .mat-list-item.mat-2-line{
+	height: auto !important;
+}
 .info-container {
 	height: 90%;
 	overflow-y:auto;

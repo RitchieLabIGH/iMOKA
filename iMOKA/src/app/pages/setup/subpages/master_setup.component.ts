@@ -26,7 +26,6 @@ export class MasterSetupComponent implements OnInit {
 		if (this.uem.electron) {
 			this.uem.getSession().subscribe(response => {
 				this.zone.run(() => {
-					console.log(response);
 					this.session = response;
 					this.isNewSetting=true;
 					if (typeof this.session.profile.process_config.current_profile != "undefined" && this.session.profile.process_config.profiles.length > 0) {

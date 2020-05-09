@@ -67,7 +67,6 @@ export class KMerListComponent implements OnInit, OnDestroy {
 
 
 	addExternalTrackFile(track: ExternalTrack) {
-		console.log(track)
 		this.zone.run(() => {
 			this.browser.loadTrack({ url: track.path, name: track.name }).catch((error: any) => {
 				if (error) {
@@ -177,8 +176,6 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		if (file_type == "kmers") {
 			this.dtOptions = this.initDtOptions();
 			info.events.forEach(ev => this.dtOptions.eventsFilter.push(ev.name));
-			console.log(this.session);
-			console.log(this.info.kmers);
 		} else if (file_type == "som") {
 			this.initSOM();
 		} else if (file_type == "importance") {
@@ -240,7 +237,6 @@ export class KMerListComponent implements OnInit, OnDestroy {
 					this.zone.run(() => { this.dialog.open(KmerInfoComponent, { data: { kmer: resp.data, info: this.info.kmers } }) });
 				} else {
 					this.zone.run(() => { this.dialog.open(SequenceInfoComponent, { data: { sequence: resp.data, info: this.info.kmers } }) });
-					console.log(resp)
 				}
 			}
 		});
@@ -266,14 +262,11 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		let data = new InfoData("Extraction");
 		let extract_file = function(args: any) {
 			args.that.fileService.getNewFile({ title: "Create a new file" }).then((data_file: string | any[]) => {
-				console.log("request succeeded")
-				console.log(data_file);
 				if (!data_file || data_file.length == 0) {
 					args.that.toastMessage("No file selected", "Warning", 2);
 					return;
 				} else {
 					args.that.fileService.saveKmerTable(data_file, args.ftype).then((resp: any) => {
-						console.log(resp);
 						args.that.toastMessage("File saved corectly", "Success", 0);
 					});
 				}

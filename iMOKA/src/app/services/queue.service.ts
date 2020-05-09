@@ -19,7 +19,6 @@ export class QueueService {
                 this.electron=true;
                 this.queue = new Observable<any>(observer=>{
                     this.ipc.on("queue", (event, response)=>{
-                        console.log(response);
                         if (response.code == 0 ){
                             observer.next(response.data);
                         } else {
@@ -38,29 +37,23 @@ export class QueueService {
     
     
     
-    delJob(job_uid: any):Observable<any>{
-        return this.sendAction({action : "queueAction", subaction : "delete", uid : job_uid });
+    delJob(job_uid: any):Promise<any>{
+        return this.sendAction({ action : "queueAction", subaction : "delete", uid : job_uid });
     }
     
-    sendJob(request) : Observable<any>{
+    sendJob(request) : Promise<any>{
         var id = this.request;
         this.request += 1;
         request.id = id; 
         request.action="runJob";
         this.ipc.send( "action",id,  request );
-        return new Observable<any>(observer=>{
+        return new Promise<any>((resolve, reject)=>{
            this.ipc.on("action-"+id, (event, response)=>{
-               console.log("---UEM_SERIVCE ms---")
-               console.log(response);
-               console.log("---UEM_SERIVCE me---")
-              if ( response.code == 0){
-                  observer.next(response);
-              } else {
-                  observer.error(response);
-                  observer.complete();
+              if ( response.code != 0){
+                  reject(response.message);
               }
               if (response.message == "COMPLETED"){
-                  observer.complete();
+                  resolve();
                   this.ipc.removeAllListeners("action-"+id);
               }
            }); 
@@ -74,20 +67,17 @@ export class QueueService {
 		this.ipc.send( "getData", 0 , {data : "queue"});
 	}
     
-    sendAction(request):Observable<any> {
+    sendAction(request):Promise<any> {
         let id = this.request;
         this.request = this.request+1;
         this.ipc.send("action", id, request);
-        return new Observable<any>(observer=>{
+        return new Promise<any>((resolve, reject)=>{
             this.ipc.on("action-"+id, (event, response)=>{
-               if ( response.code == 0){
-                   observer.next(response);
-               } else {
-                   observer.error(response);
-                   observer.complete();
+               if ( response.code != 0){
+					reject(response.message);
                }
                if (response.message == "COMPLETED"){
-                   observer.complete();
+                   resolve();
                    this.ipc.removeAllListeners("action-"+id);
                }
             }); 

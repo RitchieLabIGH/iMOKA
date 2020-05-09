@@ -7,7 +7,7 @@
 		<mat-option *ngFor="let model of data.models.data; let i = index" value="{{i}}">{{i}} ( acc:
 	{{model.models[model.best_model].acc | number}} ) </mat-option> </mat-select></mat-form-field> <mat-form-field>
 	<mat-select [(ngModel)]="data.models.show_type" placeholder="Data representation"> 
-			<mat-option value="tsne">t-SNE</mat-option> <mat-option value="pca">PCA</mat-option>
+			<mat-option value="pca">PCA</mat-option><mat-option value="tsne">t-SNE</mat-option> 
 	</mat-select> 
 	</mat-form-field> </mat-card-header> 
 	<mat-card-content *ngIf="data.models.data[data.models.current_model].models[data.models.data[data.models.current_model].best_model]; let best_model">

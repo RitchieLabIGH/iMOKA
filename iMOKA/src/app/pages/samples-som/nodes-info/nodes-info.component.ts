@@ -12,7 +12,6 @@ export class NodesInfoComponent implements OnInit, OnDestroy {
 	counts:any;
 	KmersIndex: any;
 	constructor(@Inject(MAT_DIALOG_DATA) public inData: any) {
-		console.log(inData);
 		this.counts = inData.data;
 		this.info = inData.info;
 		this.KmersIndex = inData.KmersIndex;
@@ -21,7 +20,6 @@ export class NodesInfoComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 
 		this.data.boxplot = this.generateBoxplotData();
-		console.log(this.data.boxplot);
 	}
 	ngOnDestroy() {
 

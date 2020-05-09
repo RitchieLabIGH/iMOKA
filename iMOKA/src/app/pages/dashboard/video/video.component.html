@@ -1,0 +1,13 @@
+<mat-card> 
+<mat-card-content style="height : 250px;" fxLayout="row wrap">
+<div fxFlex="30%" fxFlex.lt-md="100%" style="padding: 5px;">
+  <strong>Useful videos</strong>
+  <mat-action-list dense style="height:100%; overflow-y:auto;">
+  <button *ngFor="let video of videos" mat-list-item (click)="current_video=video">{{video.title}}</button>
+  </mat-action-list>
+</div>
+<div fxFlex="70%" fxFlex.lt-md="100%">
+  <iframe style="width: 100%; height: 100%" [src]="current_video.url | safeURL" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+</mat-card-content>
+</mat-card>

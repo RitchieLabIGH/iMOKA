@@ -206,6 +206,8 @@
 						<button mat-raised-button (click)="modSelMetadata()"
 							[disabled]="getSelectedNumber()==0">Add/Modify
 							selected metadata</button>
+                        <button mat-raised-button (click)="refreshTable('search', true)" 
+                          title="Check on the disk for changes of your samples" >Check changes</button>
 					</div>
 					<h4>Matrix creation</h4>
 					<div class="button-list-v">

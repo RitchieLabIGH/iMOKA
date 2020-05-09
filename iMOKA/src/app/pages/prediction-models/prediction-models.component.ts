@@ -30,7 +30,6 @@ export class PredictionModelsComponent implements OnInit {
     ngOnInit() {
         this.subscriptions.push(this.uem.getSession().subscribe(( session : Session ) => {
             this.session=session;
-            console.log(session);
             this.initImportance();
         } ));
         this.subscriptions.push(this.trackService.getData("importance").subscribe((response)=>{
@@ -59,7 +58,7 @@ export class PredictionModelsComponent implements OnInit {
 
     initImportance() {
         this.subscriptions.push(this.trackService.getData( "importance_models" ).subscribe(( resp ) => {
-            let models = { data: resp, current_model: 0, show_type: "tsne" }, best_acc = 0;
+            let models = { data: resp, current_model: 0, show_type: "pca" }, best_acc = 0;
             models.data.forEach(( data, datIdx ) => {
                 if ( data.acc > best_acc ) {
                     best_acc = data.acc;

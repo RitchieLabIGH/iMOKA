@@ -45,7 +45,23 @@ class iMokaBE extends EventEmitter {
 		if (this.processor ){
 			request.data.uid= this.makeid();
 			request.data.context = this;
-			return this.processor.run(request);
+			return new Promise((resolve, reject)=>{
+				let err_b = false;
+				this.mess.block({message : "Sending the job"});
+				this.processor.run(request).catch((err)=>{
+					reject(err);
+					err_b=true;
+					this.mess.release({message : err.message ? err.message : err})
+				}).finally(()=>{
+					if (err_b){
+						this.mess.release({message : "Job failed"});
+					} else {
+						this.mess.release({message : "Job sent"});
+					}
+					resolve();
+					
+				});
+			});
 		} else {
 			throw "Processor not loaded";
 		}
@@ -75,7 +91,7 @@ class iMokaBE extends EventEmitter {
 				reject(err);
 			}).then((res)=>{
 				resolve(res);
-				this.updateMatrices().then(()=>{
+				this.updateMatrices().finally(()=>{
 					this.sendSession();
 				})
 				
@@ -159,8 +175,9 @@ class iMokaBE extends EventEmitter {
 	getSamples(request){
 		return new Promise((resolve, reject)=>{
 			if (this.processor){
-				this.processor.getSamples().then( samples  =>{
-					resolve({ "message": "SUCCESS", code: 0, data : samples , draw : request.draw, 
+				this.processor.getSamples(request).then( samples  =>{
+					this.user_session.data.samples = {number : samples.length , total_kmers : samples.reduce((prev, x)=> {return prev + x.total_suffix}, 0 ) };
+					resolve({ "message": "SUCCESS", code: 0, data : samples ,  
 						recordsTotal : samples.length, recordsFiltered : samples.length, stats : {}}
 					);
 				} ).catch(err=>{
@@ -168,52 +185,108 @@ class iMokaBE extends EventEmitter {
 				})
 				
 			} else {
-				reject("Processor not loaded" );
+				resolve("Processor not loaded" );
 			}
 		})
+		
+	}
+	updating_session = false;
+	
+	updateSession(){
+		if (! this.processor ){
+			return new Promise((resolve, reject)=>{
+				this.sendSession();
+				resolve("Processor not loaded")
+			});
+		}
+		if (this.updating_session ){
+			return new Promise((resolve, reject)=>{
+				let tick = ()=>{
+					console.log("waiting...")
+					if ( this.updating_setting){
+						setTimeout(tick, 1000)
+					} else {
+						resolve()
+					}
+				}
+				tick();
+			});
+			
+		} else {
+			this.updating_session=true;
+			return new Promise((resolve, reject)=>{
+				this.updateMatrices().finally(()=>{
+					this.getSamples({update : true}).finally(()=>{
+						this.sendSession();
+						this.updating_session=false;
+						resolve();
+					}).catch((err)=>{
+						console.log(err)
+						this.mess.sendMessage(err);
+					})
+				}).catch((err)=>{
+					console.log(err)
+					this.mess.sendMessage(err);
+				})
+			});
+		}
+		
 		
 	}
 	
-	updateSession(){
-		return new Promise((resolve, rejcect)=>{
-			this.updateMatrices().then(()=>{
-				resolve("Updated")
-				this.sendSession();
-			}).catch((err)=>{
-				reject(err);
-				this.mess.sendMessage(err);
-			})
-		});
-		
-	}
+	updating_matrices= false;
+	
 	updateMatrices(){
-		console.log("Updating matrices")
-		return new Promise((resolve, reject)=>{
-			if ( this.processor){
-				this.processor.getMatrices(true).then((matrices)=>{
-					if (this.user_session.data.files.kmers && this.user_session.data.files.kmers.original_request){
-						let curr_mat=this.user_session.data.files.kmers.original_request;
-						matrices.forEach((mat)=>{
-							if (mat.uid == curr_mat){
-								mat.isOpen=true;
-							}
-						});
+		if ( ! this.updating_matrices ){
+			this.updating_matrices=true;
+			 return new Promise((resolve, reject)=>{
+				if ( this.processor){
+					this.processor.getMatrices(true).then((matrices)=>{
+						matrices.sort((m1, m2)=>{return m1.name < m2.name ? -1 :1;});
+						if (this.user_session.data.files.kmers && this.user_session.data.files.kmers.original_request){
+							let curr_mat=this.user_session.data.files.kmers.original_request;
+							matrices.forEach((mat)=>{
+								if (mat.uid == curr_mat){
+									mat.isOpen=true;
+								}
+							});
+						}
+						this.user_session.data.matrices=matrices;
+						this.user_session.save();
+						this.updating_matrices = false;
+						resolve()
+					}).catch((err)=>{
+						reject(err);
+					}).finally(()=>{
+						console.log("end updating matrix")
+						this.updating_matrices = false;
+					});
+				} else {
+					this.updating_matrices = false;
+					resolve("Processor not loaded");
+				}
+			}); 
+		} else {
+			return new Promise((resolve, reject)=>{
+				let tick =()=>{
+					if ( this.updating_matrices ){
+					setTimeout(()=>{
+						tick()
+					}, 500);
+					} else {
+						resolve();
 					}
-					this.user_session.data.matrices=matrices;
-					this.user_session.save();
-					resolve()
-				}).catch((err)=>{
-					reject(err);
-				})
-			} else {
-				resolve({ "message": "Processor not loaded" , code:1} );
-			}
-		})
+				}
+				tick();
+			})
+		}
+		
+		
 	}
 	
 	getMatrices(request){
 		return new Promise((resolve, reject)=>{
-			this.updateMatrices().then(()=>{
+			this.updateMatrices().finally(()=>{
 				resolve( { "message": "SUCCESS", code: 0, data : this.user_session.data.matrices , draw : request.draw, 
 						recordsTotal : this.user_session.data.matrices.length, recordsFiltered : this.user_session.data.matrices.length, stats : {}}
 					);
@@ -1075,30 +1148,27 @@ class iMokaBE extends EventEmitter {
 	
 	loadProfileFiles(){
 		return new Promise((resolve, reject)=>{
-			this.updateMatrices().then((err)=>{
+			this.updateMatrices().finally(()=>{
 				if (this.user_session.data.files ){
+					let promises=[];
 			        Object.keys(this.user_session.data.files).forEach(file_type => {
 			           let fname = this.user_session.data.files[file_type].original_request;
 			           if ( ! fname ){
 			        	   fname = this.user_session.data.files[file_type].file
 			           }
-			           console.log("opening "+ fname);
-			           this.openData({file_name: fname}).then( ()=>{
-			        	   
-			           }).catch((err)=>{
-			        	   console.log(err)
-			        	   this.closeData({file_type : file_type});
-			           	   this.mess.sendMessage({error: err,code : 1, message : "Error opening file "+fname });
-			           }).finally(()=>{
-			        	   this.user_session.save();
-			           });
+			           console.log("Opening "+fname )
+			           promises.push(this.openData({file_name: fname}))
 			        });
+			        Promise.all(promises).then(()=>{
+			        	this.updateSession().finally(()=>{
+			        		resolve();
+			        	})
+			        })
+			    } else {
+			    	resolve();
 			    }
-			}).finally(()=>{
-				this.sendSession();
-				resolve();
-			})
-		})
+			});
+		});
 		
 		
 	}
@@ -1123,10 +1193,6 @@ class iMokaBE extends EventEmitter {
 	
 	logout(){
 	    this.login("public", "None");
-	    /*
-		 * this.user_session.data={profile : {name : "public", picture : "" },
-		 * files : {}}; this.user_session.save();
-		 */
 	    this.data={};
 	}
 	
@@ -1153,11 +1219,10 @@ class iMokaBE extends EventEmitter {
 	
 	setProfile(profile_number){
 		return new Promise((resolve, reject)=>{
-			console.log("Loading profile " + profile_number)
 			if (typeof profile_number == 'undefined' ){
 				if (! this.user_session.data.profile.process_config.current_profile ){
 					if ( this.user_session.data.profile.process_config.profiles.length == 0 ){
-						this.loadProfileFiles().then(()=>{
+						this.loadProfileFiles().finally(()=>{
 							resolve("No profile given")
 						}).catch((err)=>{
 							reject(err);
@@ -1171,9 +1236,10 @@ class iMokaBE extends EventEmitter {
 				}
 				profile_number=this.user_session.data.profile.process_config.current_profile;
 			} else {
+				this.user_session.data.files= {};
 				this.user_session.data.profile.process_config.current_profile=profile_number;
 			}
-			console.log("setting profile")
+			console.log("Loading profile " + profile_number)
 			this.processor = new Processor(this.user_session.data.profile.process_config.profiles[profile_number], this.mess);
 			this.processor.tmp_dir = this.tmp_dir;
 			let ct=this.user_session.data.profile.process_config.profiles[profile_number].connection_type;

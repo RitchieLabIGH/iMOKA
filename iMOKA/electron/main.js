@@ -53,6 +53,7 @@ function createWindow () {
   if (!('ELECTRON_IS_DEV' in process.env && parseInt(process.env.ELECTRON_IS_DEV, 10) === 1)){
 	  Menu.setApplicationMenu(null)  
   } 
+  win.loadFile(`./dist/index.html`);
   backend = new iMokaBE(mess);
   rimraf(store.get('tmpDir'), (err)=>{ if (err ){
 	  console.log(err)
@@ -60,7 +61,6 @@ function createWindow () {
 	  fs.mkdir(store.get('tmpDir'), {recursive : true}, ()=>{return;});
   } } );
   backend.tmp_dir=store.get('tmpDir');
-  win.loadFile(`./dist/index.html`);
   fs.mkdir(store.get('tmpDir'), {recursive : true}, ()=>{return;});
   if (store.data.session){
 	  backend.login(store.data.session.user, "" , true);
@@ -79,7 +79,7 @@ function createWindow () {
 	    });
 	  backend.on("sendSession", (session)=>{
 		  console.log("Sending get session");
-		win.webContents.send("getSession", {"message" : "SUCCESS", "session" : session});
+		  win.webContents.send("getSession", {"message" : "SUCCESS", "session" : session});
 	  });
 	  backend.on("queue", (queue)=>{
 		  console.log("Sending queue");
@@ -87,8 +87,8 @@ function createWindow () {
 	  });
 	  mess.on("message", (content)=>{
 		  win.webContents.send("message", content);
-	    
 	  })
+	  backend.sendSession();
   });
   
 }

@@ -149,7 +149,7 @@ export class SamplesListComponent implements OnInit {
         } );
 
     }
-
+	
     refreshTable( event?: any, update?: boolean ) {
         if ( event ) {
             if ( event.pageSize ) {

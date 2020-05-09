@@ -22,35 +22,41 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	queue_types = ["running", "jobs", "completed"];
 	dtOptions: any = this.initDtOptions();
 	dataSource: QueueSource;
-	refreshTime: number = -1;
+	refreshTime: number = 5000;
 	refreshRequest: Subscription;
 	error: string;
 	current_matrix: Matrix;
-	revisions : {matrix : number} = {matrix : 0};
+	current_video:string = "https://www.youtube.com/embed/VWRah09PxlE"
+	main_plot : boolean=true;
 	plots: { matrices?: { layout: any, data: any }, matrix?: { layout: any, data: any } } = {};
-
 	constructor(private uem: UemService, private zone: NgZone,
 		private sb: MatSnackBar, private queueService: QueueService, private cd: ChangeDetectorRef
 		, private bottomSheet: MatBottomSheet, public dialog: MatDialog
 	) { }
 	ngOnInit() {
-		this.sub_session = this.uem.getSession().subscribe(observer => {
-			this.zone.run(() => {
-				this.session = observer;
+		this.sub_session = this.uem.getSession().subscribe(session => {
+			
+				this.session = session;
 				if (this.session && this.session.matrices && this.session.matrices.length > 0) {
-					this.plots.matrices = { data: [{ values: [], labels: [], type: 'pie' }], layout: {
-						 title: "Samples per matrix in your Workspace", height: 350 ,
-					legend: {
-   						 x: 1,
-    					xanchor: 'right',
-    					y: 1
-  					} } }
+					let mats = {
+						data: [{ values: [], labels: [], type: 'pie' }], layout: {
+							title: "Samples per matrix in your Workspace", 
+							margin : {l : 0 , r : 0 , b : 0 , t : 30},
+							height : 230,
+							legend: {"orientation": "h"}
+						}
+					}
 					this.session.matrices.forEach((mat) => {
-						this.plots.matrices.data[0].values.push(mat.groups.length)
-						this.plots.matrices.data[0].labels.push(mat.name)
+						mats.data[0].values.push(mat.groups.length)
+						mats.data[0].labels.push(mat.name)
 					})
 					this.current_matrix = this.session.matrices[0];
 					this.updateCurrentMatrix();
+					setTimeout(()=>{
+						this.zone.run(() => {
+							this.plots.matrices=mats;
+						});		
+					}, 500)
 				}
 				if (!this.dataSource && this.session && this.session.profile.process_config.profiles.length > 0) {
 					this.dataSource = new QueueSource(this.queueService);
@@ -61,39 +67,42 @@ export class DashboardComponent implements OnInit, OnDestroy {
 					setTimeout(() => { this.refreshTable() }, 1000);
 				}
 
-			});
 		}, err => {
 			console.log(err);
 		});
 	}
-	selectMatrix(event: any) {
-		if (event.points && event.points.length == 1) {
+	selectMatrix(event?: any) {
+		if (event && event.points && event.points.length == 1) {
 			this.current_matrix = this.session.matrices.find((m) => { return m.name == event.points[0].label; })
+			this.zone.run(()=>{
+				this.main_plot=false;
+			})
 			this.updateCurrentMatrix();
+		} else {
+			this.main_plot=true;
 		}
 	}
 	updateCurrentMatrix() {
 		let mat = this.current_matrix;
-		this.plots.matrix = { data: [{ values: [], labels: mat.groups_names, type: 'pie' }], layout: {
-			 title: "Matrix " + mat.name + (mat.group_tag_key ? " ("+mat.group_tag_key+")" : ""), height: 350 ,
-		legend: {
-   						 x: 1,
-    					xanchor: 'right',
-    					y: 1	
-  					}
-		} }
+		let mats = {
+			data: [{ values: [], labels: mat.groups_names, type: 'pie' }], layout: {
+				title: "Matrix " + mat.name + (mat.group_tag_key ? " (" + mat.group_tag_key + ")" : ""),
+				margin : {l : 0 , r : 0 , b : 0 , t : 30},
+				height : 230,
+				legend: {"orientation": "h"}
+			}
+		}
 		mat.groups_names.forEach((n, i) => {
 			let count = 0;
-			mat.groups.forEach((g)=>{
-				if ( g == n ) count+=1;
+			mat.groups.forEach((g) => {
+				if (g == n) count += 1;
 			})
-			this.plots.matrix.data[0].values.push(count)
+			mats.data[0].values.push(count)
 		})
-		this.zone.run(()=>{
-			this.revisions.matrix+=1;
-			console.log(this.revisions)	
+		this.zone.run(() => {
+			this.plots.matrix=mats;
 		})
-		
+
 	}
 	updateRefresh() {
 		if (this.refreshRequest) this.refreshRequest.unsubscribe();
@@ -141,11 +150,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	}
 
 	delJob(job: any) {
-		this.queueService.delJob(job.job.uid).subscribe(res => {
-			this.sbMessage({ title: "Delete job", message: res.message, opts: { duration: 2000 } })
-		}, err => {
+		this.queueService.delJob(job.job.uid).then((res) => {
+			this.sbMessage({ title: "Delete job", message: res, opts: { duration: 2000 } })
+		}).catch((err) => {
 			this.sbMessage({ title: "ERROR! Delete job", message: err.message, opts: { duration: 2000 } })
-		}, () => {
+		}).finally(() => {
 			this.updateRefresh();
 		});
 	}

@@ -38,7 +38,7 @@
           <mat-form-field> <mat-label>Display</mat-label> <input matInput [(ngModel)]="data.feature_importance.to_display" type='number' min="1" (change)="updateFI()"></mat-form-field>
         </div>
       </div>
-      <div fxFlex="max(80vh, 450px)">
+      <div fxFlex="max(80vh, 450px)" *ngIf="data.feature_importance">
         <plotly-plot [revision]="revision" [useResizeHandler]="true" [style]="gstyle" [data]="data.feature_importance.display_data" [layout]="data.feature_importance.layout"></plotly-plot>
       </div>
     </div>
@@ -68,7 +68,7 @@
           <mat-label>Samples</mat-label> <mat-select multiple [(ngModel)]="dat.toshow" (openedChange)="! $event && updateSample(dat.name)"> <mat-option value="all">All</mat-option> <mat-option *ngFor="let n of dat.samples" [value]="n.name" [disabled]="dat.toshow[0]=='all'">{{n.name}}</mat-option> </mat-select></mat-form-field>
         </div>
       </div>
-      <div fxFlex="max(80vh, 450px)">
+      <div fxFlex="max(80vh, 450px)" *ngIf="dat.display_data">
         <plotly-plot [revision]="revision" [data]="dat.display_data" [layout]="dat.layout" [useResizeHandler]="true" [style]="gstyle"></plotly-plot>
       </div>
     </div>

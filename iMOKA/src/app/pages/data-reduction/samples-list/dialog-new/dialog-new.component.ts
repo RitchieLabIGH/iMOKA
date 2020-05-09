@@ -15,8 +15,6 @@ import { MatStepper } from '@angular/material/stepper';
 export class DialogNewComponent implements OnInit {
 	@ViewChild('stepper', { static: false }) stepper: MatStepper;
 	session: Session;
-	error_message: string;
-	loading_message: string;
 	tsvControl: FormGroup;
 	detailsControl: FormGroup;
 	procControl: FormGroup;
@@ -60,40 +58,15 @@ export class DialogNewComponent implements OnInit {
 	}
 
 	send() {
-		this.loading_message = "Sending the process..."
-		this.error_message = undefined;
-
 		let data = { source: this.tsvControl.value, details: this.detailsControl.value, process: this.procControl.value };
-		this.queue.sendJob({ name: "preprocess", data: data }).subscribe((resp) => {
-			this.zone.run(() => {
-				this.loading_message = resp.message
-			});
-		}, err => {
-			this.zone.run(() => {
-				if (typeof err == "string") {
-					this.error_message = err
-				} else if (err.message) {
-					this.error_message = err.message
-					if (err.error && err.error.stderr) {
-						this.error_message += "\n" + err.error.stderr;
-					}
-				} else if (err.stderr) {
-					this.error_message = err.stderr
-				}
-				console.log(err);
-			});
-		}, () => {
-			this.zone.run(() => { this.loading_message = "Job in queue. You can check the progress in your dashboard" });
-			if (typeof this.error_message == "undefined") {
+		this.queue.sendJob({ name: "preprocess", data: data }).then(() => {
 				setTimeout(() => {
 					this.zone.run(() => {
-						this.loading_message = undefined;
 						this.close();
 					});
 				}, 2000);
-			}
+			});
 
-		});
 	}
 
 

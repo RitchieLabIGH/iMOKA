@@ -1,4 +1,4 @@
-import { Component, NgZone } from '@angular/core';
+import { Component, NgZone , OnInit} from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
@@ -12,7 +12,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 	styleUrls: ['./nav.component.css'],
 })
 
-export class NavComponent {
+export class NavComponent implements OnInit{
 
 	isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset)
 		.pipe(
@@ -22,14 +22,19 @@ export class NavComponent {
 	session: Session;
 	messages: Message[]=[];
 	hideAlert : boolean=true;
+	init_message:string="Loading your profile...";
 	blocked : any;
 	constructor(private breakpointObserver: BreakpointObserver, private zone : NgZone, private uem: UemService,private alert: MatSnackBar,) {
+		
+	}
+	ngOnInit(){
 		this.uem.getSession().subscribe(session => {
-			this.session = session;
+			this.zone.run(()=>{
+				this.session = session;
+			})
 		});
 		this.uem.getMessage().subscribe(message => {
-			if (message) {
-				console.log(message)
+			if (message && this.session ) {
 				switch (message.type) {
 					case "alert": {
 						this.alert.open(message.message, "Warning", { duration: 2000 })
@@ -42,19 +47,34 @@ export class NavComponent {
 							break;	
 						}
 						if (message.action == "release"){
-							this.blocked = undefined;
-							this.messages.push(message);
-							this.showAlert(message.message,"Done!");
+							if ( this.blocked ){
+								this.zone.run(()=>{
+									message.progress=100;
+									this.blocked = message;
+								});	
+							}
+							setTimeout(()=>{
+								this.zone.run(()=>{
+									this.blocked = undefined;
+								})	
+							}, 500);
 							break;
 						}
 					}
 					default: {
 						this.messages.push(message)
-						this.showAlert(message.message, message.title ? message.title : "Warning!");
+						this.showAlert(typeof message.message == "string" ? message.message : JSON.stringify(message.message), message.title ? message.title : "Warning!");
 					}
 				}
+			} else {
+				if ( message && message.action == "block"){
+					this.zone.run(()=>{
+						this.init_message = message.message;
+					})
+				}
 			}
-		})
+		});
+		
 	}
 	showAlert(message:string, title:string){
 		this.zone.run(()=>{

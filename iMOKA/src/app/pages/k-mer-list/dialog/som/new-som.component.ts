@@ -14,8 +14,6 @@ import {COMMA, ENTER} from '@angular/cdk/keycodes';
 export class NewSomComponent implements OnInit {
 	mainParam: FormGroup;
 	procControl: FormGroup;
-	error_message: string;
-	loading_message: string;
 	session: Session;
 	mappers: any[] = [];
 	annotations: any[] = [];
@@ -42,7 +40,6 @@ export class NewSomComponent implements OnInit {
 		if (this.uem.electron) {
 			this.subscription=this.uem.getSession().subscribe(response => {
 				this.zone.run(() => {
-					console.log(response);
 					this.session = response;
 					let profile: Setting = this.session.profile.process_config.profiles[this.session.profile.process_config.current_profile];
 					if (profile.mappers) {
@@ -76,8 +73,6 @@ export class NewSomComponent implements OnInit {
 	}
 	
 	send() {
-		this.loading_message = "Sending the process..."
-		this.error_message = undefined;
 		let data = { parameters: this.mainParam.value, process: this.procControl.value }, mat = this.session.matrices.find((mat) => {
 			return mat.uid == this.session.files.kmers.original_request;
 		});
@@ -88,29 +83,9 @@ export class NewSomComponent implements OnInit {
 			data.parameters.matrix_uid = "external_file";
 			data.parameters.matrix_name = this.session.files.kmers.original_request;
 		}
-		this.queue.sendJob({ name: "som", data: data }).subscribe((resp) => {
-			this.zone.run(() => {
-				this.loading_message = resp.message
-			});
-		}, err => {
-			this.zone.run(() => {
-				if (typeof err == "string") {
-					this.error_message = err
-				} else if (err.message) {
-					this.error_message = err.message
-					if (err.error && err.error.stderr) {
-						this.error_message += "\n" + err.error.stderr;
-					}
-				} else if (err.stderr) {
-					this.error_message = err.stderr
-				}
-				this.loading_message = undefined;
-			});
-		}, () => {
-			this.zone.run(() => { this.loading_message = "Job in queue. You can check the progress in your dashboard" });
+		this.queue.sendJob({ name: "som", data: data }).then(() => {
 			setTimeout(() => {
 					this.zone.run(() => {
-						this.loading_message = undefined;
 						this.close();
 					});
 			}, 2000);
