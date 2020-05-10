@@ -21,7 +21,7 @@ export class DialogNewComponent implements OnInit {
 
 	constructor(private queue: QueueService, private uem: UemService, private zone: NgZone, public dialogRef: MatDialogRef<DialogNewComponent>, private fb: FormBuilder) {
 		this.tsvControl = this.fb.group({
-			raw_file: ['ERR2407636	chemorefractory	ERR2407636', [Validators.pattern(/^([A-Za-z0-9_-]+\s+([^\s;:]+:?[^\s;:]*[;]?)+\s+[^\s]+[\n]?)+$/), Validators.required]],
+			raw_file: ['ERR2407636 Chemosensitive:F ERR2407636', { validators: [Validators.pattern(/^([A-Za-z0-9_-]+\s+([^\s;:]+:?[^\s;:]*[;]?)+\s+[^\s]+[\n]?)+$/), Validators.required], updateOn: "blur"}],
 		});
 		this.detailsControl = this.fb.group({
 			k_len: [31, [Validators.min(4), Validators.max(150)]],
@@ -38,7 +38,6 @@ export class DialogNewComponent implements OnInit {
 
 	}
 	isValid() {
-
 		return this.tsvControl.valid && this.detailsControl.valid && this.procControl.valid && this.getIndex() > 0;
 	}
 

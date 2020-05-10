@@ -13,7 +13,7 @@
 			profiles</mat-label> <mat-select (selectionChange)="setProfile($event.value)"
 				[(ngModel)]="current_profile"> <mat-option
 				*ngFor="let profile of session.profile.process_config.profiles; let i=index"
-				value="{{i}}"> {{ profile.setting_name }} </mat-option> </mat-select> </mat-form-field>
+				[value]="i"> {{ profile.setting_name }} </mat-option> </mat-select> </mat-form-field>
 			<button matPrefix mat-icon-button
 				*ngIf="session.profile.process_config.current_profile == current_profile"
 				disabled title="This is the current profile">
@@ -58,8 +58,8 @@
 						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
 						<mat-form-field> <mat-label>Location</mat-label>
 						<mat-select [disabled]="!modify" formControlName="connection_type">
-						<mat-option value="local">Local</mat-option> <mat-option
-							value="cluster">Cluster</mat-option> </mat-select> </mat-form-field>
+						<mat-option [value]="'local'">Local</mat-option> <mat-option
+							[value]="'cluster'">Cluster</mat-option> </mat-select> </mat-form-field>
 					</div>
 					<div fxFlex="0 1 calc(33.3% - 32px)"
 						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
@@ -102,8 +102,8 @@
 						<mat-form-field> <mat-label>Authentication
 						method</mat-label> <mat-select [disabled]="!modify"
 							formControlName="ssh_auth"> <mat-option
-							value="UsernamePassword">Username and Password</mat-option> <mat-option
-							value="SshKey">SSH key</mat-option> </mat-select> </mat-form-field>
+							[value]="'UsernamePassword'">Username and Password</mat-option> <mat-option
+							[value]="'SshKey'">SSH key</mat-option> </mat-select> </mat-form-field>
 					</div>
 					<div fxFlex="0 1 calc(33.3% - 32px)"
 						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
@@ -133,7 +133,7 @@
 						<mat-form-field> <mat-label>Cluster
 						type</mat-label> <mat-select [disabled]="!modify"
 							formControlName="cluster_type">
-						<mat-option value="slurm">SLURM</mat-option> </mat-select> </mat-form-field>
+						<mat-option [value]="'slurm'">SLURM</mat-option> </mat-select> </mat-form-field>
 					</div>
 					<div fxFlex="100%">
 						<mat-form-field style="width:100%"> <mat-label>Cluster

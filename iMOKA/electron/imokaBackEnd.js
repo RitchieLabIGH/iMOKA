@@ -49,6 +49,7 @@ class iMokaBE extends EventEmitter {
 				let err_b = false;
 				this.mess.block({message : "Sending the job"});
 				this.processor.run(request).catch((err)=>{
+					console.log(err)
 					reject(err);
 					err_b=true;
 					this.mess.release({message : err.message ? err.message : err})

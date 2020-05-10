@@ -671,15 +671,15 @@ class Processor {
 			let files=res.stdout.split("\n").filter((fname)=>{return fname.length > 0});
 			this.mess.block({message : "Retrieving remote samples 0/"+files.length, progress : 0})
 			let meta = await ssh.execCommand("cat "+samples_dir+"/*/*.metadata.json")
+			let tot_files= files.length;
 			if ( meta.stdout.length > 0 ){
 				meta.stdout.split("\n").forEach((el)=>{
 					if (el.length > 0 ){
 						samples.push(JSON.parse(el));
-						this.mess.block({message : "Retrieving remote samples "+ samples.length+ "/"+ files.length, progress : Math.round((samples.lenght *100)/ files.length)})
+						if (samples.length % 10 == 0 ) this.mess.block({message : "Retrieving remote samples "+ samples.length+ "/"+ tot_files, progress : Math.round((samples.lenght *100)/ tot_files)})
 					}
 				})
 			}
-			
 			files = files.filter((fname)=>{return samples.find((e)=>{return e.name == fname && e.count_file})? false : true;})
 			if ( files.length != 0 ){
 				let s_dir;
@@ -703,14 +703,12 @@ class Processor {
 							sample.fastqc = "remote://"+fname;
 						}
 						ssh.execCommand("echo '"+JSON.stringify(sample)+"' > "+samples_dir+s_dir+"/"+s_dir+".metadata.json")
-						samples = samples.filter((s)=>{
-							return s.name != sample.name;
-						});
-						samples.push(sample);
-					} else {
-						samples.push(sample);
-					}
-					this.mess.block({message : "Retrieving remote samples "+ samples.length+ "/"+ files.length, progress : Math.round((samples.lenght *100)/ files.length)})
+					} 
+					samples = samples.filter((s)=>{
+						return s.name != sample.name;
+					});
+					samples.push(sample);
+					this.mess.block({message : "Retrieving remote samples "+ samples.length+ "/"+ tot_files, progress : Math.round((samples.lenght *100)/ tot_files)})
 				};
 			}
 			let preds = await ssh.execCommand("cat "+samples_dir+"/*/PRED/*.json")
@@ -794,10 +792,14 @@ class Processor {
 					procs.push(raw_file_lines.slice(i*l_per_file, (i+1)*l_per_file));
 				}
 				procs.push(raw_file_lines.slice((proc.data.process.njobs - 1)*l_per_file));
+				let context = proc.data.context;
+				proc.data.context = undefined;
+				
 				procs.forEach((raw_f, idx) =>{
 					let spr = JSON.parse(JSON.stringify(proc));
 					spr.data.uid=spr.data.uid+"_"+idx;
 					spr.data.source.raw_file=raw_f.join("\n");
+					spr.data.context = context;
 					promises.push(runJob(spr));
 				});
 				
@@ -807,6 +809,7 @@ class Processor {
 			Promise.all(promises).then(()=>{
 				resolve();
 			}).catch((err)=>{
+				console.log(err);
 				reject(err);
 			});
 		});

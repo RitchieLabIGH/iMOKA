@@ -142,7 +142,7 @@ class iMOKA {
 	 parseProcessRaw(raw_content){
 		 let  content = raw_content.split("\n"), out= {samples : [] , errors : [] };
 		 for (let i = 0 ; i < content.length ; i++){
-			let line = content[i].split(/\t+/);
+			let line = content[i].split(/\s+/);
 			if ( line.length == 3 ){
 				let metadata = line[1].split(";"), sample = { name : line[0], source : line[2].split(";"), metadata : [] };
 				metadata.forEach((met)=>{
