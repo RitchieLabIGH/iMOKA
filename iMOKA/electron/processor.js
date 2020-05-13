@@ -147,7 +147,7 @@ class Processor {
 					this.options = opts;
 					if (this.options.connection_type=="cluster"){
 						this.getSSH().then((ssh)=>{
-							this.queue = new ClusterQueue(ssh, clusterCommands[this.options.cluster_type], this.options.id );
+							this.queue = new ClusterQueue(ssh, clusterCommands[this.options.cluster_type], this.options.id, this.mess );
 							resolve();
 						}).catch((err)=>{
 							console.log(err);
@@ -546,6 +546,12 @@ class Processor {
 			}
 		});
 	}
+	
+	async getRemoteFile(file, des_file){
+		let ssh = await this.getSSH();
+		let res = await ssh.getFile(des_file, file);
+		return res;
+	}
 
 	async setSampleRemote(ssh, samples){
 		
@@ -558,6 +564,7 @@ class Processor {
 			if (res.code != 0 || res.stderr.length > 1){
 				throw res.stderr
 			} 
+			sam.predictions = undefined;
 			ssh.execCommand("echo '"+JSON.stringify(sam)+"' > "+sample_dir+"/"+sam.name+".metadata.json")
 			
 		};
@@ -690,6 +697,10 @@ class Processor {
 					res = await ssh.execCommand("[[ -f "+fname+" ]] &&  cat "+fname)
 					if ( res.code == 0 && res.stdout.length > 1){
 						let tmp_j = JSON.parse(res.stdout);
+						let oSample = samples.find((s)=>{
+							return s.name == sample.name; 
+						});
+						if ( oSample ) sample = oSample;
 						sample.count_file = tmp_j.count_files[0];
 						sample.prefix_size = tmp_j.prefix_size[0];
 						sample.total_count = tmp_j.total_counts[0];
@@ -698,10 +709,11 @@ class Processor {
 						sample.k_len = tmp_j.k_len;
 						sample.message = "Imported";
 						fname=samples_dir+"/"+s_dir+"/fastqc/"+s_dir+"_fastqc.html"
-						res = await ssh.execCommand("[[ -f "+fname+" ]] && cat "+fname)
+						res = await ssh.execCommand("[[ -f "+fname+" ]] && ls "+fname)
 						if (res.code == 0 &&  res.stdout.length > 1){
 							sample.fastqc = "remote://"+fname;
 						}
+						
 						ssh.execCommand("echo '"+JSON.stringify(sample)+"' > "+samples_dir+s_dir+"/"+s_dir+".metadata.json")
 					} 
 					samples = samples.filter((s)=>{
@@ -742,7 +754,9 @@ class Processor {
 		}
 		return true;
 	}
-
+	
+	
+	
 	delJob(uid){
 		return new Promise((resolve, reject)=>{
 			if ( this.queue){
@@ -1112,9 +1126,7 @@ class Processor {
 				let tick= function() {
 					ssh.execCommand(command).then((response)=>{
 						if (response.code == 0){
-							console.log(response.stdout)
 							let result = setting.parse_jobs(response.stdout);
-							console.log(result)
 							if ( result ){
 								observer.next(result[0]);
 								setTimeout(tick, 2000);

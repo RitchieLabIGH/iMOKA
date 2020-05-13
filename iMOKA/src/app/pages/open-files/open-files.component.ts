@@ -47,7 +47,9 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 								if (omat) {
 									name = omat.name;
 									external = false;
-									this.openExperiment(omat);
+									if ( ! this.current_matrix ){
+										this.openExperiment(omat);	
+									}
 								}
 							}
 						}

@@ -38,7 +38,7 @@ function createWindow () {
   let conf=store.get('BrowserWindowConfig');
   
   conf.frame=true;
-  conf.icon = './dist/assets/images/256x256.png';
+  conf.icon = __dirname + "/../dist/assets/images/256x256.png";
   mess = new Messenger();
   win = new BrowserWindow(conf);
   function saveWindowBounds() {
@@ -74,15 +74,22 @@ function createWindow () {
   }).finally(()=>{
 	  win.webContents.on('new-window', function(event, url){
 	      event.preventDefault();
-	      console.log(url)
-	      shell.openExternal(url);
+	      if ( url.match(/^unsafe:remote/)){
+	    	  backend.getRemoteFile(url.replace("unsafe:remote://", "/")).then((file)=>{
+	    		  shell.openExternal("file://"+file);
+	    	  }).catch((err)=>{
+	    		  mess.sendMessage({message : err})
+	    		  console.log(err)
+	    	  });
+	      } else {
+	    	  shell.openExternal(url);
+	      }
+	      
 	    });
 	  backend.on("sendSession", (session)=>{
-		  console.log("Sending get session");
 		  win.webContents.send("getSession", {"message" : "SUCCESS", "session" : session});
 	  });
 	  backend.on("queue", (queue)=>{
-		  console.log("Sending queue");
 		  win.webContents.send("queue", {"message" : "SUCCESS",code :0, "data" : queue});
 	  });
 	  mess.on("message", (content)=>{
@@ -109,7 +116,6 @@ app.on('window-all-closed', function () {
 })
 
 app.on('activate', function () {
-  // macOS specific close process
   if (win === null) {
     createWindow()
   }
@@ -131,7 +137,6 @@ String.prototype.hashCode = function() {
 /// ipcMain listeners
 
 ipcMain.on("getData" , (event, id, request) => {
-	console.log("Get data recived "+ request.data);
 	let promise=undefined;
 	let event_id="getData-"+id;
     if ( request.data == "kmers" ){
@@ -187,7 +192,6 @@ ipcMain.on("getData" , (event, id, request) => {
 });
 
 ipcMain.on("action" , (event, id, request) => {
-    console.log("action request recived " + request.action)
     request.id = id;
     if ( request.action == "saveKmerTable"){
     	var fs = require('fs');
@@ -219,6 +223,7 @@ ipcMain.on("action" , (event, id, request) => {
     			win.webContents.send("action-"+request.id, { "message": res , code:0} );
     		}, (err)=>{
     			has_err=true;
+    			console.log(err);
     			if (err.message){
     				mess.sendMessage({ "message": err.message, "type" : "error" } );
     			} else {

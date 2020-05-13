@@ -10,8 +10,9 @@ class LocalQueue {
 	
 	tick_time = 5000;
 	messanger;
-	constructor(opts){
+	constructor(opts, mess){
 		this.options = opts;
+		this.messanger= mess;
 		this.current_queue=new Store({configName : "queue", defaults : { queue :[] , running :[] , completed : [] } });
 		this.locker=this.current_queue.userDataPath + "/locker/"
 		if (! fs.existsSync(this.locker)){
@@ -35,7 +36,6 @@ class LocalQueue {
 	delJob(uid){
 		return new Promise((resolve, reject)=>{
 			let done = false;
-			console.log(uid)
 			this.current_queue.data.running.forEach((job)=>{
 				if ( job.job.uid == uid) {
 					done=true;
@@ -99,7 +99,6 @@ class LocalQueue {
 				  job.copy_files.forEach((file)=>{
 					 if ( file.copy_file ){
 						 promises.push(new Promise((resolve, reject)=>{
-							 console.log("cp "+file.origin_file+" "+job_dir+file.destination_file)
 							 child_process.exec("cp "+file.origin_file+" "+job_dir+file.destination_file, {}, (err, stdout, stderr)=>{
 								 if (err){
 									 err.stderr=stderr;
@@ -150,7 +149,7 @@ class LocalQueue {
 	run(job){
 		job.result = "Running";
 		if (this.messanger){
-			this.messanger.sendMessage({ message  : job.job.original_request.name +" running", title : "Queue updates"})
+			this.messanger.sendMessage({ message  : job.job.original_request.name +" is running", title : "Queue updates"})
 		}
 		let lock=this.locker+"/"+job.job.uid;
 		var stream = fs.createWriteStream(lock+".sh");

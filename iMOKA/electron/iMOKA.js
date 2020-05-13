@@ -39,7 +39,6 @@ class iMOKA {
 		 return ""+Date.now();
 	 }
 	 predict(data){
-		 console.log(data)
 		 
 		return new Promise((resolve, reject)=>{
 			let out = { commands : [ ] , files : [] ,
@@ -92,7 +91,6 @@ class iMOKA {
 	 }
 	 
 	 makeSOMargs(data){
-		 console.log(data)
 		 let args=" -cs "+data.parameters.csize;
 		 args+= " -i "+data.parameters.iterations;
 		 args+= " -lr "+data.parameters.learn_rate;

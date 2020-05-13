@@ -7,9 +7,10 @@ const Store  = require('./store.js');
 class ClusterQueue {
 	
 	tick_time = 10000;
-	
-	constructor(ssh, settings, name){
+	mess;
+	constructor(ssh, settings, name, mess){
 		this.ssh = ssh;
+		this.mess = mess;
 		this.current_queue=new Store({configName : "queue_"+name, defaults : { queue :[]  } });
 		this.settings=settings;
 		this.isAlive=true;
@@ -176,13 +177,10 @@ class ClusterQueue {
 				this.current_queue.data.queue.forEach((job)=>{
 					if ( ! job.completed || job.result == "No info"   ){
 						this.ssh.execCommand("cat "+job.job.wd+"runscript.sh.out && cat "+job.job.wd+"runscript.sh.err >&2" ).then((log)=>{
-							if ( log.code == 0 ){
+							if ( log.code == 0  ){
 								job.stderr= log.stderr;
 								job.stdout = log.stdout;
-							} else {
-								job.stderr="";
-								job.stdout ="";
-							}
+							} 
 							let c_job;
 							if (queue_cluster){
 								c_job =queue_cluster.find(cl => {
@@ -212,6 +210,7 @@ class ClusterQueue {
 									this.current_queue.save();
 									if ( job.type == "completed" ){
 										job.completed=true;
+										if ( this.mess) this.mess.sendMessage("Job "+job.job.original_request.name+" completed.")
 										this.ssh.execCommand("rm -fr "+job.job.wd +" ").catch(err=>{
 											console.log(err);
 										});

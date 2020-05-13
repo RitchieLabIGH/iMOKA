@@ -68,6 +68,18 @@ class iMokaBE extends EventEmitter {
 		}
 	}
 	
+	async getRemoteFile(file){
+		if (! this.processor ){
+			throw "Processor not loaded";
+		}
+		let fname = "file.tmp", reg =file.match(/\/([^/]+)$/ );
+		if ( reg[1]){
+			fname = reg[1];
+		}
+		let tmp_file=this.tmp_dir+fname;
+		await this.processor.getRemoteFile(file, tmp_file );
+		return tmp_file;
+	}
 	
 	
 	setMatrix(request){
@@ -1248,7 +1260,7 @@ class iMokaBE extends EventEmitter {
 				if (this.local_queue ){
 					this.local_queue.destroy();
 				}
-				this.local_queue = new LocalQueue(this.processor.options);
+				this.local_queue = new LocalQueue(this.processor.options, this.mess);
 				this.processor.setQueue(this.local_queue);
 			}
 			this.loadProfileFiles().then(()=>{

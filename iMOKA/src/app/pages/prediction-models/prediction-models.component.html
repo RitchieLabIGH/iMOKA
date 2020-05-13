@@ -12,7 +12,8 @@
 	</mat-form-field> </mat-card-header> 
 	<mat-card-content *ngIf="data.models.data[data.models.current_model].models[data.models.data[data.models.current_model].best_model]; let best_model">
 		<app-model-display [graph]="data.models.data[data.models.current_model].graphs[data.models.show_type]" [model]="best_model" [session]="session"></app-model-display>
-	</mat-card-content> </mat-card>
+	</mat-card-content> 
+  </mat-card>
 </div>
 </mat-tab>
 <mat-tab label="Feature Importance">
@@ -22,5 +23,4 @@
 		</mat-card-content>
 	</mat-card>
 </mat-tab>
-
 </mat-tab-group>

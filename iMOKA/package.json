@@ -11,7 +11,7 @@
     "electron": "export ELECTRON_IS_DEV=1 && ./node_modules/electron/dist/electron --disable-gpu  .",
     "be": "export ELECTRON_IS_DEV=1 && ng build && ./node_modules/electron/dist/electron --disable-gpu  .",
     "packager": "electron-packager ./ iMOKA --out=packages --no-prune --ignore=^/node_modules --ignore=^/packages --ignore=/e2e --ignore=^/src --overwrite ",
-    "p-all": "electron-packager ./ iMOKA --out=packages --no-prune --ignore=^/node_modules --ignore=^/packages --ignore=/e2e --ignore=6/src --all --overwrite"
+    "p-all": "electron-packager ./ iMOKA --out=packages --no-prune --ignore=^/node_modules --ignore=^/packages --ignore=/e2e --ignore=^/src --icon=assets/images/256x256.png --all --overwrite"
   },
   "private": true,
   "dependencies": {
