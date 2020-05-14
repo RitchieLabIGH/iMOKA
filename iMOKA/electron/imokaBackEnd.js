@@ -146,9 +146,9 @@ class iMokaBE extends EventEmitter {
 			           }
 			       } else {
 			           let obj, gene_name, gene_id, aln_pos;
-			           this.push("Gene\tGeneName\tEvent\t"+this.data.kmers.info.predictors.join("\t")+"\tkmer\talignment"+"\n");
+			           this.push("Gene\tGeneName\tEvent\t"+that.data.kmers.info.predictors.join("\t")+"\tkmer\talignment"+"\n");
 			           for ( let order=0; order < that.data.kmers.orders_idxs.kmers.length; order++ ){
-			               i = that.data.kmers.orders_idxs.kmers[order];
+			               let i = that.data.kmers.orders_idxs.kmers[order];
 			               if (! that.data.kmers.masks.kmers || that.data.kmers.masks.kmers[i]){
 			            	   that.data.kmers.kmers[i].idx=i;
 			                   obj=that.regenerate(that.data.kmers.kmers[i]);
