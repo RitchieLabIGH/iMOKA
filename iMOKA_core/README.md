@@ -120,7 +120,7 @@ ERR2407650	responsive:T	ERR2407650
 ERR2407651	responsive:T	ERR2407651
 ERR2407652	responsive:T	ERR2407652
 ```
-That contains targeted RNA sequencing of 17 DLBCL patients responsive (10) and non responsive (7) to an anthracycline-based terapy, as described in the reference study [Crump, M. et al](https://pubmed.ncbi.nlm.nih.gov/28774879/)
+That contains targeted RNA sequencing of 17 DLBCL patients responsive (10) and non responsive (7) to an anthracycline-based terapy, as described in the reference study [Fornecker, L-M. et al](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6351558/)
 
 ## <a name="core"></a> Run the core software
 The main software aims to reduce the k-mers to a non redundant subset having the potential to classify the samples in the given classes. The final list of k-mer can be directly explored using the GUI (TODO link), where it's also possible to refine the list with filters and criterias in according to the user's needs.
