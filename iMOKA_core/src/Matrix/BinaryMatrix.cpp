@@ -191,35 +191,40 @@ bool BinaryMatrix::getLine(KmerMatrixLine & line) {
 		}
 	}
 
-	if (line.count.size() != n_of_bd)
+	if (line.count.size() != n_of_bd){
 		line.count.resize(bin_databases.size());
+		line.raw_count.resize(bin_databases.size());
+	}
 	line.setKmer(*(current_kmers.begin()));
 	current_kmers.erase(current_kmers.begin());
 	line.index = current_line++;
 	if ( normalized ){
 		for (uint64_t i = 0; i < n_of_bd; i++) {
 				if (bin_databases[i].getKmer() == line.getKmer()) {
+					line.raw_count[i]=bin_databases[i].getCount();
 					line.count[i] =((bin_databases[i].getCount()) / normalization_factors[i]);
 					if (bin_databases[i].getNext()) {
 						current_kmers.insert((bin_databases[i].getKmer()));
 					}
 				} else {
 					line.count[i] = 0;
+					line.raw_count[i]=0;
 				}
 			}
 	} else {
 		for (uint64_t i = 0; i < n_of_bd; i++) {
 				if (bin_databases[i].getKmer() == line.getKmer()) {
 					line.count[i] =(bin_databases[i].getCount());
+					line.raw_count[i]=bin_databases[i].getCount();
 					if (bin_databases[i].getNext()) {
 						current_kmers.insert((bin_databases[i].getKmer()));
 					}
 				} else {
 					line.count[i] = 0;
+					line.raw_count[i]=0;
 				}
 			}
 	}
-
 	return true;
 
 }

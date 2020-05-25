@@ -1,5 +1,6 @@
 <h3>{{data.title}}</h3>
 <mat-accordion >
+    <p *ngIf="data.summary" >{{data.summary}}</p>
   	<mat-expansion-panel *ngFor="let el of data.information_list">
     <mat-expansion-panel-header >
       <mat-panel-title>

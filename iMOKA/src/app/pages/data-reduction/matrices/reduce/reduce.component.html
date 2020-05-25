@@ -13,6 +13,13 @@
 						<mat-hint>Accuracy threshold that the k-mers have to reach</mat-hint> 
 					</mat-form-field>
 				</div>
+                <div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+                  <mat-form-field> 
+                    <mat-label>Minimum count</mat-label> 
+                    <input matInput required formControlName="min" type="number"> 
+                    <mat-hint>Consider a k-mer only if at least one sample has a raw count higher than this value</mat-hint> 
+                    </mat-form-field>
+                </div>
 				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
 					<mat-form-field> 
 						<mat-label>Test percentage</mat-label> 

@@ -207,21 +207,19 @@ class Processor {
 					reject("File doesn't exists!");
 				}
 			} else {
-				this.getSSH().then((ssh)=>{
-					this.mess.block({message : "Retrieving the remote matrix..."})
-					ssh.execCommand("cat "+matrix_file).then((res)=>{
-						if (res.code == 0){
-							this.mess.block({message : "Downloaded, opening..."})
-							let mat=JSON.parse(res.stdout);
-							mat.file_name = matrix_file;
-							this.mess.release({message : "Completed"})
-							resolve(mat);
-						} else {
-							reject("File doesn't exists!")
-						}
-					}).catch((err)=>{reject(err);})
+				let tmp_file=this.tmp_dir+"/aggregated.tmp.json";
+				this.mess.block({message : "Retrieving the remote matrix..."})
+				this.getRemoteFile(matrix_file, tmp_file).then(()=>{
+					this.mess.block({message : "Downloaded, opening..."})
+					let mat=JSON.parse(fs.readFileSync(tmp_file));
+					mat.file_name = matrix_file;
+					this.mess.release({message : "Completed"})
+					resolve(mat);
+				}).catch((err)=>{
+					this.mess.release({message : "Error!"})
+					console.log(err);
+					reject(err);
 				})
-
 			}    
 		});
 	}

@@ -51,7 +51,7 @@ run_till_success(){
     count_success="1"
     command_to_run=$@
 	while [[ ${prev_count_success} -ne ${count_success} ]]; do
-   	    echo -n "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] running $1 "
+   	    echo -n "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] running $command_to_run "
    	    prev_count_success=$count_success
         $command_to_run || count_success=$(( count_success + 1)) ;
         if [[ ${prev_count_success} -ne ${count_success} ]]; then

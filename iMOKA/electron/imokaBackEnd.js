@@ -426,7 +426,7 @@ class iMokaBE extends EventEmitter {
 							}
 						} else {
 							this.processor.getAggregated(file_name).then((local_mat)=>{
-								console.log("resolving with " +local_mat )
+								console.log("resolving with matrix" )
 								resolve(local_mat);
 							}).catch((err)=>{
 								reject(err);
@@ -502,7 +502,10 @@ class iMokaBE extends EventEmitter {
 	
 	openData(request) {
 		return new Promise((resolve, reject)=>{
-			this.checkFileMatrix(request.file_name).then((file_name)=>{
+			this.checkFileMatrix(request.file_name).catch((err)=>{
+				console.log(err);
+				reject(err);
+			}).then((file_name)=>{
 				
 				if (typeof file_name != typeof "string" ){
 					this.openNewData(file_name, {"file" : file_name.file_name , "original_request" : request.file_name } ).then((res)=>{
@@ -857,7 +860,6 @@ class iMokaBE extends EventEmitter {
 	
 	getFeatures(request) {
 		return new Promise((resolve, reject)=>{
-			console.log("getFeatures received");
 			if ( ! this.data.kmers){
 				reject("Kmers file not loaded");
 			}
@@ -1172,7 +1174,9 @@ class iMokaBE extends EventEmitter {
 			           console.log("Opening "+fname )
 			           promises.push(this.openData({file_name: fname}))
 			        });
-			        Promise.all(promises).then(()=>{
+			        Promise.all(promises).catch((err)=>{
+			        	console.log(err);
+			        }).then(()=>{
 			        	this.updateSession().finally(()=>{
 			        		resolve();
 			        	})

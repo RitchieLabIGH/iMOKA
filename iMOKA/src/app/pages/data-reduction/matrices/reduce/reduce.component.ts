@@ -31,6 +31,7 @@ export class ReduceComponent implements OnInit {
 			});
 			this.detailsControl = this.fb.group({
 				accuracy: [65, [Validators.min(50), Validators.max(99)]],
+				min: [5, Validators.min(0) ],
 				test: [0.25, [Validators.min(0.05), Validators.max(0.50)]],
 				crossvalidation: [100, [Validators.min(10), Validators.max(1000)]],
 				crossvalidationsd: [0.5, [Validators.min(0.05), Validators.max(5)]],

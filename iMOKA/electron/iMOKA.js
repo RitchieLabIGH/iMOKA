@@ -193,7 +193,7 @@ class iMOKA {
 		 
 		  experiment = "${imoka_home}/experiments/" +  proc.matrix.uid +"/", param = proc.parameters;
 		 let command = "singularity exec ${singularity_image} iMOKA_core reduce -i "+ experiment + "matrix.json -o " + experiment + "reduced.matrix "+
-		 	" -a " + param.accuracy + " -t " + param.test + " -e " + param.entropyone + " -E " + param.entropytwo + " -c "+ param.crossvalidation + " -s " + param.crossvalidationsd +" " ;
+		 	" -a " + param.accuracy + " -t " + param.test + " -e " + param.entropyone + " -E " + param.entropytwo + " -c "+ param.crossvalidation + " -s " + param.crossvalidationsd +" -m "+param.min+ " " ;
 		 out.commands.push(command);
 		 out.memory = proc.process.mem ;  
 		 out.threads = proc.process.cores;

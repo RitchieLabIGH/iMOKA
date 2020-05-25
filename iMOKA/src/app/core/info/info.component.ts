@@ -5,6 +5,7 @@ import {MAT_BOTTOM_SHEET_DATA, MatBottomSheet, MatBottomSheetRef} from '@angular
 export class InfoData {
     constructor( public title : string, 
     public information_list : InfoListElement[]=[]){};
+	summary : string;
 }
 
 export class InfoListElement {

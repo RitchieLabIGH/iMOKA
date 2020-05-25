@@ -190,7 +190,17 @@ export class MatricesComponent implements OnInit {
   }
   
   openBottomSheet(name:string){
-      console.log("TODO");
+	let data;
+	if ( name == "reduced"){
+		data=new InfoData("Reduced matrix");
+		data.summary = "Matrix reduction allows to keep the k-mers that are able to classify your samples in the correct classes.";
+	} else if (name == "aggregated"){
+		data=new InfoData("Aggregated matrix");
+		data.summary= "Aggregating overlapping k-mers allows to reduce the redundancy of your features. If an annotation and mapping settings are given, also groups of k-mers that map on the same annotated event will collapse in a single feature.";
+	}
+	this.zone.run(()=>{
+          this.bottomSheet.open(InfoComponent, {data : data });
+    });
   }
 
 }
