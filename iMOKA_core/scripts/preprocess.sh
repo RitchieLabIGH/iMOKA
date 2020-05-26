@@ -66,7 +66,7 @@ run_till_success(){
 
 input_file="NONE"
 outputDir=$(realpath ./preprocess/)
-library_type="NONE"
+library_type="NULL"
 keepFiles="F"
 minCounts="5"
 kmer_len="31"
@@ -208,7 +208,7 @@ while read line; do
         f_files="${f_files} ${f}"
     done
     s_files=$(echo "$f_files" | xargs )
-    paired=$(echo "$s_files" | awk '{if (NF >= 2) { print "T" } else { print "F" } }')
+    paired=$(echo "$s_files" | awk '{if (NF == 2) { print "T" } else { print "F" } }')
     if [[ "${use_fastqc}" == "T" ]]; then
         echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] running fastqc ${fname}"
         mkdir ./fastqc
@@ -219,7 +219,7 @@ while read line; do
     read_files=$(echo ${s_files} | awk '{ if ( $1 ~/.gz$|.zip$/ ) { print "zcat" } else { print "cat" } }' )
     file_type=$($read_files ${s_files} | head -n 1 | awk 'NR==1 { if ($0 ~ /^>/) { print "fm" } else { print "fq" } }')
     ## detect if there is a file to convert to rc
-    if [[ "${paired}" == "T" && "${library_type}" != "NONE" ]]; then
+    if [[ "${paired}" == "T" && "${library_type}" != "NULL" ]]; then
         echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] Detected paired"
         file_1=$(echo ${s_files} | awk  'BEGIN {RS=" "} /[_]?[R_]1\./ {print}')
         file_2=$(echo ${s_files} | awk  'BEGIN {RS=" "} /[_]?[R_]2\./ {print}')
