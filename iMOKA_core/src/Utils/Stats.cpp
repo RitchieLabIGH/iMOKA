@@ -367,7 +367,6 @@ arma::Mat<double> Stats::euclideanDistance(const arma::Mat<double> & data){
 	for ( int i=0; i< data.n_cols; i++){
 		for (int j= i+1; j < data.n_cols; j++ ){
 			distances(i, j) = sqrt(distances(i,i) - (2* arma::dot(data.col(i),data.col(j))) + distances(j ,j));
-			distances(j,i) = distances(i, j);
 		}
 	}
 	for ( int s=0; s < data.n_cols; s++) distances(s,s)=0;
@@ -375,5 +374,42 @@ arma::Mat<double> Stats::euclideanDistance(const arma::Mat<double> & data){
 	return distances;
 }
 
+std::vector<uint32_t> Stats::discretize(const std::vector<double> & data, const uint32_t & n_bins,const double & min_nonzero){
+	std::vector<uint32_t> out(data.size());
+	double min_v=0, max_v=0;
+	std::vector<uint32_t> idxs;
+	for ( uint32_t i =0 ; i < data.size(); i++){
+		out[i]=0;
+		if ( data[i] != 0 ){
+			if ( data[i] < min_v || min_v == 0 ) min_v=data[i];
+			if ( data[i] > max_v ) max_v = data[i];
+			idxs.push_back(i);
+		}
+	}
+	if ( ( (double (idxs.size())) / data.size()) >= min_nonzero ){
+		std::vector<std::vector<uint32_t>> bins(n_bins);
+		double bin_size= (max_v - min_v)/ (n_bins-1);
+		for ( uint32_t & i : idxs) {
+			bins[std::floor((data[i]-min_v)/bin_size)].push_back(i);
+		}
+		uint64_t c_cluster=1 , last_bin_size=0 ;
+		bool ascending=true;
+		for ( uint32_t b=0 ; b < n_bins; b++){
+			if ( bins[b].size() > last_bin_size ){
+				if ( ! ascending ) c_cluster++;
+				ascending=true;
+			} else {
+				ascending = false;
+			}
+			for ( uint32_t & i : bins[b]) out[i]=c_cluster;
+			if ( bins[b].size() > 0 ){
+				last_bin_size = bins[b].size();
+			}
+		}
+	}else {
+		out.resize(0);
+	}
+	return out;
+}
 
 }

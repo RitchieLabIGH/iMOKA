@@ -432,6 +432,7 @@ ClusterizationResult MLpack::DBSCAN(
 			[epsilon, min_dimension](arma::Mat<double> & input_data, arma::Row<size_t> & clusters) {
 				mlpack::dbscan::DBSCAN<> dbscan(epsilon, min_dimension , false);
 				size_t n_clusters=dbscan.Cluster(input_data, clusters);
+
 				// Replace MAX with n_clusters ( DBSCAN will assign MAX to the unclustered points )
 				for (size_t i = 0; i < clusters.n_elem; ++i) {
 					clusters[i] = clusters[i] == SIZE_MAX? n_clusters : clusters[i];

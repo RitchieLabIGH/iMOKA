@@ -85,6 +85,7 @@ public:
 	static double tiecorrect(const std::vector<double> & );
 	static arma::Mat<double> euclideanDistance(const arma::Mat<double> & points);
 	static void computeSilhuettes(const arma::Mat<double> &, arma::Row<size_t> &, std::vector<double> & , size_t );
+	static std::vector<uint32_t> discretize(const std::vector<double> & data, const uint32_t & n_bin,const double & min_nonzero);
 
 };
 }

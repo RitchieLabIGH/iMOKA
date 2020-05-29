@@ -69,6 +69,7 @@ void BinaryMatrix::initKmerVector(int64_t prefix_size) {
 			count_files[i] += ".sorted.bin";
 		}
 		BinaryDB tmp(count_files[i]);
+		tmp.getNext();
 		k_len = tmp.getKmer().k_len;
 		total_counts[i] = tmp.getTotCount();
 		normalization_factors[i] = (double) (total_counts[i] / rescale_factor);

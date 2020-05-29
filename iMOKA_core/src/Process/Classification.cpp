@@ -71,19 +71,11 @@ bool Classification::run(int argc, char **argv) {
 			options.add_options()("i,input", "The input matrix JSON header",
 					cxxopts::value<std::string>())("o,output",
 					"Output matrix file", cxxopts::value<std::string>())(
-					"h,help", "Show this help")("m,method",
-					"Clusterization method to use [DBSCAN|KMEANS]. Use DBSCAN if you don't know the number of clusters that are present in your data, use KMEANS if you know it.",
-					cxxopts::value<std::string>()->default_value("DBSCAN"))(
-					"c,clusters",
-					"min-max:dim number of clusters and minimum dimension of a cluster.",
-					cxxopts::value<std::string>()->default_value("2-10:2"))(
-					"e,epsilon",
-					"Epsilon value in DBSCAN. Two points are considered neighbors if the distance between the two points is below the threshold epsilon. The points are rescaled in [0-100]",
-					cxxopts::value<double>()->default_value("5"))("s,silhuette",
-					"Minimum median silhuette required to consider a k-mer",
-					cxxopts::value<double>()->default_value("0.90"))("b,batch",
-					"format: \"a-b\" -> Process only the baches from a to b.",
-					cxxopts::value<std::string>()->default_value("all"));
+					"h,help", "Show this help")("s,sigthr",
+					"Proportion of non zero values to consider a k-mer [0-1] ",
+					cxxopts::value<double>()->default_value("0.10"))("b,bins",
+					"Number of bins used to discretize the k-mer counts",
+					cxxopts::value<uint64_t>()->default_value("100"));
 			auto parsedArgs = options.parse(argc, argv);
 			if (parsedArgs.count("help") != 0
 					|| IOTools::checkArguments(parsedArgs,
@@ -94,11 +86,8 @@ bool Classification::run(int argc, char **argv) {
 			}
 			return clusterizationFilter(parsedArgs["input"].as<std::string>(),
 					parsedArgs["output"].as<std::string>(),
-					parsedArgs["method"].as<std::string>(),
-					parsedArgs["batch"].as<std::string>(),
-					parsedArgs["silhuette"].as<double>(),
-					parsedArgs["epsilon"].as<double>(),
-					parsedArgs["clusters"].as<std::string>());
+					parsedArgs["bins"].as<uint64_t>(),
+					parsedArgs["sigthr"].as<double>());
 		}
 
 		if (std::string(argv[1]) == "models") {
@@ -379,181 +368,117 @@ bool Classification::classificationFilterMulti(std::string file_in,
 /// @param epsilon
 /// @param clusters
 /// @param min_cluster
-bool Classification::clusterizationFilter(std::string input, std::string output,
-		std::string method, std::string batch, double silhuette, double epsilon,
-		std::string clusters) {
-	BinaryMatrix mat(input, true);
-	std::ofstream ofs(output);
-	size_t min_cluster, max_cluster, min_dim, num_samples =
-			mat.col_names.size(), number_of_dimensions = 100;
+bool Classification::clusterizationFilter(std::string file_in,
+		std::string file_out, uint64_t nbins, double sigthr) {
+	std::cerr << "Memory occupied: "
+			<< IOTools::format_space_human(IOTools::getCurrentProcessMemory())
+			<< ".\n";
+	int max_thr = omp_get_max_threads();
+	BinaryMatrix bm(file_in, true);
+	const uint64_t k_len = bm.k_len, batch_size = std::floor(
+			((std::pow(4, bm.k_len)) - 1) / max_thr), nsam =
+			bm.col_names.size();
+	std::vector<std::string> names = bm.col_names;
 
-	try {
-		min_cluster = std::stoi(
-				clusters.substr(0, clusters.find(":")).substr(0,
-						clusters.find("-")));
-		max_cluster = std::stoi(
-				clusters.substr(0, clusters.find(":")).substr(
-						clusters.find("-") + 1));
-		min_dim = std::stoi(clusters.substr(clusters.find(":") + 1));
-		std::cerr << "min cluster: " << min_cluster << "\nmax_cluster: "
-				<< max_cluster << "\nmin_dim: " << min_dim << "\n";
-	} catch (std::exception &e) {
-		log
-				<< "ERROR! cluster size range have to be given as min-max:dim ( example: 2-4:2 ).\n";
-		log << clusters << "\n";
-		return false;
-	}
+	bm.clear();
+	json info = { { "nbins", nbins }, { "sigthr", sigthr },
+			{ "file_in", file_in }, { "file_out", file_out } };
 
-	std::function<ClusterizationResult(const std::vector<std::vector<double>>&)> fun;
-	json info = { { "silhuette", silhuette }, { "method", method }, {
-			"cluster_range", clusters }, { "file_in", input }, { "file_out",
-			output } };
-	if (method == "DBSCAN") {
-		log << "Using DBSCAN algorithm\n";
-		fun = [epsilon, min_dim](const std::vector<std::vector<double>> &data) {
-			return MLpack::DBSCAN(data, epsilon, min_dim);
-		};
-		info["epsilon"] = epsilon;
-	} else if (method == "KMEANS") {
-		fun = [min_dim, max_cluster](
-				const std::vector<std::vector<double>> &data) {
-			return MLpack::KMEANS(data, max_cluster, min_dim);
-		};
-		log << "Using KMeans algorithm\n";
-		info["clusters"] = clusters;
-	} else {
-		throw "ERROR! method " + method
-				+ " not recognized. Choose between DBSCAN and KMEANS";
-	}
+	std::vector<arma::Mat<uint64_t>> results(max_thr);
 
-	ofs << "#" << info.dump() << "\n";
-	log << info.dump(2) << "\n";
-	ofs << "kmer\tsilhuette\tclusters\n";
-	ofs.flush();
-	int64_t from_batch = 0, to_batch = -1, current_batch = 0;
-	if (batch != "all") {
-		from_batch = std::stoll(batch.substr(0, batch.find("-")));
-		to_batch = std::stoll(batch.substr(batch.find("-") + 1));
-		log << "Analyzing batches from " << from_batch << " to " << to_batch
-				<< " included\n";
-	}
-	mlpack::Log::Warn.ignoreInput = true;
-	uint64_t tot_lines = 0;
-
-	log
-			<< "Batch\tTotLines\tPerc\tReadingTime\tProcessTime\tTimeSinceStart\tExpectedRemainingTime\tMemoryUsage\n";
-	log.flush();
-	auto b_start = std::chrono::high_resolution_clock::now(), start =
-			std::chrono::high_resolution_clock::now();
-	bool running = true;
-	std::vector<std::vector<std::vector<double>>> buffer;
-	std::string expected_end, reading_time, total_time, process_time;
-	arma::Mat<double> distance = arma::zeros<arma::Mat<double>>(num_samples,
-			num_samples);
-	int current_bucket, max_thr = omp_get_max_threads();
-	KmerMatrixLine line;
-	std::vector<std::string> out_buffer(max_thr);
-
-	while (running) {
-		current_bucket = 0;
-		buffer.clear();
-		buffer.resize(max_thr);
-		while (mat.getLine(line) && current_bucket < max_thr) {
-			buffer[current_bucket].push_back(line.count);
-			if (buffer[current_bucket].size() == number_of_dimensions) {
-				current_bucket++;
+#pragma omp parallel firstprivate( nsam, file_in, file_out, batch_size, nbins, sigthr )
+	{
+		uint64_t thr = omp_get_thread_num();
+		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
+		auto start = std::chrono::high_resolution_clock::now();
+		BinaryMatrix mat(file_in, true);
+		std::string file_out_thr = file_out + std::to_string(thr);
+		uint64_t tot_lines = 0, siglines = 0;
+		uint64_t a = thr * batch_size, b = ((thr + 1) * batch_size) - 1;
+		Kmer from_kmer(k_len, a), to_kmer(k_len, b);
+		mat.go_to(from_kmer);
+		std::ostringstream os;
+		os << "[ " << IOTools::now() << " ] Thread " << thr
+				<< " starting on cpu " << sched_getcpu()
+				<< ", memory occupied: "
+				<< IOTools::format_space_human(
+						IOTools::getCurrentProcessMemory()) << "\n";
+		std::cerr << os.str() << std::flush;
+		KmerMatrixLine line;
+		bool running = mat.getLine(line);
+		std::ofstream tlog(file_out_thr + ".log");
+		tlog << "Total\tProcessed\tRunningTime\n";
+		arma::Mat<uint64_t> interactions(nsam, nsam);
+		int i, j;
+		for (i = 0; i < nsam; i++) {
+			for (j = 0; j < nsam; j++) {
+				interactions(i, j) = 0;
 			}
 		}
-		if (current_batch >= from_batch) {
-			reading_time =
-					IOTools::format_time(
-							std::chrono::duration_cast<std::chrono::seconds>(
-									std::chrono::high_resolution_clock::now()
-											- b_start).count());
-			b_start = std::chrono::high_resolution_clock::now();
-			std::vector<arma::Mat<double>> distances;
-			for (int t = 0; t < omp_get_max_threads(); t++) {
-				distances.push_back(
-						arma::zeros<arma::Mat<double>>(num_samples,
-								num_samples));
-			}
-			log << current_batch << "\t";
-			log.flush();
-#pragma omp parallel
-			{
-				std::ostringstream final("");
-				ClusterizationResult res = fun(buffer[omp_get_thread_num()]);
-				log << omp_get_thread_num() << " " << res.number_of_clusters
-						<< " " << res.silhuettes_score << "\n";
-				log.flush();
-				if (res.silhuettes_score > silhuette
-						&& res.number_of_clusters >= min_cluster
-						&& res.number_of_clusters <= max_cluster) {
-					final << res.silhuettes_score << "\t"
-							<< res.number_of_clusters << "\t";
-					distances[omp_get_thread_num()] += res.distances;
+		tlog.flush();
+		while (running) {
+			if (line.getKmer() <= to_kmer) {
+				std::vector<uint32_t> dcount = Stats::discretize(line.count, nbins, sigthr);
+				if (dcount.size() > 0) {
+					for (i = 0; i < nsam; i++) {
+						if (dcount[i] != 0) {
+							for (j = i + 1; j < nsam; j++) {
+								if (dcount[j] == dcount[i])
+									interactions(i, j)++;
+							}
+						}
+					}
+					siglines++;
 				}
-				out_buffer[omp_get_thread_num()] = final.str();
+				tot_lines++;
+				if (tot_lines % 10000 == 0) {
+					tlog << tot_lines << "\t" << siglines << "\t"
+							<< IOTools::format_time(
+									std::chrono::duration_cast<
+											std::chrono::seconds>(
+											std::chrono::high_resolution_clock::now()
+													- start).count()) << "\n";
+					tlog.flush();
+				}
+				running = mat.getLine(line);
+			} else {
+				running = false;
 			}
-			tot_lines += max_thr * number_of_dimensions;
-			process_time =
-					IOTools::format_time(
-							std::chrono::duration_cast<std::chrono::seconds>(
-									std::chrono::high_resolution_clock::now()
-											- b_start).count());
-			expected_end = "NA";
-			if (mat.perc() > 0) {
-				double seconds_till_now =
+		}
+		std::cerr << "[ " << IOTools::now() << " ] Thread " << thr
+				<< " completed. \n";
+		tlog << tot_lines << "\t" << siglines << "\t"
+				<< IOTools::format_time(
 						std::chrono::duration_cast<std::chrono::seconds>(
 								std::chrono::high_resolution_clock::now()
-										- start).count();
-				uint64_t time_to_end = std::round(
-						((seconds_till_now * 100) / mat.perc())
-								- seconds_till_now);
-				expected_end = IOTools::format_time(time_to_end);
-			}
-			total_time =
-					IOTools::format_time(
-							std::chrono::duration_cast<std::chrono::seconds>(
-									std::chrono::high_resolution_clock::now()
-											- start).count());
-			log << tot_lines << "\t" << mat.perc() << "\t" << reading_time
-					<< "\t" << process_time << "\t" << total_time << "\t"
-					<< expected_end << "\t"
-					<< IOTools::format_space_human(
-							IOTools::getCurrentProcessMemory()) << "\n";
-			log.flush();
-			b_start = std::chrono::high_resolution_clock::now();
-			uint64_t success = 0;
-			for (uint64_t i = 0; i < buffer.size(); i++) {
-				ofs << out_buffer[i];
-				if (out_buffer[i].size() > 0) {
-					success++;
-				}
-			}
-			if (success > 0) {
-				for (int t = 0; t < omp_get_max_threads(); t++) {
-					distance += distances[t];
-				}
-				distance /= success;
-				std::ofstream matrix_file(output + ".distance_matrix.tsv");
-				for (auto n : mat.col_groups)
-					matrix_file << n << "\t";
-				matrix_file << "\n";
-				for (auto n : mat.col_names)
-					matrix_file << n << "\t";
-				matrix_file << "\n" << distance << "\n";
-				matrix_file.close();
-			}
-			ofs.flush();
-			buffer.clear();
-		}
-		current_batch += 1;
+										- start).count()) << "\n";
+		tlog.flush();
+		tlog.close();
+		results[thr] = interactions;
+	} // parallel end
 
+	arma::Mat<uint64_t> final_interaction = results[0];
+	for (int i = 0; i < nsam; i++) {
+		for (int j = i + 1; j < nsam; j++) {
+			for (int n = 1; n < max_thr; n++) {
+				final_interaction(i, j) += results[n](i, j);
+			}
+			final_interaction(j, i) = final_interaction(i, j);
+		}
 	}
-	;
-	ofs.close();
-	log << "done.\n";
+
+	std::ofstream fos(file_out);
+	for (int i = 0; i < nsam; i++) {
+		fos << names[i];
+		for (int j = 0; j < nsam; j++) {
+			fos << "\t" << final_interaction(i, j);
+		}
+		fos << "\n";
+	}
+	fos.close();
+	fos.open(file_out + ".json");
+	fos << info.dump() << "\n";
+	fos.close();
 	return true;
 }
 ;

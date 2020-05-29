@@ -687,7 +687,7 @@ class Processor {
 			}
 			files = files.filter((fname)=>{return samples.find((e)=>{return e.name == fname && e.count_file})? false : true;})
 			if ( files.length != 0 ){
-				let s_dir;
+				let s_dir, n_sam = samples.length - files.length;
 				for ( let i=0; i<files.length ; i++){
 					s_dir = files[i];
 					let fname=samples_dir+s_dir+"/"+s_dir+".json", sample;
@@ -717,8 +717,9 @@ class Processor {
 					samples = samples.filter((s)=>{
 						return s.name != sample.name;
 					});
+					
 					samples.push(sample);
-					this.mess.block({message : "Retrieving remote samples "+ samples.length+ "/"+ tot_files, progress : Math.round((samples.lenght *100)/ tot_files)})
+					this.mess.block({message : "Retrieving remote samples "+ (n_sam + i )+ "/"+ tot_files, progress : Math.round(((n_sam + i ) *100)/ tot_files)})
 				};
 			}
 			let preds = await ssh.execCommand("cat "+samples_dir+"/*/PRED/*.json")

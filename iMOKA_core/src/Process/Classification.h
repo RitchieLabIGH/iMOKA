@@ -27,8 +27,7 @@ public:
 	bool classificationFilterMulti(std::string file_in, std::string file_out, int min , std::string batch, uint64_t cv,double sd, double acc, double perc_training, std::vector<double> adjustments);
 	bool geneticAlgorithm(std::string list_of_kmers, std::string matrix_file, std::string output_json, std::string method, uint64_t cross_validation,double sd,  double train_perc, uint64_t max_dimension,uint64_t population ,
 			uint64_t generation_max, double CO_fraction , double MUT_rate, double GENE_MUT_rate ,  uint64_t ELITE_count,uint64_t total_runs, uint64_t numTrees,uint64_t minLeaf, uint64_t best_stall_max, uint64_t average_stall_max);
-	bool clusterizationFilter(std::string input, std::string output, std::string method,
-			std::string batch, double silhuette, double epsilon, std::string clusters);
+	bool clusterizationFilter(std::string file_in, std::string file_out, uint64_t nbins, double sigthr);
 };
 }
 } /* namespace kma */
