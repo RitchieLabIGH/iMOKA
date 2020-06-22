@@ -3,10 +3,7 @@ MAINTAINER claudio.lorenzi
 
 LABEL version=v1.0
 
-COPY ./src /iMOKA/src
-COPY ./Release /iMOKA/Release
-COPY ./python /iMOKA/python
-COPY ./scripts /iMOKA/scripts
+
 COPY ./external /iMOKA/external
 
 ENV PATH="/iMOKA/external:/iMOKA/external/bin:/iMOKA/python/:/iMOKA/scripts/:$PATH"
@@ -58,9 +55,15 @@ RUN apt-get clean all && \
 	tar -zxvf seqkit_linux_amd64.tar.gz && chmod +x ./seqkit && rm -f seqkit_linux_amd64.tar.gz && \
 ### SRATOOLKIT
 	cd /iMOKA/external/ && \
-	tar -zxvf sratoolkit.2.10.0-ubuntu64-light.tar.gz && rm -f sratoolkit.2.10.0-ubuntu64-light.tar.gz && \
+	tar -zxvf sratoolkit.2.10.0-ubuntu64-light.tar.gz && rm -f sratoolkit.2.10.0-ubuntu64-light.tar.gz
+
+COPY ./src /iMOKA/src
+COPY ./Release /iMOKA/Release
+COPY ./python /iMOKA/python
+COPY ./scripts /iMOKA/scripts
+
 ### Actual iMOKA
-	cd /iMOKA/Release && \
+RUN	cd /iMOKA/Release && \
 	make clean && \
 	make -j4 all && \
 	mv ./iMOKA_core /iMOKA/external/ && \

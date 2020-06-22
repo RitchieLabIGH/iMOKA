@@ -797,7 +797,7 @@ class Processor {
 					});
 				});
 			}
-			let promises = [];
+			let processes = [];
 			if (proc.data && proc.data.process && proc.data.process.njobs > 1 ){
 				let raw_file_lines= proc.data.source.raw_file.split("\n").filter((l)=>l.length > 0);
 				let l_per_file=Math.ceil(raw_file_lines.length / proc.data.process.njobs), procs=[];
@@ -813,18 +813,32 @@ class Processor {
 					spr.data.uid=spr.data.uid+"_"+idx;
 					spr.data.source.raw_file=raw_f.join("\n");
 					spr.data.context = context;
-					promises.push(runJob(spr));
+					processes.push(spr);
 				});
 				
 			} else {
-				promises.push(runJob(proc));
+				processes.push(proc);
 			}
-			Promise.all(promises).then(()=>{
-				resolve();
-			}).catch((err)=>{
-				console.log(err);
+			try {
+				processes.reduce(async (previousPromise, nextProc, idx , src) => {
+					await previousPromise;
+					if ( idx == src.length-1 ){
+						return new Promise((rs)=>{
+							runJob(nextProc).then(()=>{
+								rs();
+								resolve();
+							}).catch((err)=>{
+								reject(err);
+							});
+						});
+					} else {
+						return runJob(nextProc);
+					}
+					
+				}, Promise.resolve());
+			} catch (err) {
 				reject(err);
-			});
+			}
 		});
 	}
 

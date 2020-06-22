@@ -352,11 +352,11 @@ void KmerGraphSet::alignSequences(Mapper &mapper) {
 		ofs << ">seq_" << s << "\n" << sequences[s].sequence << "\n";
 	}
 	ofs.close();
-	std::string output_file =  mapper.align(input_file);
-
+	std::string output_file=  mapper.align(input_file);
 	std::ifstream ifs(output_file);
 	std::string line;
 	int64_t new_pos = -1, tot_pos=0;
+	std::cerr << "\n";
 	while (getline(ifs, line)) {
 		if (! mapper.isCommentLine(line)) {
 			MapperResultLine res_line(line, mapper.output_type);

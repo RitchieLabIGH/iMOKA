@@ -5,7 +5,10 @@ import {TracksService} from './tracks.service';
 import {PantherDBService} from './pantherdb.service';
 import {UemService} from './uem.service';
 import {QueueService} from './queue.service';
-import {SamplesService} from './samples.service'
+import {SamplesService} from './samples.service';
+import {ElectronSymService} from './electronsym.service';
+
+
 const SERVICES = [
   FileService,
   TracksService,
@@ -13,6 +16,7 @@ const SERVICES = [
   UemService,
   QueueService,
   SamplesService,
+  ElectronSymService,
 ];
 
 @NgModule({

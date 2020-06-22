@@ -37,12 +37,9 @@ export class AggregateComponent implements OnInit {
 					if (profile.annotations) {
 						this.annotations = profile.annotations;
 					}
-					let cpus=4;
-					if (typeof profile.max_cpu != "undefined") {
-						cpus = profile.max_cpu;
-					}
+					let cpus = profile.max_cpu && profile.connection_type == "local" ? profile.max_cpu : 100;
 					this.procControl = this.fb.group({
-						cores: [cpus-1, [Validators.min(1), Validators.max(cpus)]],
+						cores: [cpus < 4 ? cpus : 4, [Validators.min(1), Validators.max(cpus)]],
 						mem: [32, [Validators.min(1), Validators.max(100)]],
 					});
 					this.detailsControl = this.fb.group({

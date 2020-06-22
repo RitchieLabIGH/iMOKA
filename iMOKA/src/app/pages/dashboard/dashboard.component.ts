@@ -26,7 +26,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	refreshRequest: Subscription;
 	error: string;
 	current_matrix: Matrix;
-	current_video:string = "https://www.youtube.com/embed/VWRah09PxlE"
 	main_plot : boolean=true;
 	plots: { matrices?: { layout: any, data: any }, matrix?: { layout: any, data: any } } = {};
 	constructor(private uem: UemService, private zone: NgZone,

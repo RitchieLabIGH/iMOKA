@@ -113,6 +113,15 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 	std::ofstream infoJSON(json_info_file);
 	infoJSON << "{\"message\":\"running\"}\n";
 	infoJSON.close();
+	if (! IOTools::fileExists(in_file) ){
+		std::cerr << "Error! file " << in_file << " doesn't exists!\n";
+	}
+	if ( json_config != "nomap"){
+		if (! IOTools::fileExists(json_config) ){
+			std::cerr << "Error! file " << in_file << " doesn't exists!\n";
+		}
+	}
+
 	auto start = std::chrono::high_resolution_clock::now();
 	std::cout << "Starting the analysis with the following arguments: \n"
 			<< "\t- Input file= " << in_file << "\n"
@@ -171,7 +180,9 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 			user_conf = IOTools::parseJSON(json_config);
 		}
 		IOTools::getParameter(user_conf["annotation"], def_conf["annotation"], "file", annotation_file);
-
+		if (! IOTools::fileExists(annotation_file)){
+			std::cerr << "Error! file " << annotation_file << " doesn't exists.\n";
+		}
 		Mapper mapper(user_conf, def_conf);
 		if ( mapper.isInit() ){
 			info["mapping"]= user_conf;

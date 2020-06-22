@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { IpcRenderer } from 'electron';
 import {Session, Message} from '../interfaces/session';
+import {ElectronSymService} from'./electronsym.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +17,7 @@ export class UemService {
     messages : BehaviorSubject<Message> = new BehaviorSubject<Message>(undefined);
     
 
-    constructor( protected http: HttpClient ) {
+    constructor( protected http: HttpClient , private sym : ElectronSymService) {
         if ( ( <any>window ).require ) {
             try {
                 this.ipc = ( <any>window ).require( "electron" ).ipcRenderer;
@@ -25,7 +26,8 @@ export class UemService {
                 throw error;
             }
         } else {
-            console.warn( "Could not load electron ipc" );
+            console.warn( "Could not load electron ipc, using the ElectronSym" );
+			this.ipc = sym;
        }
         this.ipc.on("getSession", (event, response) => {
             if ( response.message == "SUCCESS"){

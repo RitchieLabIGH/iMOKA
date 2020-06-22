@@ -11,7 +11,7 @@
 	} else {
 		root.hexamap = factory(root); // @todo rename plugin
 	}
-})(typeof global !== "undefined" ? global : hexamap.window || hexamap.global, function(root) {
+})(typeof self !== 'undefined' ? self : this, function(root) {
 	'use strict';
 
 	var hexamap = {};

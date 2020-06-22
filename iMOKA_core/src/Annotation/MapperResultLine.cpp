@@ -76,7 +76,7 @@ void MapperResultLine::parseSAM(std::string line) {
 	IOTools::split(content, line, "[\t]+");
 	name = content[0];
 	std::vector<std::string> name_components;
-	IOTools::split(name_components, name);
+	IOTools::split(name_components, name, "_");
 	query_index = std::stoll(name_components[1]);
 	query_type= name_components[0];
 	flag = std::stoi(content[1]);

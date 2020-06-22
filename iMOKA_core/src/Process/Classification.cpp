@@ -67,14 +67,14 @@ bool Classification::run(int argc, char **argv) {
 
 		if (std::string(argv[1]) == "cluster") {
 			cxxopts::Options options("iMOKA cluster",
-					"Reduce a k-mer matrix in according to the clusterization power of each k-mer");
-			options.add_options()("i,input", "The input matrix JSON header",
-					cxxopts::value<std::string>())("o,output",
-					"Output matrix file", cxxopts::value<std::string>())(
-					"h,help", "Show this help")("s,sigthr",
-					"Proportion of non zero values to consider a k-mer [0-1] ",
-					cxxopts::value<double>()->default_value("0.10"))("b,bins",
-					"Number of bins used to discretize the k-mer counts",
+					"Produce a similarity matrix between the samples based on their k-mers");
+			options.add_options()
+					("i,input", "The input matrix JSON header", cxxopts::value<std::string>())
+					("o,output", "Output matrix file", cxxopts::value<std::string>())
+					("h,help", "Show this help")
+					("s,sigthr","Proportion of non zero values to consider a k-mer [0-1] ",
+					cxxopts::value<double>()->default_value("0.10"))
+					("b,bins", "Number of bins used to discretize the k-mer counts",
 					cxxopts::value<uint64_t>()->default_value("100"));
 			auto parsedArgs = options.parse(argc, argv);
 			if (parsedArgs.count("help") != 0
@@ -87,7 +87,7 @@ bool Classification::run(int argc, char **argv) {
 			return clusterizationFilter(parsedArgs["input"].as<std::string>(),
 					parsedArgs["output"].as<std::string>(),
 					parsedArgs["bins"].as<uint64_t>(),
-					parsedArgs["sigthr"].as<double>());
+					parsedArgs["sigthr"].as<double>() );
 		}
 
 		if (std::string(argv[1]) == "models") {
@@ -384,7 +384,7 @@ bool Classification::clusterizationFilter(std::string file_in,
 	json info = { { "nbins", nbins }, { "sigthr", sigthr },
 			{ "file_in", file_in }, { "file_out", file_out } };
 
-	std::vector<arma::Mat<uint64_t>> results(max_thr);
+	std::vector<arma::Mat<double>> results(max_thr);
 
 #pragma omp parallel firstprivate( nsam, file_in, file_out, batch_size, nbins, sigthr )
 	{
@@ -408,7 +408,7 @@ bool Classification::clusterizationFilter(std::string file_in,
 		bool running = mat.getLine(line);
 		std::ofstream tlog(file_out_thr + ".log");
 		tlog << "Total\tProcessed\tRunningTime\n";
-		arma::Mat<uint64_t> interactions(nsam, nsam);
+		arma::Mat<double> interactions(nsam, nsam);
 		int i, j;
 		for (i = 0; i < nsam; i++) {
 			for (j = 0; j < nsam; j++) {
@@ -418,20 +418,29 @@ bool Classification::clusterizationFilter(std::string file_in,
 		tlog.flush();
 		while (running) {
 			if (line.getKmer() <= to_kmer) {
-				std::vector<uint32_t> dcount = Stats::discretize(line.count, nbins, sigthr);
-				if (dcount.size() > 0) {
+				std::pair<std::vector<uint32_t>, double> dcount = Stats::discretize(line.count, nbins, sigthr);
+				if (dcount.first.size() > 0) {
+					uint32_t diff;
+					double weight = 1-dcount.second;
 					for (i = 0; i < nsam; i++) {
-						if (dcount[i] != 0) {
+						if (dcount.first[i] != 0) {
 							for (j = i + 1; j < nsam; j++) {
-								if (dcount[j] == dcount[i])
-									interactions(i, j)++;
+								if ( dcount.first[j] != 0 ){
+									diff = std::abs((int) (dcount.first[j] - dcount.first[i]));
+									if (diff==0) {
+										interactions(i, j)+= (2*weight);
+									} else if ( diff == 1 ){
+										interactions(i, j)+= weight ;
+									}
+								}
+
 							}
 						}
 					}
 					siglines++;
 				}
 				tot_lines++;
-				if (tot_lines % 10000 == 0) {
+				if (tot_lines % 100000 == 0) {
 					tlog << tot_lines << "\t" << siglines << "\t"
 							<< IOTools::format_time(
 									std::chrono::duration_cast<
@@ -440,7 +449,7 @@ bool Classification::clusterizationFilter(std::string file_in,
 													- start).count()) << "\n";
 					tlog.flush();
 				}
-				running = mat.getLine(line);
+				running =  mat.getLine(line);
 			} else {
 				running = false;
 			}
@@ -457,7 +466,7 @@ bool Classification::clusterizationFilter(std::string file_in,
 		results[thr] = interactions;
 	} // parallel end
 
-	arma::Mat<uint64_t> final_interaction = results[0];
+	arma::Mat<double> final_interaction = results[0];
 	for (int i = 0; i < nsam; i++) {
 		for (int j = i + 1; j < nsam; j++) {
 			for (int n = 1; n < max_thr; n++) {
