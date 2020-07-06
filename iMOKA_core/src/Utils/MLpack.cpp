@@ -310,8 +310,6 @@ std::vector<double> MLpack::pairwise_classification(
 	for (uint64_t g = 0; g < group_counts.size(); g++) {
 		for (uint64_t h = g + 1; h < group_counts.size(); h++) {
 			std::vector<double> accuracies;
-			std::vector<double> mean_accuracies;
-			double mean;
 			for (int cv = 0; cv < crossValidation; cv++) {
 				splitTrainingTest(values, groups, trainingData, testData,
 						trainingLabels, testLabels, perc_test, min_group, { g,
@@ -331,16 +329,13 @@ std::vector<double> MLpack::pairwise_classification(
 				accuracies.push_back(
 						classification_fun(trainingData, trainingLabels,
 								testData, testLabels));
-				mean=Stats::mean(accuracies);
-				mean_accuracies.push_back(mean);
-				if (mean_accuracies.size() > 10) {
-					if (Stats::stdev(mean_accuracies) < sd) {
+				if (accuracies.size() > 10) {
+					if (Stats::stdev(accuracies) < sd) {
 						cv = crossValidation;
 					}
-					mean_accuracies.erase(mean_accuracies.begin());
 				}
 			}
-			results.push_back(Stats::mean(mean_accuracies));
+			results.push_back(Stats::mean(accuracies));
 		}
 	}
 	return results;

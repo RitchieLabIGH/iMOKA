@@ -342,8 +342,8 @@ bool Classification::classificationFilterMulti(std::string file_in,
 	}
 	info["processed"] = total_kmers;
 	info["kept"] = total_kmers_kept;
-	final_ofs << header.str() << "\n";
 	final_ofs << "#" << info.dump() << "\n";
+	final_ofs << header.str() << "\n";
 	for (int i = 0; i < omp_get_max_threads(); i++) {
 		ifs.open(file_out + std::to_string(i));
 		final_ofs << ifs.rdbuf();
