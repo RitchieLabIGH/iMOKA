@@ -60,6 +60,8 @@ For example, you can use jellyfish, dump in column formatted text file ( flag -c
 
 
 ## <a name="design"></a> Experimental design
+**We suggest to use balanced datasets to avoid confounding factors, as gender, age or ethnicity. The quality of the final results depends a lot by the dimensionality of the dataset, the sequencing technology and depth and by the complexity of the contrast between the groups.**
+
 This is the real first step of the software that generates a json file containing all the informations to generate the k-mer count matrix. The length of k has to be the same for all the samples.
 
 iMOKA requires as input a tab separeted text file containing the position of the sorted k-mer count file, the name of the sample and his group. For example:

@@ -4,10 +4,12 @@
 iMOKA is a software that enables a comprehensive analysis of sequencing data from large cohorts to generate robust classification models or explore specific genetic elements associated with disease etiology. iMOKA uses a fast and accurate feature reduction step that combines a Naïve Bayes Classifier augmented by an adaptive Entropy filter and a graph-based filter to rapidly reduce the search space. By using a flexible file format and distributed indexing, iMOKA can easily integrate data from multiple experiments and also reduces disk space requirements.
 
 ## How to use the software
+ **The iMOKA_core and iMOKA_GUI are downlodable from the [Release page of GitHub](https://github.com/RitchieLabIGH/iMOKA/releases) in the assets section.**
+ 
 The core software is distributed as [Singularity](https://sylabs.io/singularity/) image and need as only dependency singularity version 3 or higher ( currently available only on Linux distributions). 
 The graphical user interface (GUI), that allows to visualize the results and to use the core software in local environment or in SLURM clusters, is a multiplatform application implemented using [Electron](https://www.electronjs.org/).
 
-The iMOKA_core and iMOKA_GUI are downlodable from the [Release page of GitHub](https://github.com/RitchieLabIGH/iMOKA/releases).
+
 
 ## How to contribute
 The folders iMOKA_core and iMOKA contains the sources of the CLI and the GUI parts of the software, with dedicated README files, doxygen documentations (for the C++ component ) but, in case of doubt, don't hesitate to contact the maintainers.
