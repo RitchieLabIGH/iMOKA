@@ -330,7 +330,7 @@ std::vector<double> MLpack::pairwise_classification(
 						classification_fun(trainingData, trainingLabels,
 								testData, testLabels));
 				if (accuracies.size() > 10) {
-					if (Stats::stdev(accuracies) < sd) {
+					if (Stats::stderr(accuracies) < sd) {
 						cv = crossValidation;
 					}
 				}

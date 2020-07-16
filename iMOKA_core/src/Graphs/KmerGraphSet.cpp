@@ -344,7 +344,6 @@ void KmerGraphSet::correctHolmBonferroni(double thr) {
 }
 
 void KmerGraphSet::alignSequences(Mapper &mapper) {
-
 	uint64_t s;
 	std::string input_file = "./sequences_" + IOTools::timestamp() + ".fa";
 	std::ofstream ofs(input_file);
@@ -352,13 +351,13 @@ void KmerGraphSet::alignSequences(Mapper &mapper) {
 		ofs << ">seq_" << s << "\n" << sequences[s].sequence << "\n";
 	}
 	ofs.close();
-	std::string output_file=  mapper.align(input_file);
+	std::string output_file = mapper.align(input_file);
 	std::ifstream ifs(output_file);
 	std::string line;
-	int64_t new_pos = -1, tot_pos=0;
+	int64_t new_pos = -1, tot_pos = 0;
 	std::cerr << "\n";
 	while (getline(ifs, line)) {
-		if (! mapper.isCommentLine(line)) {
+		if (!mapper.isCommentLine(line)) {
 			MapperResultLine res_line(line, mapper.output_type);
 			if (!(res_line.flag & SAMflags::isUnmappedQuery)) {
 				new_pos = -2;
@@ -366,6 +365,13 @@ void KmerGraphSet::alignSequences(Mapper &mapper) {
 					for (auto idx : sequences[res_line.query_index].alignments) {
 						if (mapper_results[idx].match < res_line.match) {
 							new_pos = idx;
+						}
+					}
+					if (new_pos == -2) {
+						for (auto idx : sequences[res_line.query_index].alignments) {
+							if (mapper_results[idx].match == res_line.match) {
+								new_pos = -1;
+							}
 						}
 					}
 				} else {
@@ -376,16 +382,18 @@ void KmerGraphSet::alignSequences(Mapper &mapper) {
 						std::pair<BNode*, bool> res = getBestKmerAndBorder(
 								sequences[res_line.query_index], sig,
 								res_line.strand);
-						if (res.second && sig.signature_type != "clipping") {
+						if (res.second && sig.signature_type != "clipping"
+								&& !perfect_match) {
 							sig.generates_event = true;
 						}
 						sig.best_kmer = res.first;
 					}
 					if (new_pos == -1) {
-						sequences[res_line.query_index].alignments.push_back(mapper_results.size());
+						sequences[res_line.query_index].alignments.push_back(
+								mapper_results.size());
 						res_line.id = mapper_results.size();
 						mapper_results.push_back(res_line);
-					} else if ( new_pos >= 0 ) {
+					} else if (new_pos >= 0) {
 						res_line.id = new_pos;
 						mapper_results[new_pos] = res_line;
 					}
@@ -527,7 +535,8 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 		Gene g;
 		g.init(gene_ids_keys[i], gene_names[gene_ids_keys[i]], coverage_limit,
 				gene_exons[gene_ids_keys[i]], genes_ids[gene_ids_keys[i]],
-				mapper_results, alignmentDerivedFeatures, sequences);
+				mapper_results, alignmentDerivedFeatures, sequences,
+				perfect_match);
 		if (g.best_kmer != 0) {
 			g.id = genes.size();
 			genes.push_back(g);
@@ -622,13 +631,39 @@ void KmerGraphSet::processUnAnnotated(std::vector<bool> sequences_done) {
 					if (new_ev.gene_name.size() == 0) {
 						new_ev.type = "intergenic";
 					} else {
+						if (perfect_match){
+							represented=true;
+						}
 						new_ev.type = "intragenic";
 					}
 				}
+				if (!represented){
+					new_ev.alignments = seq.alignments;
+					new_ev.id = events.size();
+					events.push_back(new_ev);
+				}
 
-				new_ev.alignments = seq.alignments;
-				new_ev.id = events.size();
-				events.push_back(new_ev);
+			}
+		} else { /// Add multimap event for k-mers with multiple alignments
+			GraphSequence &seq = sequences[s];
+			if (seq.alignments.size() > 1) {
+				bool to_add = true;
+				for (Event &ev : events) {
+					if (ev.best_kmer == seq.best_kmer
+							&& ev.type == "multimap") {
+						to_add = false;
+					}
+				}
+				if (to_add) {
+					Event new_ev;
+					new_ev.best_kmer = seq.best_kmer;
+					new_ev.type = "multimap";
+					std::set<std::string> gene_names;
+					for (auto &aln : seq.alignments) {
+						for (auto g : mapper_results[aln].genes)
+							new_ev.gene_name.insert(genes[g].gene_name);
+					}
+				}
 			}
 		}
 	}

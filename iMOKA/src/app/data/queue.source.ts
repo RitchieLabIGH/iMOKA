@@ -44,11 +44,11 @@ export class QueueSource implements DataSource<any> {
 					
 					if ( ["added", "completed", "started"].includes(request.order.name) ) {
 						this.queue = this.queue.sort((joba, jobb)=>{
-                        	return joba.times[request.order.name] < jobb.times[request.order.name]; 
+                        	return joba.times[request.order.name] < jobb.times[request.order.name] ? -1 : 1; 
                     	});
 					} else {
 						this.queue = this.queue.sort((joba, jobb)=>{
-                        	return joba[request.order.name] < jobb[request.order.name]; 
+                        	return joba[request.order.name] < jobb[request.order.name] ? -1 : 1; 
                     	});	
 					}
                     if (!request.order.asc){

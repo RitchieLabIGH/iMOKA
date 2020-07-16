@@ -358,7 +358,11 @@ class iMokaBE extends EventEmitter {
 		
 		for ( let i =0 ; i < ranks.length; i++){
 			ranks[i].sort((a,b)=>{
-				return this.data.kmers.kmers[a].values[i] > this.data.kmers.kmers[b].values[i] ? -1 : 1;
+				if (this.data.kmers.kmers[a].values[i] == this.data.kmers.kmers[b].values[i] ){
+					return this.data.kmers.kmers[a].pvalues[i] > this.data.kmers.kmers[b].pvalues[i] ? 1 : -1;
+				} else {
+					return this.data.kmers.kmers[a].values[i] > this.data.kmers.kmers[b].values[i] ? -1 : 1;	
+				}
 			});
 		};
 		

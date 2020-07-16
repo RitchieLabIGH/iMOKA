@@ -17,29 +17,18 @@ bool Aggregation::run(int argc, char** argv){
 		if (action == "aggregate") {
 			cxxopts::Options options("iMOKA",
 					"Aggregate overlapping k-mers");
-			options.add_options()("i,input",
-					"Input file containing the informations...",
-					cxxopts::value<std::string>())("o,output",
-					"Basename of the output files", cxxopts::value<std::string>()->default_value("./aggregated"))("h,help",
-					"Show this help")("w,shift",
-					"Maximum shift considered during the edges creation",
-					cxxopts::value<uint64_t>()->default_value("1"))(
-					"t,origin-threshold",
-					"Mininum value needed to create a graph",
-					cxxopts::value<double>()->default_value("80"))(
-					"T,global-threshold",
-					"Global minimum value for whom the nodes will be used to build the graphs",
-					cxxopts::value<double>()->default_value("70"))(
-					"d,de-coverage-threshold",
-					"Consider ad differentially expressed a gene if at least one trascipt is covered for more than this threshold in sequences.",
-					cxxopts::value<double>()->default_value("50"))(
-					"m,mapper-config", "Mapper configuration JSON file",
-					cxxopts::value<std::string>()->default_value("nomap"))
+			options.add_options()
+					("i,input", "Input file containing the informations...",cxxopts::value<std::string>())
+					("o,output", "Basename of the output files", cxxopts::value<std::string>()->default_value("./aggregated"))
+					("h,help","Show this help")
+					("w,shift","Maximum shift considered during the edges creation", cxxopts::value<uint64_t>()->default_value("1"))
+					("t,origin-threshold","Mininum value needed to create a graph",cxxopts::value<double>()->default_value("80"))
+					("T,global-threshold","Global minimum value for whom the nodes will be used to build the graphs",cxxopts::value<double>()->default_value("70"))
+					("d,de-coverage-threshold","Consider ad differentially expressed a gene if at least one trascipt is covered for more than this threshold in sequences.",cxxopts::value<double>()->default_value("50"))
+					("m,mapper-config", "Mapper configuration JSON file",cxxopts::value<std::string>()->default_value("nomap"))
 					("corr","Agglomerate k-mers with a correlation higher than this threshold and in the same gene or unmapped.", cxxopts::value<double>()->default_value("1"))
-					(
-					"c,count-matrix",
-					"The count matrix.",
-					cxxopts::value<std::string>()->default_value("nocount"));
+					("c,count-matrix", "The count matrix.", cxxopts::value<std::string>()->default_value("nocount"))
+					("p,perfect-match", "Don't consider sequences with mismatches or indels");
 			auto parsedArgs = options.parse(argc, argv);
 			if (IOTools::checkArguments(parsedArgs, {"input", "output"}, log)) {
 				log << "\n" << options.help() << "\n";
@@ -54,7 +43,8 @@ bool Aggregation::run(int argc, char** argv){
 					parsedArgs["global-threshold"].as<double>(),
 					parsedArgs["origin-threshold"].as<double>(),
 					parsedArgs["de-coverage-threshold"].as<double>(),
-					parsedArgs["corr"].as<double>());
+					parsedArgs["corr"].as<double>(),
+					parsedArgs["perfect-match"].count() != 0);
 		} else if (action == "config") {
 			cxxopts::Options options(
 					std::string(argv[0]) + " " + std::string(argv[1]),
@@ -108,7 +98,7 @@ void Aggregation::print_conf(std::string where) {
 bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 		std::string count_matrix, std::string json_config, uint64_t w,
 		double threshold = 70, double final_thr = 80,
-		double coverage_limit = 10, double corr=1) {
+		double coverage_limit = 10, double corr=1, bool perfect_match=false) {
 	std::string json_info_file = out_file+".info.json";
 	std::ofstream infoJSON(json_info_file);
 	infoJSON << "{\"message\":\"running\"}\n";
@@ -173,7 +163,6 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 	}
 	info["n_of_sequences"]=gg.sequences.size();
 	if ( json_config != "nomap" ){
-
 		std::string annotation_file;
 		json user_conf;
 		if (json_config.size() > 0 && json_config != "default") {
@@ -187,6 +176,7 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 		if ( mapper.isInit() ){
 			info["mapping"]= user_conf;
 			std::cerr << "Mapping the sequences... ";
+			gg.setPerfectMatch(perfect_match);
 			gg.alignSequences(mapper);
 			std::cerr << "Done.\nAnnotating...";
 			std::cerr.flush();

@@ -29,12 +29,14 @@ class Stats {
 public:
 	Stats();
 	virtual ~Stats();
+	static double stderr(std::vector<double> & v) {
+			return stdev(v, mean(v)) / std::sqrt(v.size());
+	}
 
 	static double stdev(std::vector<double> & v) {
 		return stdev(v, mean(v));
 	}
 	static double stdev(std::vector<double> & v, double mean) {
-
 		return std::sqrt(var(v, mean));
 	}
 	static double var(std::vector<double> & v){

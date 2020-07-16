@@ -68,11 +68,9 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
         cross_v=5
     samples, groups, dimensions, values = read_kmer_matrix(file_input)
     classnames, Y = np.unique(groups, return_inverse=True)
-    mask = reduce_na(values, Y, perc_test)
-    n_dim=sum(mask) 
     groupcount = np.bincount(Y)
     print("Starting the creation of {} models.".format(nmodels))
-    print("Original data have {} dimensions (reduced to {} due to NaN) with {} samples, divided in {} groups:".format(values.shape[1], n_dim, values.shape[0],len(classnames)))
+    print("Original data have {} dimensions with {} samples, divided in {} groups:".format(values.shape[1], values.shape[0],len(classnames)))
     for c in range(0, len(classnames)) :
         print("\t{} - {} \t {} samples".format(c, classnames[c] ,groupcount[c])) 
     
@@ -102,16 +100,15 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
     
     for i in range(0, nmodels):
         print("\n\nRound {}".format(i))
-        seed= round(np.random.rand()*100000)
-        clf=DecisionTreeClassifier(random_state=seed,  class_weight="balanced", min_samples_split=0.10);
-        clf.fit( values[:,mask], Y)
+        clf=RandomForestClassifier(n_estimators= max_features,  class_weight="balanced_subsample", max_features=None);
+        clf.fit( values, Y)
         fi=clf.feature_importances_.copy()
         n_of_trees=1
         while sum(fi!=0) < max_features:
             n_of_trees=n_of_trees+1
             seed= round(np.random.rand()*100000)
-            clf=DecisionTreeClassifier(random_state=seed, class_weight="balanced", min_samples_split=0.10);
-            clf.fit( values[:,mask], Y)
+            clf=RandomForestClassifier(n_estimators= max_features,  class_weight="balanced_subsample", max_features=None);
+            clf.fit( values, Y)
             fi=fi+clf.feature_importances_.copy()
             if n_of_trees > max_features :
                 fi=fi+0.01 
@@ -122,13 +119,13 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
             support[best]=True
             fi[best]=0
         ### Producing an example of tree built with the best features
-        tree=DecisionTreeClassifier(random_state=seed, class_weight="balanced", min_samples_split=0.05);
-        acc = np.mean(cross_validate(tree, values[:,mask][:,support], Y, scoring="balanced_accuracy", cv=BalancedShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus,  return_train_score=False)["test_score"] )
-        tree.fit(values[:,mask][:,support], Y)
+        tree= DecisionTreeClassifier(random_state=seed, class_weight="balanced", min_samples_split=0.05);
+        acc = np.mean(cross_validate(tree, values[:,support], Y, scoring="balanced_accuracy", cv=ShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus,  return_train_score=False)["test_score"] )
+        tree.fit(values[:,support], Y)
         tree_file= "{}_models/{}_tree_acc_{}.dot".format(file_output, i, acc)
         export_graphviz(tree,
                     out_file=tree_file,
-                    feature_names = np.array(dimensions)[mask][support],
+                    feature_names = np.array(dimensions)[support],
                     class_names = classnames,
                     rounded = True, proportion = False, 
                     precision = 2, filled = True )
@@ -137,27 +134,27 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
         gviz["accuracy"]=acc
         output_tree_png="{}_models/{}_tree_acc_{}.png".format(file_output, i, acc)
         subprocess.call(["dot", "-Tpng", tree_file , "-o{}".format(output_tree_png)])
-        for s in np.array(dimensions)[mask][support]:
+        for s in np.array(dimensions)[support]:
             feat_freq[s]= feat_freq[s]+1 if feat_freq.__contains__(s) else 1;
         models_acc=[];
         best_acc=0
         best_acc_idx=0
         ### producing the features importances with a RF 
-        clf = RandomForestClassifier(max_features="auto",class_weight= "balanced_subsample",min_samples_split=0.05, n_estimators=n_trees )
-        clf.fit(values[:,mask], Y)
+        clf = RandomForestClassifier(max_features="auto", class_weight= "balanced_subsample",min_samples_split=0.05, n_estimators=n_trees )
+        clf.fit(values, Y)
         global_fi=clf.feature_importances_.copy()
         ### 
         for m in models:
             print("Training {} ".format(m))
-            clf=GridSearchCV(models[m]["clf"], models[m]["parameters"], cv=BalancedShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus, scoring="balanced_accuracy");
-            clf.fit(values[:,mask][:,support], Y);
+            clf=GridSearchCV(models[m]["clf"], models[m]["parameters"], cv=ShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus, scoring="balanced_accuracy");
+            clf.fit(values[:,support], Y);
             print("Grid search found the following values:")
             print(clf.best_params_)
             accuracies = []
             uaccuracies = []
-            tmp_y_proba = cross_val_predict(clf.best_estimator_,values[:,mask][:,support], Y,cv=cross_v, n_jobs=cpus, method="predict_proba")
+            tmp_y_proba = cross_val_predict(clf.best_estimator_,values[:,support], Y,cv=cross_v, n_jobs=cpus, method="predict_proba")
             tmp_y_pred = np.argmax(tmp_y_proba, axis=1)
-            tmp_acc =  cross_validate(clf.best_estimator_, values[:,mask][:,support], Y, scoring="balanced_accuracy", cv=BalancedShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus,  return_train_score=True)
+            tmp_acc =  cross_validate(clf.best_estimator_, values[:,support], Y, scoring="balanced_accuracy", cv=ShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus,  return_train_score=True)
             acc = np.mean( tmp_acc["test_score"])
             acc_train = np.mean(tmp_acc["train_score"] )
             models_acc.append({
@@ -170,7 +167,7 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
                 "best_parameters" : clf.best_params_
                 });
             if len(classnames) == 2:
-                models_acc[len(models_acc)-1]["roc"]=np.mean( cross_validate(clf.best_estimator_, values[:,mask][:,support], Y, scoring="roc_auc", cv=BalancedShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus, return_train_score=False)["test_score"])
+                models_acc[len(models_acc)-1]["roc"]=np.mean( cross_validate(clf.best_estimator_, values[:,support], Y, scoring="roc_auc", cv=ShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus, return_train_score=False)["test_score"])
                 print("Model {} processed. Accuracy: {:.2f} ( {:.2f} roc auc ) ".format(m, models_acc[len(models_acc)-1]["acc"],models_acc[len(models_acc)-1]["roc"] ))
             else :
                 print("Model {} processed. Accuracy: {:.2f} ".format(m, models_acc[len(models_acc)-1]["acc"]))
@@ -190,17 +187,17 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
         metrics.append({ 
             "models" : models_acc, 
             "best_model" : best_acc_idx,
-            "features" : np.array(dimensions)[mask][support].tolist(),
+            "features" : np.array(dimensions)[support].tolist(),
             "probabilities" : y_proba.tolist(),
             "graph" : gviz,
-            "tsne" : clone(tsne).fit_transform(StandardScaler().fit_transform(values[:,mask][:,support])).tolist(),
-            "pca" : clone(pca).fit_transform(StandardScaler().fit_transform(values[:,mask][:,support])).tolist(),
+            "tsne" : clone(tsne).fit_transform(StandardScaler().fit_transform(values[:,support])).tolist(),
+            "pca" : clone(pca).fit_transform(StandardScaler().fit_transform(values[:,support])).tolist(),
             "seed" : seed
         })
         if best_clf_type != "RF": ## RF is already a Bagging method
             best_clf= BaggingClassifier(best_clf, n_estimators=5, n_jobs=cpus)
-        best_clf.fit(values[:,mask][:,support], Y)
-        saveModel( "{}_models/{}_{}.pickle".format(file_output, i, best_clf_type), best_clf, np.array(dimensions)[mask][support].tolist(), classnames )
+        best_clf.fit(values[:,support], Y)
+        saveModel( "{}_models/{}_{}.pickle".format(file_output, i, best_clf_type), best_clf, np.array(dimensions)[support].tolist(), classnames )
     importances= np.array(importances).T
     means = np.mean(importances, axis=1);
     if nmodels > 1 :
@@ -216,10 +213,9 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
     with open(file_output+"_fi.tsv", "w") as f:
         f.write("name\timportance\n")
         for i in range(0, len(dimensions)):
-            if mask[i]:
-                out_file["features_importances"][dimensions[i]]={ "values" :  importances[imp].tolist() , "mean" : means[imp].tolist(), "std" : stds[imp].tolist(), "rank" : len(ranks)-int(ranks[imp])} ;
-                f.write("{}\t{}\n".format(dimensions[i], means[imp] ))
-                imp=imp+1
+            out_file["features_importances"][dimensions[i]]={ "values" :  importances[imp].tolist() , "mean" : means[imp].tolist(), "std" : stds[imp].tolist(), "rank" : len(ranks)-int(ranks[imp])} ;
+            f.write("{}\t{}\n".format(dimensions[i], means[imp] ))
+            imp=imp+1
                 
     with open(file_output+"_predictions.tsv","w") as f:    
         f.write("sample\tgroup\tprediction\tprobabilites\n")

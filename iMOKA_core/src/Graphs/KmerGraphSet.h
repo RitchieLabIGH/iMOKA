@@ -39,6 +39,7 @@ public:
 	void rescale();
 	void processUnAnnotated(std::vector<bool>);
 	uint64_t size() { return nodes.size(); };
+	void setPerfectMatch(bool perfect_match ) {this->perfect_match=perfect_match;};
 	std::vector<std::string> graph_type;
 	void write_json(std::string);
 	void write_tsv(std::string);
@@ -68,6 +69,7 @@ public:
 	json infos={{"version", "0.0.1"}};
 	bool has_matrix=false;
 private:
+	bool perfect_match=false;
 	std::vector<double> max_values;
 	uint64_t w; // it's the offset
 	std::string matrix_file="None";

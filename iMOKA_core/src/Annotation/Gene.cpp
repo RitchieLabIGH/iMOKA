@@ -16,7 +16,7 @@ void Gene::init(std::string geneId, std::string geneName, double coverage_limit,
 		 std::set<uint64_t> mapper_results_idxs,
 		 std::vector<MapperResultLine> & all_mapper_results,
 		 std::vector<AlignmentDerivedFeature> & all_signatures,
-		 std::vector<GraphSequence> & all_sequences) {
+		 std::vector<GraphSequence> & all_sequences, bool perfect_match) {
 	gene_id = geneId;
 	gene_name = geneName;
 	std::map<std::string, std::vector<Segment>> exon_covered_positions;
@@ -47,6 +47,7 @@ void Gene::init(std::string geneId, std::string geneName, double coverage_limit,
 		chromosome = mrl.chromosome;
 		alignmentDerivedFeatures.insert(mrl.signatures_id.begin(),
 				mrl.signatures_id.end());
+		bool ov_exon=false;
 		for (auto & seg : mrl.t_blocks) {
 			for (auto & pair : transcripts_exons) {
 				for (auto & exon : pair.second) {
@@ -57,6 +58,7 @@ void Gene::init(std::string geneId, std::string geneName, double coverage_limit,
 						add_segments(std::vector<Segment> { ov_seg },
 								exon_covered_positions[pair.first]);
 						covering_aln[pair.first].insert(s);
+						ov_exon=true;
 					}
 				}
 			}
@@ -81,10 +83,21 @@ void Gene::init(std::string geneId, std::string geneName, double coverage_limit,
 		cmax = *std::max_element(
 				all_sequences[mrl.query_index].best_kmer->values.begin(),
 				all_sequences[mrl.query_index].best_kmer->values.end());
+
 		if (cmax > max_val) {
-			max_val = cmax;
-			best_kmer = all_sequences[mrl.query_index].best_kmer;
-			best_kmer_mapper_result = s;
+			if ( perfect_match ){
+				for (auto i : alignmentDerivedFeatures) {
+					const AlignmentDerivedFeature & sa = all_signatures[i];
+					if ( sa.best_kmer == all_sequences[mrl.query_index].best_kmer && sa.signature_type != "splice" ){
+						cmax=0;
+					}
+				}
+			}
+			if ( cmax > max_val && ov_exon ) {
+				max_val = cmax;
+				best_kmer = all_sequences[mrl.query_index].best_kmer;
+				best_kmer_mapper_result = s;
+			}
 		}
 	}
 	for (auto & s : seq_set) {
@@ -192,7 +205,7 @@ void Gene::init(std::string geneId, std::string geneName, double coverage_limit,
 	}
 	for (auto i : alignmentDerivedFeatures) {
 		const AlignmentDerivedFeature & sa = all_signatures[i];
-		if ( ads_stats.count(sa.signature_type) == 0 )ads_stats[sa.signature_type]=0;
+		if ( ads_stats.count(sa.signature_type) == 0 ) ads_stats[sa.signature_type]=0;
 		ads_stats[sa.signature_type]+=1;
 		for (auto j : alignmentDerivedFeatures) {
 			if (j > i) {
