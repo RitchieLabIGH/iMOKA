@@ -173,7 +173,7 @@ while read line; do
             f=$(realpath ./${fname})
             cd ..
             downloaded="T"
-        elif [[ "${f}" =~ ^[SE]RR[0-9]{7}$ ]]; then
+        elif [[ "${f}" =~ ^[SE]RR[0-9]+$ ]]; then
             echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] DOWNLOADING ${fname}"
             mkdir -p ./fastq
             cd ./fastq

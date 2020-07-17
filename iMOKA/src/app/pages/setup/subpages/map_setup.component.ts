@@ -23,7 +23,6 @@ export class MapSetupComponent implements OnInit {
 
   constructor(private uem : UemService,  private zone:NgZone , private snack:MatSnackBar) { }
   ngOnInit() {
-      if (this.uem.electron){
           this.uem.getSession().subscribe(response=>{
               this.zone.run(()=>{
                   this.session=response;
@@ -36,7 +35,6 @@ export class MapSetupComponent implements OnInit {
                   this.loading=false;
              });
          });
-      }
   }
   
   save(event?:any){

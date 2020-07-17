@@ -898,9 +898,14 @@ class Processor {
 						this.blocked = false;
 					});
 				} else {
-					this.mess.sendMessage({type : "action", action :"block", progress : -1 , message : "Copying singularity image.\n Don't close the software!"})
+					let tick = ()=>{
+						if (this.blocked){
+							this.mess.sendMessage({ type : "action", action :"block", progress : -1 , message : "Copying singularity image.\n Don't close the software!"});
+							setTimeout(tick, 1000);
+						}	
+					};
+					tick();
 					child_process.exec("cp -f "+this.options.original_image+" "+this.options.storage_folder +"/.singularity/iMOKA" , {} , (err)=>{
-						console.log(err);
 						this.mess.sendMessage({type : "action", action :"release", message : "Singularity image copied"})
 						this.blocked = false;
 					});

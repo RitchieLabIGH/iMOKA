@@ -79,7 +79,6 @@ export class UemService {
         this.request += 1;
         request.id = id; 
         request.action= "saveProfile";
-        this.ipc.send( "action", id, request );
         return new Observable<any>(observer=>{
            this.ipc.on("action-"+id, (event, response)=>{
               if ( response.code == 0){
@@ -92,7 +91,8 @@ export class UemService {
                   observer.complete();
                   this.ipc.removeAllListeners("action-"+id);
               }
-           }); 
+           });
+		   this.ipc.send( "action", id, request ); 
         });
     }
     

@@ -23,7 +23,6 @@ export class MasterSetupComponent implements OnInit {
 	isNewSetting:boolean = true;
 	constructor(private uem: UemService, private fb: FormBuilder,private zone: NgZone, private snack: MatSnackBar, private fs : FileService) { }
 	ngOnInit() {
-		if (this.uem.electron) {
 			this.uem.getSession().subscribe(response => {
 				this.zone.run(() => {
 					this.session = response;
@@ -38,13 +37,6 @@ export class MasterSetupComponent implements OnInit {
 					this.updateParam();
 				});
 			});
-		} else {
-			this.session = new Session();
-			this.session.profile = new Profile();
-			this.loading = false;
-			this.modify = true;
-			this.updateParam();
-		}
 	}
 	remove() {
 		console.log("TODO")
@@ -78,7 +70,6 @@ export class MasterSetupComponent implements OnInit {
 		if (this.modify) {
 			this.updateSetting();
 			tosend.profile = this.setting;
-			
 		}
 		this.uem.saveProfile(tosend).subscribe(
 			result => {
@@ -159,12 +150,15 @@ export class MasterSetupComponent implements OnInit {
 		if (typeof n == 'undefined') {
 			n = this.session.profile.process_config.current_profile;
 		}
+		console.log(n);
+		console.log(this.session)
 		this.isNewSetting=false;
 		this.current_profile = n;
 		this.setting = JSON.parse(JSON.stringify(this.session.profile.process_config.profiles[n]));
 		this.updateParam();
 		this.modify = false;
 	}
+	
 	isValid(){
 		if ( this.mainParam.value.connection_type == 'local'){
 			return this.mainParam.valid;	

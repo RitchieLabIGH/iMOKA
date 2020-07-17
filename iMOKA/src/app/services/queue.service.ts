@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IpcRenderer } from 'electron';
+import {ElectronSymService} from "./electronsym.service";
 
 
 
@@ -14,12 +15,19 @@ export class QueueService {
     electron : boolean = false;
     protected queue : Observable<any>;
 
-    constructor( protected http: HttpClient ) {
+    constructor( protected http: HttpClient, protected sym :ElectronSymService ) {
         if ( ( <any>window ).require ) {
             try {
                 this.ipc = ( <any>window ).require( "electron" ).ipcRenderer;
                 this.electron=true;
-                this.queue = new Observable<any>(observer=>{
+            } catch ( error ) {
+                throw error;
+            }
+        } else {
+			this.ipc = sym;
+            console.warn( "Could not load electron ipc" );
+       }
+		this.queue = new Observable<any>(observer=>{
                     this.ipc.on("queue", (event, response)=>{
                         if (response.code == 0 ){
                             observer.next(response.data);
@@ -29,12 +37,6 @@ export class QueueService {
                         
                      });
                  });
-            } catch ( error ) {
-                throw error;
-            }
-        } else {
-            console.warn( "Could not load electron ipc" );
-       }
     }
     
     

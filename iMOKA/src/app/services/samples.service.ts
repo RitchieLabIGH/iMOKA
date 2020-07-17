@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IpcRenderer } from 'electron';
 import {Matrix} from '../interfaces/samples';
+import {ElectronSymService} from "./electronsym.service";
 
 
 @Injectable({
@@ -10,7 +11,7 @@ import {Matrix} from '../interfaces/samples';
 export class SamplesService {
     protected request: number = 0;
     protected ipc : IpcRenderer;
-    constructor( protected http: HttpClient ) {
+    constructor( protected http: HttpClient , protected sym : ElectronSymService) {
         if ( ( <any>window ).require ) {
             try {
                 this.ipc = ( <any>window ).require( "electron" ).ipcRenderer;
@@ -18,6 +19,7 @@ export class SamplesService {
                 throw error;
             }
         } else {
+			this.ipc= sym;
             console.warn( "Could not load electron ipc" );
         }
     }

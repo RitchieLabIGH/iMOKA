@@ -12,7 +12,7 @@ import {ElectronSymService} from "./electronsym.service";
 export class FileService {
     private ipc: IpcRenderer;
     private requests=0;
-    constructor() {
+    constructor(protected sym: ElectronSymService ) {
         if ( ( <any>window ).require ) {
             try {
                 this.ipc = ( <any>window ).require( "electron" ).ipcRenderer;
@@ -21,6 +21,7 @@ export class FileService {
             }
         } else {
             console.warn( "Could not load electron ipc" );
+			this.ipc = sym;
         }
     }
     
