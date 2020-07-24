@@ -1,0 +1,13 @@
+<h1 mat-dialog-title>Samples</h1>
+<div mat-dialog-content class="main-dialog">
+  <div fxLayout="row wrap" fxLayout.lt-md="column" fxLayoutAlign="start start">
+      <div class="tile-container" fxFlex="50%" *ngFor="let plot of plots">
+        <mat-card>
+        <mat-card-content>
+          <plotly-plot [useResizeHandler]="true" [data]="plot.data" [layout]="plot.layout"></plotly-plot>
+        </mat-card-content>
+        </mat-card> 
+      </div>
+  </div>
+</div>
+

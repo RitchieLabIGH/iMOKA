@@ -43,7 +43,7 @@ import { HexamapComponent } from './samples-som/hexamap/hexamap.component';
 import {AboutComponent} from './about/about.component';
 import {SampleComponent} from './data-reduction/samples-list/sample/sample.component';
 import {VideoComponent} from './dashboard/video/video.component';
-
+import {GraphsComponent} from './data-reduction/samples-list/graphs/graphs.component';
 
 PlotlyModule.plotlyjs = PlotlyJS;
 
@@ -78,6 +78,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
 		NewSomComponent,
 		SampleComponent,
 		VideoComponent,
+		GraphsComponent,
 	],
 	imports: [
 		CommonModule,
@@ -105,6 +106,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
 		NodesInfoComponent,
 		NewSomComponent,
 		SampleComponent,
+		GraphsComponent,
 	]
 })
 export class PagesModule { }

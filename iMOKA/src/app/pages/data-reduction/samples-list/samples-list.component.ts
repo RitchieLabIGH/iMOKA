@@ -12,6 +12,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogNewComponent } from './dialog-new/dialog-new.component';
 import {SampleComponent} from './sample/sample.component';
+import {GraphsComponent} from './graphs/graphs.component';
 
 @Component( {
     selector: 'app-samples-list',
@@ -82,6 +83,17 @@ export class SamplesListComponent implements OnInit {
 	infoSample(sample :Sample){
 		this.dialog.open(SampleComponent, {data : sample});
 	}
+	graphSel(){
+		let rows=[]
+		Object.keys( this.checked ).forEach(( sname ) => {
+            if ( this.checked[sname] ) {
+                let row = this.dataSource.samples.find(( sam ) => { return sam.name == sname } );
+				if ( row ) rows.push(row);
+			}});
+		this.dialog.open(GraphsComponent, {data: rows});
+		
+	}
+	
     newBulkMod(){
         if ( this.bulk_mod){
             this.bulk_mod.push( { new_key: "", new_value: "", keep: true, samples: this.bulk_mod_samples });
@@ -128,6 +140,8 @@ export class SamplesListComponent implements OnInit {
         this.bulk_mod_samples=undefined;
         this.edit={};
     }
+
+	
     
     modSelMetadata() {
         this.bulk_mod = [];

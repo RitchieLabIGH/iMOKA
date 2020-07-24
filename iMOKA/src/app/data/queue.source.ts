@@ -57,8 +57,6 @@ export class QueueSource implements DataSource<any> {
                     request.recordsTotal = this.queue.length;
                     request.recordsFiltered = this.queue.length;
 					this.all_queue=this.queue;
-					console.log(request.order.name)
-					console.log(this.queue)
                     if ( request.search.value.lenght > 2 ){
                         this.queue = this.queue.filter((job)=>{
                             return JSON.stringify(job).includes(request.search.value)

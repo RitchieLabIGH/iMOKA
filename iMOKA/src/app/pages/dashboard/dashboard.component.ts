@@ -63,7 +63,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 						this.zone.run(() => { this.cd.markForCheck() });
 						return;
 					};
-					setTimeout(() => { this.refreshTable() }, 1000);
+					setTimeout(() => { this.updateRefresh() }, 1000);
 				}
 
 		}, err => {

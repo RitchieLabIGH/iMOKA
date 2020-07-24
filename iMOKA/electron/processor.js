@@ -678,7 +678,7 @@ class Processor {
 			let meta = await ssh.execCommand("cat "+samples_dir+"/*/*.metadata.json")
 			let tot_files= files.length;
 			if ( meta.stdout.length > 0 ){
-				meta.stdout.split("\n").forEach((el)=>{
+				meta.stdout.replace(/}{/g, "}\n{").split("\n").forEach((el)=>{
 					if (el.length > 0 ){
 						samples.push(JSON.parse(el));
 						if (samples.length % 10 == 0 ) this.mess.block({message : "Retrieving remote samples "+ samples.length+ "/"+ tot_files, progress : Math.round((samples.lenght *100)/ tot_files)})

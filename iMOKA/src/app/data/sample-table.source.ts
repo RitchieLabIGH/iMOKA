@@ -59,7 +59,6 @@ export class SampleTableSource implements DataSource<Sample> {
                     delete request.metadataKeyValFilter[k];
                 }
             });
-        console.log(subject);
         return subject.filter(( sam ) => {
             let keep = true;
             if ( request.search.value.length > 2 ) {
