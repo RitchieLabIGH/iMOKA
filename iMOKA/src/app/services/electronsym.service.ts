@@ -134,7 +134,7 @@ export class ElectronSymService implements IpcRenderer {
 					list({}, response);
 				})
 
-			} else if (args[1].data = "data_by_id") {
+			} else if (args[1].data == "data_by_id") {
 				let request = args[1], resp;
 				let el_id = request.request.id, el_type = request.request.type;
 				if (typeof el_id == "number") {
@@ -155,6 +155,10 @@ export class ElectronSymService implements IpcRenderer {
 				}
 				this._listeners[channel + "-" + args[0]].forEach((list) => {
 					list({}, resp);
+				})
+			} else if (args[1].data == "queue"){
+				this._listeners["queue"].forEach((list)=>{
+					list({}, { code : 0 , data : environment.debug.queue})
 				})
 			}
 		} else if (channel == "getSession") {

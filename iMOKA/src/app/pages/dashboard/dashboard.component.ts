@@ -120,6 +120,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
 	}
 	jobInfo(job: any) {
+		console.log(job)
 		let data = new InfoData("Job " + job.job.original_request.name + " informations");
 		let times = new InfoListElement("Times");
 		let time = new Date(job.times.added);

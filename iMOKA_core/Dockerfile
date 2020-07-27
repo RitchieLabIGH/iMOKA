@@ -1,8 +1,6 @@
 FROM ubuntu:bionic
-MAINTAINER claudio.lorenzi
 
 LABEL version=v1.0
-
 
 COPY ./external /iMOKA/external
 

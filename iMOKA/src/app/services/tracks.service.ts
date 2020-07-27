@@ -113,7 +113,7 @@ export class TracksService {
             this.ipc.once( "getData-" + id, ( event, arg ) => {
                 resolve( arg );
             });
-			this.ipc.send("getData", id, { data : "data_by_id" ,  request : request , file_type : file_type} )
+			this.ipc.send("getData", id, { data : "data_by_id" ,  request : request , file_type : file_type } )
         });
     }
 

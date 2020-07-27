@@ -6,6 +6,41 @@ export const environment = {
   production: false,
   defaultLanguage : "EN",
   default_profile : true,
+	debug : {
+		queue : 
+		[{  type : "completed",
+			result : "success",
+			code :0,
+			times : {
+				added : 1595844774,
+				started : 1595844784,
+				completed : 1595844974
+			},
+			job : {
+				
+				uid : "1235456", 
+				original_request : {
+					name : "preprocess"
+				},
+			},
+			stderr : "Exmaple of short stderr",
+			stdout : "Exmaple of short stdout"
+		},{ type : "running",
+			times : {
+				added : 1595844775,
+				started : 1595844780,
+			},
+			job : {
+				
+				uid : "1235457", 
+				original_request : {
+					name : "aggregation"
+				},
+			}, 
+			stderr : "Exmaple of short stderr",
+			stdout : "Exmaple of short stdout"
+		}]
+	},
 };
 
 /*
