@@ -13,9 +13,9 @@ export const environment : any = {
 			result : "success",
 			code :0,
 			times : {
-				added : 1595844774,
-				started : 1595844784,
-				completed : 1595844974
+				added : Date.now(),
+				started : Date.now()+10000,
+				completed : Date.now()+50000
 			},
 			job : {
 				
@@ -28,8 +28,8 @@ export const environment : any = {
 			stdout : "Exmaple of short stdout"
 		},{ type : "running",
 			times : {
-				added : 1595844775,
-				started : 1595844780,
+				added : Date.now(),
+				started : Date.now(),
 			},
 			job : {
 				
@@ -38,8 +38,8 @@ export const environment : any = {
 					name : "aggregation"
 				},
 			}, 
-			stderr : "Exmaple of short stderr",
-			stdout : "Exmaple of short stdout"
+			stderr : "Exmaple of long stderr\n".repeat(100),
+			stdout : "Exmaple of long stdout\n".repeat(100)
 		}]
 	},
 };

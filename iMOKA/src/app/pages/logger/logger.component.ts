@@ -26,10 +26,16 @@ export class LoggerComponent implements OnInit, OnDestroy {
 	refreshRequest: Subscription;
 	error: string;
 	current_matrix: Matrix;
+	current_time : number = Date.now();
 	constructor(private uem: UemService, private zone: NgZone,
 		private sb: MatSnackBar, private queueService: QueueService, private cd: ChangeDetectorRef
 		, private bottomSheet: MatBottomSheet, public dialog: MatDialog
 	) { }
+	
+	currentDuration(from_ms : number){
+		return this.current_time - from_ms;
+	}
+	
 	ngOnInit() {
 		this.sub_session = this.uem.getSession().subscribe(session => {
 				this.session = session;
@@ -99,6 +105,7 @@ export class LoggerComponent implements OnInit, OnDestroy {
 	}
 
 	refreshTable(event?: any) {
+		this.current_time= Date.now();
 		if (event) {
 			if (event.pageSize) {
 				this.dtOptions.pageSize = event.pageSize;

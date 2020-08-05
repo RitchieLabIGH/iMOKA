@@ -19,7 +19,7 @@ import { InfoComponent, JobInfo } from './info/info.component'
 /// Pipes
 import {TypeofPipe} from '../pipes/typeof.pipe';
 import {SafeHtmlPipe, SafeURLPipe} from '../pipes/safeHtml.pipe';
-
+import {DurationPipe} from '../pipes/duration.pipe';
 
 
 export const NB_CORE_PROVIDERS = [
@@ -37,13 +37,13 @@ export const NB_CORE_PROVIDERS = [
     LayoutModule,
     FlexLayoutModule,
   ],
-  declarations: [ NavComponent, InfoComponent, TypeofPipe, SafeHtmlPipe, SafeURLPipe, JobInfo],
+  declarations: [ NavComponent, InfoComponent, TypeofPipe, SafeHtmlPipe, SafeURLPipe,DurationPipe, JobInfo],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: environment.defaultLanguage }
     
   ],
   entryComponents : [ InfoComponent, JobInfo ],
-  exports: [ NavComponent ,TypeofPipe, SafeHtmlPipe, SafeURLPipe]
+  exports: [ NavComponent ,TypeofPipe, SafeHtmlPipe, SafeURLPipe, DurationPipe]
 })
 export class CoreModule {
   constructor(@Optional() @SkipSelf() parentModule: CoreModule) {

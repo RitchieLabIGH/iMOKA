@@ -1,16 +1,15 @@
-<h3>{{data.title}}</h3>
-<mat-accordion >
-    <p *ngIf="data.summary" >{{data.summary}}</p>
-  	<mat-expansion-panel *ngFor="let el of data.information_list">
+<h3>Job {{data.job.original_request.name}} #{{data.job.uid}}</h3>
+<mat-accordion>
+  <mat-expansion-panel>
     <mat-expansion-panel-header >
-      <mat-panel-title>
-        {{el.title}}
-      </mat-panel-title>
-      <mat-panel-description *ngIf="el.subtitle">
-        {{el.subtitle}}
-      </mat-panel-description>
+      <mat-panel-title>Standard output</mat-panel-title>
     </mat-expansion-panel-header>
-   	<div *ngIf="(el.content | typeof) === 'string'" [innerHTML]="el.content" style="max-height:200px;overflow:auto;" ></div>
-   	<div *ngIf="(el.content | typeof) === 'function'" ><p *ngIf="el.args.description">{{el.args.description}}</p><button mat-raised-button (click)="el.content(el.args)">{{el.args.title ? el.args.title : 'Select' }}</button></div>
+    <pre class="logger">{{data.stdout}}</pre>
+  </mat-expansion-panel>
+  <mat-expansion-panel >
+    <mat-expansion-panel-header >
+      <mat-panel-title>Standard error</mat-panel-title>
+    </mat-expansion-panel-header>
+    <pre class="logger">{{data.stderr}}</pre>
   </mat-expansion-panel>
 </mat-accordion>
