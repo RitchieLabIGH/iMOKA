@@ -8,6 +8,7 @@ import {DataReductionComponent} from './pages/data-reduction/data-reduction.comp
 import {OpenFilesComponent} from './pages/open-files/open-files.component';
 import {PredictionModelsComponent} from './pages/prediction-models/prediction-models.component';
 import {AboutComponent} from './pages/about/about.component';
+import {LoggerComponent} from './pages/logger/logger.component';
 
 const routes: Routes = [
   {path : 'dashboard', component : DashboardComponent},
@@ -18,7 +19,8 @@ const routes: Routes = [
   {path : 'dred' , component :DataReductionComponent },
   {path : 'files' , component :OpenFilesComponent },
   {path : 'models' , component : PredictionModelsComponent},
- {path : 'about', component : AboutComponent}
+  {path : 'about', component : AboutComponent},
+  {path : 'logger' , component: LoggerComponent},
                         ];
 
 @NgModule({

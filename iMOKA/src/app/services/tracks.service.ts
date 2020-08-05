@@ -65,8 +65,6 @@ export class TracksService {
     getData(data_type:any) : Observable<any>{
         var id = this.request;
         this.request += 1;
-		
-        
         return new Observable<any>(observer => {
             this.ipc.once( "getData-" + id, ( event, arg ) => {
                 if (arg.code != 0 ){
@@ -127,6 +125,17 @@ export class TracksService {
 			this.ipc.send("getData",id,  {data : "genes", id : id, request : request } )
         });
     }
+
+	async getIdeogram(request){
+		var id= this.request;
+		this.request+=1;
+		return new Promise<any>(( resolve) => {
+            this.ipc.once( "getData-" + id, ( event, arg ) => {
+                resolve( arg );
+            });
+			this.ipc.send("getData",id,  {data : "ideogram", id : id, request : request } )
+        });
+	}
 
 }
 

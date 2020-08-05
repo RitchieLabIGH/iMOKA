@@ -7,7 +7,6 @@ import { MatTable } from '@angular/material';
 
 import { MatTabGroup } from '@angular/material/tabs';
 import { UemService } from '../../services/uem.service';
-import { FileService } from '../../services/file.service';
 import { Session } from '../../interfaces/session';
 import { KmerDataTableOptions } from '../../interfaces/kmer';
 
@@ -24,6 +23,8 @@ import { Subscription } from 'rxjs';
 
 import { RandomForestComponent } from './dialog/random-forest/random-forest.component';
 import { NewSomComponent } from './dialog/som/new-som.component';
+	
+import Ideogram from '../../plugins/ideogram/dist/js/ideogram.min.js';
 
 import igv from '../../plugins/igv/igv.js';
 import * as $ from 'jquery';
@@ -44,7 +45,7 @@ export class KMerListComponent implements OnInit, OnDestroy {
 	constructor(private trackService: TracksService, public dialog: MatDialog,
 		private _snackBar: MatSnackBar, private zone: NgZone,
 		private cd: ChangeDetectorRef, private bottomSheet: MatBottomSheet
-		, private uem: UemService, private fileService: FileService
+		, private uem: UemService
 	) {
 	};
 
@@ -62,9 +63,33 @@ export class KMerListComponent implements OnInit, OnDestroy {
 	browserSequenceTrack: any;
 	browserKmerTrack: any;
 	subscriptions: Subscription[] = [];
-
-
-
+	
+	ideo_visible : boolean=false;
+	ideo_chromosomes : string[] =["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"] 
+	ideogram_type : string[] = [];
+	ideo_table_norm : string="raw";
+	ideogram_possible_types : {key : string, name : string}[] = [];
+	ideogram_stats : { header : string[] , data : number[][] , row_names : string[], tot_rows : number[], tot_global:number, tot_columns : number[] };
+	ideogram : Ideogram;
+	ideo_config : any={
+						organism : 'human', 
+						container : '#ideo-container' , 
+						annotations : {keys : ["name","start","length", "repetitive", "highest_expression"], annots: [] },
+						dataDir: 'https://cdn.jsdelivr.net/npm/ideogram@1.21/dist/data/bands/native/',
+						annotationsLayout: 'heatmap',
+					    orientation: 'horizontal',
+						demarcateCollinearChromosomes: true,
+					    geometry: 'collinear',
+      					chrHeight: 100,
+						chrWidth: 12,
+      					chrMargin: 20,
+						annotationHeight: 30,
+						annotLabelHeight: 10,
+						legend : [],
+						heatmaps : [],
+						rotatable : false,
+						chromosomes : [],
+		};
 
 	addExternalTrackFile(track: ExternalTrack) {
 		this.zone.run(() => {
@@ -102,6 +127,11 @@ export class KMerListComponent implements OnInit, OnDestroy {
 					});
 				}
 
+			} else if ( ev.index == 2) {
+				if ( ! this.ideogram){
+					this.ideogram=true;
+					this.refreshIdeogram();
+				}
 			}
 		});
 		this.subscriptions.push(this.uem.getSession().subscribe((session: Session) => {
@@ -149,7 +179,107 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		}
 		this.dataSource.loadKmer(this.dtOptions).then(() => this.cd.markForCheck());
 	}
-
+	
+	refreshIdeogram(){
+		if ( this.ideogram_possible_types.length == 0){
+			this.ideogram_possible_types=[{key : "unique", name:"Unique k-mers"},
+				 { key : "repetitive", name : "Repetitive k-mers"}];
+			this.ideo_config.legend = [
+				{name : 'Repetitive k-mer', rows : [ {color : '#F00', name : 'Unique'}, {color : '#00F', name : 'Repetitive'} ]},
+				{name : 'Highest expression', rows : []}
+				]
+			
+			this.ideo_config.heatmaps= [
+				{key : 'repetitive', thresholds : [['0', '#F00'], ['1', '#00F']] },
+				{key : 'highest_expression', thresholds : [] }];
+				
+			this.ideo_config.annotationTracks = [
+				{id: 'repetitive', displayName: 'Repetitive level'},
+    			{id: 'highest_expression', displayName: 'Expression track'},]
+			let colors=['#F0F', '#0F0','#F00', '#00F', '#0FF' ];
+			
+			this.info.kmers.groups_names.forEach((gn, idx)=>{
+				this.ideo_config.legend[1].rows.push({color : colors[idx], name : "Class "+gn })
+				this.ideogram_possible_types.push({ name : "Class "+gn , key : idx+"" })
+				this.ideo_config.heatmaps[1].thresholds.push([idx+'', colors[idx]])
+			});
+		}
+		
+		this.trackService.getIdeogram({
+				filter : this.ideogram_type,
+				table_filtered : this.ideo_visible,
+				chromosomes :  this.ideo_config.chromosomes }).then((ideo)=>{
+			let config = JSON.parse(JSON.stringify(this.ideo_config))
+			if ( config.chromosomes.length == 0 ) {
+				config.chromosomes=JSON.parse(JSON.stringify(this.ideo_chromosomes));	
+			} 
+			config.annotations= ideo.data;
+			if ( ideo.data.annots.length > 0 ){
+				config.onDrawAnnots=()=>{
+					let correct_size= ()=>{
+						let last_el=$("#_ideogramMiddleWrap canvas:last");
+						if ( last_el.length == 0 ){
+							setTimeout(correct_size, 100);	
+						} else {
+							$("svg#_ideogram").attr("width", (parseFloat(last_el.css("left").replace("px", "")) + parseFloat(last_el.attr("width")) )+"px" );		
+						}
+					}
+					setTimeout(correct_size, 100);
+				}	
+			}
+			this.ideogram = new Ideogram(config);
+			this.ideoStats(config);
+		}).catch((err)=>{
+			console.log(err);
+		})
+	}
+	
+	ideoStats(config:any){
+		this.ideogram_stats= {header: ["Unique", "Repetitive"], row_names : [], data : [], tot_rows : [],tot_columns:[], tot_global : 0};
+		let base_row=[0,0]
+		this.info.kmers.groups_names.forEach((gn, idx)=>{
+			base_row.push(0)
+			this.ideogram_stats.header.push("Class "+gn)	
+		});
+		config.chromosomes.forEach((chr)=>{
+			let ann = config.annotations.annots.find((el)=>{return el.chr == chr})
+			if ( ann ){
+				this.ideogram_stats.row_names.push("chr"+chr);
+				let counts=[...base_row];
+				ann.annots.forEach((el)=>{
+					counts[el[3]]+=1;
+					counts[2+el[4]]+=1;
+				})
+				this.ideogram_stats.data.push(counts);
+				this.ideogram_stats.tot_rows.push(ann.annots.length);
+				this.ideogram_stats.tot_global+=ann.annots.length;
+			}	
+		})
+		if ( this.ideogram_stats.data.length > 0){
+			this.ideogram_stats.data[0].forEach((el, col)=>{
+				let col_tot=0;
+				this.ideogram_stats.data.forEach((arr)=>{
+					col_tot+=arr[col];
+				})	
+				this.ideogram_stats.tot_columns.push(col_tot);	
+			})
+		}
+	}
+	
+	ideoCount(count : number, row : number, column : number){
+		switch(this.ideo_table_norm){
+			case "raw":
+				return count;
+			case "col":
+				return (count /this.ideogram_stats.tot_columns[column])*100;
+			case "chr":
+				return (count /this.ideogram_stats.tot_rows[row])*100;
+			case "global":
+				return (count / this.ideogram_stats.tot_global )*100;
+		}
+		return count;
+	}
+	
 	initDtOptions(): KmerDataTableOptions {
 		return {
 			displayedColumns: ['best_rank', 'kmer', 'position', 'genes', 'events'],

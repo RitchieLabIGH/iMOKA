@@ -3,8 +3,26 @@ import { QueueService } from '../../../../services/queue.service';
 import { UemService } from '../../../../services/uem.service';
 import { Session } from '../../../../interfaces/session';
 import { MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ValidatorFn , AbstractControl} from '@angular/forms';
 import { MatStepper } from '@angular/material/stepper';
+
+
+export function rawInputValidator() : ValidatorFn{
+	return (control: AbstractControl): {[key: string]: any} | null => {
+		let  errors=[], fields;
+		control.value.split('\n').forEach((line, idx)=>{
+			if ( line.length > 0 ){
+				fields= line.split(/\s+/);
+				if ( fields.length != 3 ){
+					errors.push("Line "+idx+" does contains "+fields.length+" columns and not 3.");
+				}
+			}
+			
+		})
+    return errors.length == 0 ?  null : {errors : errors };
+  };
+}
+
 
 @Component({
 	selector: 'app-dialog-new',
@@ -21,7 +39,7 @@ export class DialogNewComponent implements OnInit {
 
 	constructor(private queue: QueueService, private uem: UemService, private zone: NgZone, public dialogRef: MatDialogRef<DialogNewComponent>, private fb: FormBuilder) {
 		this.tsvControl = this.fb.group({
-			raw_file: ['ERR2407636 Chemosensitive:F ERR2407636', { validators: [Validators.pattern(/^([A-Za-z0-9_-]+\s+[^\s;:]+:[^\s;:]+(;[^\s;:]+:[^\s;:]+)*\s+[^\s]+[\n]?)+$/), Validators.required], updateOn: "blur"}],
+			raw_file: ['ERR2407636 Chemosensitive:F ERR2407636', { validators: [rawInputValidator(), Validators.required], updateOn: "blur"}],
 		});
 		this.detailsControl = this.fb.group({
 			k_len: [31, [Validators.min(4), Validators.max(150)]],

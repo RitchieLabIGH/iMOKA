@@ -33,7 +33,7 @@ rc_read(){
 }
 
 print_info(){
-    echo -e "Kmer Analysis Preprocessing"
+    echo -e "\n\n   Kmer Analysis Preprocessing\n"
     echo -e "\tInput: \t\t\t${input_file}"
     echo -e "\tOutput: \t\t${outputDir}"
     echo -e "\tLibrary type: \t\t${library_type}"    
@@ -43,7 +43,7 @@ print_info(){
     echo -e "\tUse fastqc: \t\t${use_fastqc}"
     echo -e "\tThreads: \t\t${threads}"
     echo -e "\tKMC Max memory: \t\t${maxRam}"
-    echo -e "\tKMC counter max value: \t${kmcCounterVal}"
+    echo -e "\tKMC counter max value: \t${kmcCounterVal}\n\n"
 }
 
 run_till_success(){
@@ -130,9 +130,7 @@ done
 
 ### Initial message 
 
-echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] starting"
 print_info
-
 
 ### Main
 
@@ -148,9 +146,11 @@ grep -v "^#" ${input_file} > ${input_file}.tmp
 input_file_tmp=$(realpath ${input_file}.tmp)
 cd ${outputDir}
 
-
+line_n=0
+total_line=$(wc -l ${input_file}.tmp | awk '{print $1}')
 
 while read line; do
+    line_n=$(( line_n + 1 ))
     partial_time=$(date +%s)
     s_name=$(echo -e "${line}" | awk -F "\t" '{print $1}' )
     s_class=$(echo -e "${line}" | awk -F "\t" '{print $2}' )
@@ -163,6 +163,8 @@ while read line; do
     mkdir -p ./tmp_dir/
     mkdir -p ./logs
     logdir=$(realpath ./logs)
+    echo -e "\n######################################################################"
+    echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] Processing ${s_name}  ( ${line_n} / ${total_line} )"
     for f in $s_links; do
         fname=$(echo $f | awk -F "/" '{print $NF}')
         if [[ "${f}" =~ ^(http|ftp).*$ ]]; then
@@ -257,7 +259,6 @@ while read line; do
     echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] running KMC dump"    
 	kmc_tools transform ./tmp_dir/tmp.kmc dump -s ./tmp_dir/tmp.txt 2>> ${logdir}/kmc_tools.err >> ${logdir}/kmc_tools.out
     echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] formatting the file"    
-#	sort -k1 --parallel=${threads} ./tmp_dir/tmp.txt | awk '{print $1 "\t" $2}' > ./${s_name}.tsv
 	awk '{print $1 "\t" $2}' ./tmp_dir/tmp.txt > ./${s_name}.tsv
 	count_file=$(realpath ./${s_name}.tsv)
     echo -e "${count_file}\t${s_name}\t${s_class}" > ./tmp_dir/kma.input
@@ -271,7 +272,7 @@ while read line; do
     rm -fr ./tmp_dir/
     cd ..
     runtime=$(( $(date +%s) - partial_time ))
-    echo "Done in $runtime"
+    echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] Done in $runtime"
 done < ${input_file}.tmp
 
 rm ${input_file_tmp}

@@ -32,7 +32,6 @@
     "datatables.net": "^1.10.20",
     "datatables.net-dt": "^1.10.20",
     "hammerjs": "^2.0.8",
-    "ideogram": "^1.21.0",
     "jquery": "^3.4.1",
     "node": "^13.1.0",
     "plotly.js": "^1.50.1",

@@ -164,10 +164,74 @@
     </div>
   </div>
   <div id="igv-browser" style='min-height: 500px;'></div>
+  </mat-card-content> 
+  </mat-card>
+</div>
+</mat-tab> 
+<mat-tab label="Chromosome view">
+<div class="tab-container">
+  <mat-card > <mat-card-content fxLayout="row">
+  <div fxFlex='80%' fxLayout="column" >
+    <div fxFlex style="margin-top:20px;"><div id="ideo-container" ></div></div>
+    <div fxFlex *ngIf="ideogram_stats">
+      <table class="mat-table mat-elevation-z8" style="text-align : center">
+        <thead>
+          <tr class="mat-header-row">
+            <th class="mat-header-cell" style="text-align : center" >Chromosome</th>
+            <th class="mat-header-cell" style="text-align : center" *ngFor="let col of ideogram_stats.header ; let i = index">{{col}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="mat-row"
+            *ngFor="let row of ideogram_stats.data ; let i = index">
+            <th class="mat-header-cell table-right-margin" style="text-align : center">{{ideogram_stats.row_names[i]}}</th>
+            <td class="mat-cell" [class.table-right-margin]="j==1" *ngFor="let cell of row ; let j = index">{{ ideoCount(cell, i, j) | number : '1.0-2'}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div fxFlex='20%' fxLayout="column" style="margin: 15px;" >
+      <h4 fxFlex="30px" >Options</h4>
+      <div fxFlex="50px" >
+        <mat-select [(ngModel)]="ideogram_type" placeholder="Heatmap informations" (openedChange)="! $event && refreshIdeogram()" multiple> 
+          <mat-option *ngFor="let el of ideogram_possible_types" [value]="el.key">{{el.name}}</mat-option>
+          </mat-select>
+      </div>
+      <div fxFlex="50px">
+        <mat-checkbox [(ngModel)]="ideo_visible">Show only the ones visible in the table</mat-checkbox>
+      </div>
+      <div fxFlex="50px">
+        <mat-label>Chromosomes</mat-label>
+        <mat-select [(ngModel)]="ideo_config.chromosomes" placeholder="chr..." (openedChange)="! $event && refreshIdeogram()" multiple> 
+          <mat-option *ngFor="let el of ideo_chromosomes" [value]="el">chr {{el}}</mat-option>
+        </mat-select>
+      </div>
+      <div fxFlex="80px">
+        <mat-label>Chromosome size</mat-label>
+        <mat-form-field >
+          <input matInput type="number" min="100" max="500" [(ngModel)]="ideo_config.chrHeight"  (change)="refreshIdeogram()">
+        </mat-form-field>
+      </div>
+      <div fxFlex="50px">
+        <mat-label>Table counts</mat-label>
+        <mat-select [(ngModel)]="ideo_table_norm">
+          <mat-option value="raw">Raw counts</mat-option>
+          <mat-option value="chr">Percentage by chromosome</mat-option>
+          <mat-option value="col">Percentage by column</mat-option>
+          <mat-option value="global">Global percentage</mat-option>
+        </mat-select>
+      </div>
+  </div>
+  
+  
   </mat-card-content> </mat-card>
 </div>
-</mat-tab> <mat-tab label="File informations">
+</mat-tab> 
+<mat-tab label="File informations">
 <div class="tab-container">
   <mat-card *ngIf="info.kmers"> <mat-card-content> <app-file-kmer [info]="info.kmers"></app-file-kmer> </mat-card-content> </mat-card>
 </div>
-</mat-tab> </mat-tab-group>
+</mat-tab> 
+
+</mat-tab-group>

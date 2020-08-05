@@ -45,6 +45,8 @@ import {SampleComponent} from './data-reduction/samples-list/sample/sample.compo
 import {VideoComponent} from './dashboard/video/video.component';
 import {GraphsComponent} from './data-reduction/samples-list/graphs/graphs.component';
 
+import {LoggerComponent} from './logger/logger.component';
+
 PlotlyModule.plotlyjs = PlotlyJS;
 
 
@@ -79,6 +81,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
 		SampleComponent,
 		VideoComponent,
 		GraphsComponent,
+		LoggerComponent,
 	],
 	imports: [
 		CommonModule,

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { IpcRenderer } from 'electron';
 import { Session, Profile, Setting } from '../interfaces/session';
 import { environment } from '../../environments/environment';
-
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
 	providedIn: 'root'
@@ -11,18 +11,27 @@ import { environment } from '../../environments/environment';
 
 
 export class ElectronSymService implements IpcRenderer {
-
+	_once: {} = {};
 	_listeners: any = {};
 	_session: Session = new Session();
 	data: any = {};
-	constructor() {
-		this._session.profile = new Profile();
-		if (environment.default_profile) {
-			this._session.profile.process_config.current_profile = 0;
-			this._session.profile.process_config.profiles = [new Setting()];
+	constructor(private http: HttpClient) {
+		if (!(<any>window).require) {
+			this._session.profile = new Profile();
+			if (environment.default_profile) {
+				this._session.profile.process_config.current_profile = 0;
+				this._session.profile.process_config.profiles = [new Setting()];
+			}
+			if (environment.debug.files) {
+				environment.debug.files.forEach((f) => {
+					this.http.get(f).subscribe((data) => {
+						this.openFile(data, f)
+					})
+				})
+			}
+			this._session.profile.id = "ElectronSymProfile";
+			this._session.profile.name = "ElectronSymProfile";
 		}
-		this._session.profile.id = "ElectronSymProfile";
-		this._session.profile.name = "ElectronSymProfile";
 	}
 
 	eventNames(): (string | symbol)[] {
@@ -61,9 +70,25 @@ export class ElectronSymService implements IpcRenderer {
 	sendSync(channel: string, ...args: any[]) {
 		throw new Error("Method not implemented.");
 	}
+
+	openFile(content: any, file_name: string) {
+		if (content.kmers) {
+			content.kmers.forEach((km, idx) => { km.best_rank = idx; })
+			this.data.kmers = content;
+			this.initEvents();
+			this._session.files["kmers"] = { file: file_name, info: content.info, original_request: file_name };
+			this.release("File k-mer read.")
+			this.sendSession();
+		} else {
+			this.release("File not recognized!")
+		}
+	}
+
+
 	send(channel: string, ...args: any[]): void {
 		console.log("Sending " + channel + " with args:");
 		console.log(args)
+		let full_channel = "";
 		if (args.length > 1) {
 			if ((args[1].action == "getSession" || args[1].action == "updateSession") && this._listeners["getSession"]) {
 				this.sendSession()
@@ -96,19 +121,8 @@ export class ElectronSymService implements IpcRenderer {
 					reader.readAsText(file, 'UTF-8');
 					reader.onload = (readerEvent: any) => {
 						var content = JSON.parse(readerEvent.target.result);
-						if (content.kmers) {
-							content.kmers.forEach((km, idx) => { km.best_rank = idx; })
-							this.data.kmers = content;
-							this.initEvents();
-							console.log(this.data.kmers.info)
-							this._session.files["kmers"] = { file: file.name, info: content.info, original_request: file.name };
-							this.release("File k-mer read.")
-							this.sendSession();
-						} else {
-							this.release("File not recognized!")
-						}
+						this.openFile(content, file.name);
 					}
-
 				}
 				input.click();
 
@@ -120,7 +134,8 @@ export class ElectronSymService implements IpcRenderer {
 				})
 			} else if (args[1].data == "kmers") {
 				console.log("Sending to " + channel + "-" + args[0])
-				this._listeners[channel + "-" + args[0]].forEach((list) => {
+				full_channel = channel + "-" + args[0];
+				this._listeners[full_channel].forEach((list) => {
 					let data_to_send = [];
 					for (let i = args[1].pageIndex * args[1].pageSize; i <= (args[1].pageIndex + 1) * args[1].pageSize; i++) {
 						data_to_send.push(this.regenerate(this.data.kmers.kmers[i]));
@@ -142,29 +157,69 @@ export class ElectronSymService implements IpcRenderer {
 						return el.id == el_id;
 					});
 					if (dat) {
-						resp={ "data": this.regenerate(dat), "message": "SUCCESS" };
+						resp = { "data": this.regenerate(dat), "message": "SUCCESS" };
 					}
 				} else {
 					let dat = this.data[request.file_type][el_type].find((el) => {
 						return el.kmer == el_id;
 					});
 					if (dat) {
-						resp={ "data": this.regenerate(dat), "message": "SUCCESS", code: 0 };
+						resp = { "data": this.regenerate(dat), "message": "SUCCESS", code: 0 };
 					}
 
 				}
-				this._listeners[channel + "-" + args[0]].forEach((list) => {
+				full_channel = channel + "-" + args[0];
+				this._listeners[full_channel].forEach((list) => {
 					list({}, resp);
 				})
-			} else if (args[1].data == "queue"){
-				this._listeners["queue"].forEach((list)=>{
-					list({}, { code : 0 , data : environment.debug.queue})
+			} else if (args[1].data == "queue") {
+				this._listeners["queue"].forEach((list) => {
+					list({}, { code: 0, data: environment.debug.queue })
 				})
+			} else if (args[1].data == "ideogram") {
+				full_channel = channel + "-" + args[0];
+				this._listeners[full_channel].forEach((list) => {
+					let data = this.getIdeo(args[1]);
+					list({}, { code: 0, data: data });
+
+				});
 			}
 		} else if (channel == "getSession") {
 			this.sendSession();
 		}
+		if (this._once[full_channel]) {
+			this._listeners[full_channel] = undefined;
+			this._once[full_channel] = undefined;
+		}
 
+	}
+
+	getIdeo(config) {
+		console.log(config)
+		let annotations={keys: ["name","start","length", "repetitive", "highest_expression"],
+			 annots : [] },  aln, hexpr, unique_n;
+			let tmp_annot={};
+			for ( var k = 0 ; k < this.data.kmers.kmers.length ; k++ ){
+					if (this.data.kmers.kmers[k].alignments ){
+	                    for (var i=0; i <  this.data.kmers.kmers[k].alignments.length; i++ ){
+	                        aln=this.data.kmers.kmers[k].alignments[i];
+							if (! tmp_annot[aln.chromosome]) tmp_annot[aln.chromosome]=[]
+							hexpr=[0, -1];
+							this.data.kmers.kmers[k].means.forEach((m, idx)=>{
+								if ( m > hexpr[0] ) {
+									hexpr=[m, idx]
+								}
+							})
+							unique_n=this.data.kmers.kmers[k].alignments.length  == 1 ? 0 : 1;
+							tmp_annot[aln.chromosome].push(["seq_"+k+"_"+i, aln.start, aln.end-aln.start, unique_n, hexpr[1] ])
+						}
+					}
+			}
+			Object.keys(tmp_annot).forEach((key)=>{
+				if ( key.match( /^chr[0-9XY]+$/ )) annotations.annots.push({"chr": key.replace("chr", ""), "annots" : tmp_annot[key]})
+				
+			})
+		return annotations;
 	}
 
 	initEvents() {
@@ -252,6 +307,7 @@ export class ElectronSymService implements IpcRenderer {
 		console.log("Requested once(" + channel + ")")
 		if (!this._listeners[channel]) this._listeners[channel] = []
 		this._listeners[channel].push(listener);
+		this._once[channel] = true;
 		return this;
 	}
 	on(channel: string, listener: (event: Electron.IpcRendererEvent, ...args: any[]) => void): this {

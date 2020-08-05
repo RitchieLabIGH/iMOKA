@@ -861,7 +861,62 @@ class iMokaBE extends EventEmitter {
 	        return this.binary_search(arr, x, mid+1, end); 
 	} 
 	
-	
+	getIdeogram(request){
+		return new Promise((resolve, reject)=>{
+			if ( ! this.data.kmers){
+				reject("Kmers file not loaded");
+			}
+			
+			let annotations={keys: ["name","start","length", "repetitive", "highest_expression"],
+			 annots : [] },  aln, hexpr;
+			let tmp_annot={},  keep, chr, unique_n, filt_unique= [request.filter.includes("unique") ,  request.filter.includes("repetitive") ],
+			filt_class=[], any_filt_class=false;
+			for ( let c=0; c < 10; c++) {
+				filt_class.push(request.filter.includes(c+""))
+				any_filt_class= any_filt_class | filt_class[c];  	
+			};
+			
+			for ( let k=0; k < this.data.kmers.kmers.length; k++ ){
+		        if (this.data.kmers.kmers[k].alignments && (! this.data.kmers.masks.kmers || ! request.table_filtered || this.data.kmers.masks.kmers[k])){
+								
+		            for (var i=0; i <  this.data.kmers.kmers[k].alignments.length; i++ ){
+                        aln=this.data.kmers.kmers[k].alignments[i];
+						chr=aln.chromosome.replace("chr", "");
+						if ( (request.chromosomes.length == 0 || request.chromosomes.includes(chr) ) && aln.chromosome.match( /^chr[0-9XY]+$/ )){
+							
+							hexpr=[0, -1];
+							
+							this.data.kmers.kmers[k].means.forEach((m, idx)=>{
+								if ( m > hexpr[0] ) {
+									hexpr=[m, idx]
+								}
+							})
+							keep=true;
+							unique_n=this.data.kmers.kmers[k].alignments.length == 1 ? 0 : 1;
+							if ( request.filter.length != 0 ){
+								keep=false;
+								if ( filt_unique[0] && unique_n == 0 ) keep=true;
+								if ( filt_unique[1] && unique_n == 1 ) keep=true;
+								if ( filt_class[hexpr[1]] ){
+									keep=true;
+								} else {
+									keep=(! any_filt_class ) && keep;
+								}
+							}
+							if ( keep ){
+								if (! tmp_annot[chr]) tmp_annot[chr]=[]
+								tmp_annot[chr].push(["seq_"+k+"_"+i, aln.start, aln.end-aln.start, unique_n , hexpr[1] ])
+							} 
+						}
+					}
+		        } 
+		    }
+			Object.keys(tmp_annot).forEach((key)=>{
+				annotations.annots.push({"chr": key, "annots" : tmp_annot[key]})
+			})
+			resolve({ "data" : annotations,  "message": "SUCCESS", "request" : request, code : 0 });
+		})
+	}
 	getFeatures(request) {
 		return new Promise((resolve, reject)=>{
 			if ( ! this.data.kmers){

@@ -1,0 +1,76 @@
+<div fxLayout="row wrap" class="main">
+  <mat-card fxFlex="100%" *ngIf="session.profile.process_config.profiles[session.profile.process_config.current_profile]; let curr_profile">
+    <mat-card-title>Jobs in the current profile
+    {{curr_profile.setting_name}} ( {{curr_profile.connection_type}} )</mat-card-title> <mat-card-content>
+    <div>
+      <button style="margin-right:1em;" mat-raised-button (click)="refreshTable()" >Refresh now</button>
+      <mat-form-field>
+      <mat-select [(ngModel)]="refreshTime" placeholder="Refresh time" (openedChange)="! $event && updateRefresh() " > 
+        <mat-option [value]="-1">Disabled</mat-option>
+        <mat-option [value]="5000" selected>5 seconds</mat-option>
+        <mat-option [value]="10000">10 seconds</mat-option>
+        <mat-option [value]="60000">1 minute</mat-option>
+        <mat-option [value]="600000">10 minutes</mat-option>
+      </mat-select> 
+      </mat-form-field>
+    </div>
+    <div class="mat-elevation-z6 table-container" style="margin-top:32px">
+    <table mat-table matSort (matSortChange)="refreshTable($event)" [dataSource]="dataSource" >
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header >Job name</th>
+          <td mat-cell *matCellDef="let job" title="Job UID: {{ job.job.uid }}">{{job.job.original_request.name }}</td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let job">{{job.type}}</td>
+        </ng-container>
+        <ng-container matColumnDef="result">          
+          <th mat-header-cell *matHeaderCellDef mat-sort-header >Result</th>
+          <td mat-cell *matCellDef="let job"><div *ngIf="job.result" [innerHtml]="job.result"></div><span *ngIf="!job.result">-</span> </td>
+        </ng-container>
+        <ng-container matColumnDef="added">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header >Added time</th>
+          <td mat-cell *matCellDef="let job"><span *ngIf="job.times.added">{{job.times.added | date: "M/d/yy, h:mm:ss" }}</span><span *ngIf="!job.times.added">-</span> </td>
+        </ng-container>
+        <ng-container matColumnDef="started">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header >Start time</th>
+          <td mat-cell *matCellDef="let job"><span *ngIf="job.times.started">{{job.times.started | date : "M/d/yy, h:mm:ss"}}</span><span *ngIf="!job.times.started">-</span> </td>
+        </ng-container>
+        <ng-container matColumnDef="end">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header >End time</th>
+          <td mat-cell *matCellDef="let job"><span *ngIf="job.times.completed">{{job.times.completed | date : "M/d/yy, h:mm:ss"}}</span><span *ngIf="!job.times.completed">-</span> </td>
+        </ng-container>
+        <ng-container matColumnDef="running">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Running time</th>
+          <td mat-cell *matCellDef="let job"><span *ngIf="job.times.completed">{{ (job.times.completed - job.times.started)/1000 | number:'1.0-0' }} sec</span><span *ngIf="!job.times.completed">-</span> </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let job"><button mat-icon-button (click)="jobInfo(job)"
+              title="View job's information">
+              <mat-icon>info</mat-icon>
+            </button>
+            <button mat-icon-button title="Kill this job" (click)="delJob(job)" *ngIf="job.type == 'running'">
+              <mat-icon>close</mat-icon>
+            </button>
+            <button mat-icon-button title="Remove this log" (click)="delJob(job)" *ngIf="job.type == 'completed'">
+              <mat-icon>close</mat-icon>
+            </button>
+            <button mat-icon-button title="Remove this job from the queue" (click)="delJob(job)" *ngIf="job.type == 'queue'">
+              <mat-icon>close</mat-icon>
+            </button>
+            <button mat-icon-button *ngIf="job.code != 0 && job.type == 'completed'" title="Run this job again">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        
+        <tr mat-header-row *matHeaderRowDef="dtOptions.displayedColumns;sticky : true;"></tr>
+          <tr mat-row cdk-row *matRowDef="let row; columns: dtOptions.displayedColumns"></tr>
+    </table>
+    </div>
+    <mat-paginator [length]="dtOptions.recordsFiltered" [pageSize]="dtOptions.pageSize" [pageIndex]="dtOptions.pageIndex" (page)="refreshTable($event)" [pageSizeOptions]="[10, 15, 20]"></mat-paginator>
+    </mat-card-content> 
+</mat-card>
+</div>
+

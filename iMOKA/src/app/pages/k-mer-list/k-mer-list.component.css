@@ -23,3 +23,13 @@ table {
       margin-left: 0;
       margin-right: 0; 
 }
+
+
+#ideo-container {
+	margin-bottom: 20px;
+}
+
+
+.table-right-margin{
+	border-right: 2px solid black;
+}

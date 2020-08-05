@@ -21,6 +21,7 @@
     <mat-nav-list>
       <h3 matSubheader>General</h3>
       <a mat-list-item routerLink="dashboard"><mat-icon matListIcon>dashboard</mat-icon> Dashboard</a>
+      <a mat-list-item routerLink="logger" *ngIf="session && session.profile.process_config.profiles[session.profile.process_config.current_profile]"><mat-icon matListIcon>work</mat-icon> Jobs</a>
       <mat-divider></mat-divider>
       <ng-container *ngIf="session && session.profile.process_config.profiles.length > 0">
       	<h3 matSubheader >Preprocess</h3>

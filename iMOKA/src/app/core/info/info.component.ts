@@ -24,3 +24,12 @@ export class InfoComponent {
   }
 
 }
+
+@Component({
+  selector: 'app-job-info',
+  templateUrl: './job-info.component.html',
+  styleUrls: ['./info.component.css']
+})
+export class JobInfo {
+	
+}

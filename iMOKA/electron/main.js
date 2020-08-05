@@ -145,6 +145,8 @@ ipcMain.on("getData" , (event, id, request) => {
     	promise = backend.getDataByID(request);
     }else if ( request.data == "genes"){
     	promise= backend.getGenes(request);
+	}else if (request.data == "ideogram"){
+		promise = backend.getIdeogram(request.request);
     }else if ( request.data == "queue"){
     	backend.sendQueue();
     } else if (request.data == "samples" ){

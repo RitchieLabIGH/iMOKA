@@ -14,7 +14,7 @@ import { NavComponent } from './nav/nav.component';
 import { LayoutModule } from '@angular/cdk/layout';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import {ServicesModule} from '../services/services.module';
-import { InfoComponent } from './info/info.component'
+import { InfoComponent, JobInfo } from './info/info.component'
 
 /// Pipes
 import {TypeofPipe} from '../pipes/typeof.pipe';
@@ -37,12 +37,12 @@ export const NB_CORE_PROVIDERS = [
     LayoutModule,
     FlexLayoutModule,
   ],
-  declarations: [ NavComponent, InfoComponent, TypeofPipe, SafeHtmlPipe, SafeURLPipe],
+  declarations: [ NavComponent, InfoComponent, TypeofPipe, SafeHtmlPipe, SafeURLPipe, JobInfo],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: environment.defaultLanguage }
     
   ],
-  entryComponents : [ InfoComponent ],
+  entryComponents : [ InfoComponent, JobInfo ],
   exports: [ NavComponent ,TypeofPipe, SafeHtmlPipe, SafeURLPipe]
 })
 export class CoreModule {
