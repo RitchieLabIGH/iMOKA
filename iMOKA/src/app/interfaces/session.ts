@@ -6,6 +6,7 @@ export class Session {
     matrices : Matrix[]=[];
 	last_kmer_table_request :  KmerDataTableOptions;
 	version : number;
+	stats : any[]=[];
 }
 
 export class Profile {

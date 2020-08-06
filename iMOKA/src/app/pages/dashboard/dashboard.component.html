@@ -39,7 +39,12 @@
   </div>
   <div fxFlex="70%" fxFlex.lt-md="100%" >
       <app-video></app-video>
-    </div>
+  </div>
+  <div fxFlex="50%" fxFlex.lt-md="100%" *ngFor="let plot of other_plots" >
+      <mat-card-content style="height : 250px;" >
+        <plotly-plot  [useResizeHandler]="true"  [data]="plot.data" [layout]="plot.layout"></plotly-plot>
+      </mat-card-content>
+  </div> 
 </div>
 
 </ng-container> </ng-container>

@@ -3,33 +3,42 @@ import { UemService } from '../../services/uem.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Session } from '../../interfaces/session';
 import { Matrix } from '../../interfaces/samples';
-import { Subscription, timer } from 'rxjs';
-import { QueueSource } from '../../data/queue.source';
-import { QueueService } from '../../services/queue.service';
-import { InfoComponent, InfoData, InfoListElement } from '../../core/info/info.component';
-import { MatBottomSheet } from '@angular/material/bottom-sheet';
+import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
+
+class PlotlyGraph {
+	data : any[];
+	layout : any;
+	constructor( data: any[], layout : any){
+		this.data = data;
+		this.layout=layout;
+	}
+} 
 
 @Component({
 	selector: 'app-dashboard',
 	templateUrl: './dashboard.component.html',
 	styleUrls: ['./dashboard.component.css']
 })
+
 export class DashboardComponent implements OnInit, OnDestroy {
 	session: Session;
 	sub_session: Subscription;
 	error: string;
 	current_matrix: Matrix;
 	main_plot : boolean=true;
-	plots: { matrices?: { layout: any, data: any }, matrix?: { layout: any, data: any } } = {};
+	plots: {[key :string]: PlotlyGraph } = {};
+	other_plots : PlotlyGraph[]=[];
+	
+	layouts : any = {bar : {} , pie : {} }
+	
 	constructor(private uem: UemService, private zone: NgZone,
-		private sb: MatSnackBar,  private cd: ChangeDetectorRef
-		, private bottomSheet: MatBottomSheet, public dialog: MatDialog
+		private sb: MatSnackBar,public dialog: MatDialog
 	) { }
 	ngOnInit() {
 		this.sub_session = this.uem.getSession().subscribe(session => {
-			
 				this.session = session;
+				console.log(this.session)
 				if (this.session && this.session.matrices && this.session.matrices.length > 0) {
 					let mats = {
 						data: [{ values: [], labels: [], type: 'pie' }], layout: {
@@ -44,6 +53,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
 						mats.data[0].labels.push(mat.name)
 					})
 					this.current_matrix = this.session.matrices[0];
+					if ( this.session.stats ){
+						this.session.stats.forEach((stat)=>{
+							let layout : any={};
+							if ( this.layouts[stat.layotu_type]){
+								layout = this.layouts[stat.layout_type]
+							}
+							layout.title = stat.title;
+							this.other_plots.push(new PlotlyGraph(stat.data, layout));
+						})
+					}
 					this.updateCurrentMatrix();
 					setTimeout(()=>{
 						this.zone.run(() => {

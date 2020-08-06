@@ -14,7 +14,7 @@ export class Sample {
     prefix_size : number;
     total_count : number;
     total_suffix : number;
-    total_predix : number;
+    total_prefix : number;
     minCount : number;
     library_type : string;
 	free_text: string="";

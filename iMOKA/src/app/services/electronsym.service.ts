@@ -21,6 +21,9 @@ export class ElectronSymService implements IpcRenderer {
 			if (environment.default_profile) {
 				this._session.profile.process_config.current_profile = 0;
 				this._session.profile.process_config.profiles = [new Setting()];
+				if (environment.debug.matrices ){
+					this._session.matrices=environment.debug.matrices; 
+				}
 			}
 			if (environment.debug.files) {
 				environment.debug.files.forEach((f) => {
@@ -128,7 +131,7 @@ export class ElectronSymService implements IpcRenderer {
 
 			} else if (args[1].data == "samples") {
 				this._listeners[channel + "-" + args[0]].forEach((list) => {
-					let samples = [];
+					let samples = environment.debug.samples ? environment.debug.samples : [];
 					this.data.samples = { number: samples.length, total_kmers: samples.reduce((prev, x) => { return prev + x.total_suffix }, 0) };
 					list({}, { "message": "SUCCESS", code: 0, data: samples, recordsTotal: samples.length, recordsFiltered: samples.length, stats: {} });
 				})
