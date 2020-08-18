@@ -9,9 +9,9 @@ export const environment : any = {
   defaultLanguage : "EN",
   default_profile : true,
   debug : {
-		files : possible_files[1] ,
+		files : possible_files[0] ,
 		queue : queue_example,
-		samples : samples_example[2],
+		samples : samples_example[0],
 		matrices : matrices_example,
    },
 };

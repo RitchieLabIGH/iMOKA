@@ -1,7 +1,6 @@
 'use strict';
 const { app, BrowserWindow, ipcMain, dialog , shell, Menu} = require('electron');
 const Store  = require('./store.js');
-const stream = require('stream');
 const rimraf = require("rimraf");
 
 const fs =require('fs');

@@ -1,19 +1,20 @@
 import { Component, OnInit, NgZone, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { UemService } from '../../services/uem.service';
+import { SamplesService } from '../../services/samples.service'
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Session } from '../../interfaces/session';
-import { Matrix } from '../../interfaces/samples';
+import { Matrix, Sample } from '../../interfaces/samples';
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 
 class PlotlyGraph {
-	data : any[];
-	layout : any;
-	constructor( data: any[], layout : any){
+	data: any[];
+	layout: any;
+	constructor(data: any[], layout: any) {
 		this.data = data;
-		this.layout=layout;
+		this.layout = layout;
 	}
-} 
+}
 
 @Component({
 	selector: 'app-dashboard',
@@ -23,100 +24,240 @@ class PlotlyGraph {
 
 export class DashboardComponent implements OnInit, OnDestroy {
 	session: Session;
-	sub_session: Subscription;
+	subscriptions: Subscription[] = [];
 	error: string;
-	current_matrix: Matrix;
-	main_plot : boolean=true;
-	plots: {[key :string]: PlotlyGraph } = {};
-	other_plots : PlotlyGraph[]=[];
-	
-	layouts : any = {bar : {} , pie : {} }
-	
+	filters: any = {};
+	plots: { [key: string]: PlotlyGraph } = {};
+	samples: Sample[];
+	samples_filter: boolean[];
 	constructor(private uem: UemService, private zone: NgZone,
-		private sb: MatSnackBar,public dialog: MatDialog
+		private sb: MatSnackBar, public dialog: MatDialog, private sampleService: SamplesService,
 	) { }
-	ngOnInit() {
-		this.sub_session = this.uem.getSession().subscribe(session => {
-				this.session = session;
-				console.log(this.session)
-				if (this.session && this.session.matrices && this.session.matrices.length > 0) {
-					let mats = {
-						data: [{ values: [], labels: [], type: 'pie' }], layout: {
-							title: "Samples per matrix in your Workspace", 
-							margin : {l : 0 , r : 0 , b : 0 , t : 30},
-							height : 230,
-							legend: {"orientation": "h"}
-						}
-					}
-					this.session.matrices.forEach((mat) => {
-						mats.data[0].values.push(mat.groups.length)
-						mats.data[0].labels.push(mat.name)
-					})
-					this.current_matrix = this.session.matrices[0];
-					if ( this.session.stats ){
-						this.session.stats.forEach((stat)=>{
-							let layout : any={};
-							if ( this.layouts[stat.layotu_type]){
-								layout = this.layouts[stat.layout_type]
-							}
-							layout.title = stat.title;
-							this.other_plots.push(new PlotlyGraph(stat.data, layout));
-						})
-					}
-					this.updateCurrentMatrix();
-					setTimeout(()=>{
-						this.zone.run(() => {
-							this.plots.matrices=mats;
-						});		
-					}, 500)
-				}
 
+
+	ngOnInit() {
+		this.subscriptions.push(this.sampleService.getSamples().subscribe((samples) => {
+			samples.sort((samA, samB) => { return samA.total_count < samB.total_count ? -1 : 1; });
+			this.samples = samples;
+			this.samples_filter = new Array(samples.length).fill(true);
+			this.updateSampleGraphs();
+		}))
+		this.subscriptions.push(this.uem.getSession().subscribe(session => {
+			this.session = session;
+			this.updateCurrentMatrix()
 		}, err => {
 			console.log(err);
-		});
+		}));
+		this.subscriptions.push()
 	}
-	selectMatrix(event?: any) {
-		if (event && event.points && event.points.length == 1) {
-			this.current_matrix = this.session.matrices.find((m) => { return m.name == event.points[0].label; })
-			this.zone.run(()=>{
-				this.main_plot=false;
-			})
-			this.updateCurrentMatrix();
+	selectFilter(event: any, fname: string) {
+		let changed = false;
+		if (this.filters[fname]) {
+			this.filters[fname] = false;
+			if (fname == 'kl') {
+				this.samples_filter = new Array(this.samples.length).fill(true);
+			}
+			changed = true;
 		} else {
-			this.main_plot=true;
-		}
-	}
-	updateCurrentMatrix() {
-		let mat = this.current_matrix;
-		let mats = {
-			data: [{ values: [], labels: mat.groups_names, type: 'pie' }], layout: {
-				title: "Matrix " + mat.name + (mat.group_tag_key ? " (" + mat.group_tag_key + ")" : ""),
-				margin : {l : 0 , r : 0 , b : 0 , t : 30},
-				height : 230,
-				legend: {"orientation": "h"}
+			if (event.points[0].label) {
+				this.filters[fname] = event.points[0].label
+				changed = true;
+				if (fname == 'kl') {
+					this.samples_filter = new Array(this.samples.length).fill(true);
+					this.samples.forEach((sam, idx) => {
+						if (sam.k_len != this.filters[fname]) { this.samples_filter[idx] = false; }
+					});
+				}
+
 			}
 		}
-		mat.groups_names.forEach((n, i) => {
-			let count = 0;
-			mat.groups.forEach((g) => {
-				if (g == n) count += 1;
+		if (changed) {
+			if (fname == "matrix") {
+				this.updateCurrentMatrix()
+			} else {
+				this.updateSampleGraphs();
+			}
+		}
+
+	}
+
+
+	updateCurrentMatrix() {
+		if (this.filters.matrix) {
+			let mat = this.session.matrices.find((m) => { return m.name == this.filters.matrix; });
+			let mats = {
+				data: [{ values: [], labels: mat.groups_names, type: 'pie' }], layout: {
+					title: "Matrix " + mat.name + (mat.group_tag_key ? " (" + mat.group_tag_key + ")" : ""),
+					margin: { l: 0, r: 0, b: 0, t: 30 },
+					height: 230,
+					legend: { "orientation": "h" }
+				}
+			}
+			mat.groups_names.forEach((n, i) => {
+				let count = 0;
+				mat.groups.forEach((g) => {
+					if (g == n) count += 1;
+				})
+				mats.data[0].values.push(count)
 			})
-			mats.data[0].values.push(count)
-		})
-		this.zone.run(() => {
-			this.plots.matrix=mats;
-		})
+			this.zone.run(() => {
+				this.plots.matrices = mats;
+			})
+		} else {
+			let mats = {
+				data: [{ values: [], labels: [], type: 'pie' }], layout: {
+					title: "Samples per matrix in your Workspace",
+					margin: { l: 0, r: 0, b: 0, t: 30 },
+					height: 230,
+					legend: { "orientation": "h" }
+				}
+			}
+			this.session.matrices.forEach((mat) => {
+				mats.data[0].values.push(mat.groups.length)
+				mats.data[0].labels.push(mat.name)
+			})
+			this.zone.run(() => {
+				this.plots.matrices = mats;
+			});
+		}
+
 
 	}
 
 	ngOnDestroy() {
-		if (this.sub_session) this.sub_session.unsubscribe();
+		this.subscriptions.forEach((sub) => {
+			sub.unsubscribe();
+		})
 	}
-	
+
 	sbMessage({ title, message, opts }: { title: any; message: any; opts: any; }) {
 		this.zone.run(() => {
 			this.sb.open(title, message, opts);
 		})
+	}
+
+	updateKLengthGraph() {
+		if (this.samples) {
+			let graph = new PlotlyGraph([{ values: [], labels: [], type: 'pie' }], {
+				title: "k dimensions",
+				margin: { l: 0, r: 0, b: 0, t: 30 },
+				height: 230,
+				legend: { "orientation": "h" }
+			});
+			this.samples.forEach((sam, id) => {
+				if (this.samples_filter[id]) {
+					let idx = graph.data[0].labels.findIndex((id) => { return id == sam.k_len; });
+					if (idx == -1) {
+						graph.data[0].labels.push(sam.k_len);
+						graph.data[0].values.push(1)
+					} else {
+						graph.data[0].values[idx] += 1
+					}
+				}
+			});
+			this.plots.k_lengths = graph;
+		}
+	}
+
+	updateMetadataGraph() {
+		if (this.samples) {
+			if (this.filters.metadata) {
+				let fname=this.filters.metadata;
+				let graph = new PlotlyGraph([{ values: [], labels: [], type: 'pie' }], {
+					title: "Metadata " + fname,
+					margin: { l: 0, r: 0, b: 0, t: 30 },
+					height: 230,
+					legend: { "orientation": "h" }
+				});
+				let idx: number;
+				this.samples.forEach((sam, id) => {
+					if (this.samples_filter[id]) {
+						sam.metadata.forEach(met => {
+							if ( met.key == fname){
+								idx = graph.data[0].labels.findIndex((name) => { return name == met.value; });
+								if (idx == -1) {
+									graph.data[0].labels.push(met.value);
+									graph.data[0].values.push(1)
+								} else {
+									graph.data[0].values[idx] += 1
+								}	
+							}
+						});
+					}
+				});
+				this.plots.metadata = graph;
+			} else {
+				let graph = new PlotlyGraph([{ values: [], labels: [], type: 'pie' }], {
+					title: "Metadata",
+					margin: { l: 0, r: 0, b: 0, t: 30 },
+					height: 230,
+					legend: { "orientation": "h" }
+				});
+				let idx: number;
+				this.samples.forEach((sam, id) => {
+					if (this.samples_filter[id]) {
+						sam.metadata.forEach(met => {
+							idx = graph.data[0].labels.findIndex((name) => { return name == met.key; });
+							if (idx == -1) {
+								graph.data[0].labels.push(met.key);
+								graph.data[0].values.push(1)
+							} else {
+								graph.data[0].values[idx] += 1
+							}
+						});
+					}
+				});
+				this.plots.metadata = graph;
+			}
+
+		}
+	}
+
+
+	updateTotalCountGraph() {
+		if (this.samples) {
+			let graph = new PlotlyGraph([{ x: [], y: [],  type: 'bar' }], {
+				title: "k-mer total counts",
+				height: 230,
+				showlegend: false,
+				xaxis : { showticklabels: false },
+				margin: { l: 0, r: 0, b: 30, t: 30 },
+			});
+			this.samples.forEach((sam, idx) => {
+				if (this.samples_filter[idx]) {
+					graph.data[0].x.push(sam.name);
+					graph.data[0].y.push(sam.total_count)
+				}
+			});
+			this.plots.total_counts = graph;
+		}
+	}
+	updateSuffixCountGraph() {
+		if (this.samples) {
+			let graph = new PlotlyGraph([{ x: [], y: [], type: 'bar' }], {
+				title: "Number of different k-mers",
+				height: 230,
+				showlegend: false,
+				xaxis : { showticklabels: false },
+				margin: { l: 0, r: 0, b: 30, t: 30 },
+			});
+			this.samples.forEach((sam, idx) => {
+				if (this.samples_filter[idx]) {
+					graph.data[0].x.push(sam.name);
+					graph.data[0].y.push(sam.total_suffix)
+				}
+			});
+			this.plots.suffix_counts = graph;
+		}
+	}
+
+	updateSampleGraphs() {
+		if (this.samples) {
+			this.updateKLengthGraph();
+			this.updateTotalCountGraph();
+			this.updateSuffixCountGraph();
+			this.updateMetadataGraph();
+		}
 	}
 
 }

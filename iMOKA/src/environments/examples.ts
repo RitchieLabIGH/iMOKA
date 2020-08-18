@@ -52,6 +52,12 @@ for ( let i=0; i< max_samples; i++){
 	sam.name="Sample "+i
 	sam.metadata=[{key : "Study", value : "Test"}, {key :"DrugA" , value : i < (max_samples/2) ? "Responsive" : "Resistant" }]
 	lots_of_samples.push(sam)
+	let sam2 = JSON.parse(JSON.stringify(sam));
+	sam2.k_len=27;
+	sam2.name+="_2";
+	sam2.id+="_2";
+	sam2.metadata=[{key : "Study", value : "Test_short"}, {key :"DrugB" , value : i < (max_samples/2) ? "Responsive" : "Resistant" }]
+	lots_of_samples.push(sam2)
 	
 }
 export const samples_example = [[],[lots_of_samples[0], lots_of_samples[1]], lots_of_samples];

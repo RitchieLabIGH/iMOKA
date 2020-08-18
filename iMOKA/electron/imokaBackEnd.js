@@ -189,7 +189,6 @@ class iMokaBE extends EventEmitter {
 		return new Promise((resolve, reject)=>{
 			if (this.processor){
 				this.processor.getSamples(request).then( samples  =>{
-					this.user_session.data.samples = {number : samples.length , total_kmers : samples.reduce((prev, x)=> {return prev + x.total_suffix}, 0 ) };
 					resolve({ "message": "SUCCESS", code: 0, data : samples ,  
 						recordsTotal : samples.length, recordsFiltered : samples.length, stats : {}}
 					);

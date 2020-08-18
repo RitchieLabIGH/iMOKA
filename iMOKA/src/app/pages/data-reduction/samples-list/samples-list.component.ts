@@ -53,7 +53,7 @@ export class SamplesListComponent implements OnInit {
       , private cd: ChangeDetectorRef ) { }
 
     ngOnInit() {
-        this.dataSource = new SampleTableSource(this.trackService);
+        this.dataSource = new SampleTableSource(this.sampleService);
         this.refreshTable( undefined, true );
     }
     getSelectedNumber() {

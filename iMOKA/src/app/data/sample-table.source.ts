@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { DataSource, CollectionViewer } from '@angular/cdk/collections'
 import { Observable, BehaviorSubject, of, pipe } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { TracksService } from '../services/tracks.service';
+import { SamplesService } from '../services/samples.service';
 import { Sample } from '../interfaces/samples';
 
 
@@ -16,7 +16,7 @@ export class SampleTableSource implements DataSource<Sample> {
 
     public samples: Sample[];
     public all_samples : Sample[];
-    constructor( private trackService: TracksService ) { }
+    constructor( private sampleService: SamplesService ) { }
 
     connect( collectionViewer: CollectionViewer ): Observable<Sample[]> {
         return this.sampleSubject.asObservable();
@@ -28,7 +28,7 @@ export class SampleTableSource implements DataSource<Sample> {
 
     update(): Promise<any> {
         return new Promise(( resolve, reject ) => {
-            this.trackService.getDataTable( { data: "samples" } ).pipe(
+            this.sampleService.getSamples().pipe(
                 catchError(() => {
                     reject();
                     return of( [] );
