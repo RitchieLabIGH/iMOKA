@@ -23,10 +23,10 @@ export class SamplesService {
             console.warn( "Could not load electron ipc" );
         }
     }
-	getSamples() : Observable<Sample[]>{
+	getSamples(update : boolean=false) : Observable<Sample[]>{
 		var id=this.request;
 		this.request+=1;
-		let dataTablesParameters : any={ data: "samples" };
+		let dataTablesParameters : any={ data: "samples" , update: update};
 		return new Observable<Sample[]>((observer)=>{
 			this.ipc.once( "getData-" + id, ( event, arg ) => {
                 dataTablesParameters.recordsTotal= arg.recordsTotal;

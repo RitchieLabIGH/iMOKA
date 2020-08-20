@@ -48,7 +48,7 @@ export class SamplesListComponent implements OnInit {
     checked = {};
     edit = {};
 
-    constructor( private sampleService : SamplesService, private trackService : TracksService,  
+    constructor( private sampleService : SamplesService,  
             private zone: NgZone, public dialog: MatDialog, private snack: MatSnackBar 
       , private cd: ChangeDetectorRef ) { }
 

@@ -11,7 +11,7 @@ export const environment : any = {
   debug : {
 		files : possible_files[0] ,
 		queue : queue_example,
-		samples : samples_example[0],
+		samples : samples_example[2],
 		matrices : matrices_example,
    },
 };

@@ -28,7 +28,7 @@ export class SampleTableSource implements DataSource<Sample> {
 
     update(): Promise<any> {
         return new Promise(( resolve, reject ) => {
-            this.sampleService.getSamples().pipe(
+            this.sampleService.getSamples(true).pipe(
                 catchError(() => {
                     reject();
                     return of( [] );
