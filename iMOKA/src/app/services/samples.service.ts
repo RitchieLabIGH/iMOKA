@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { IpcRenderer } from 'electron';
-import {Matrix} from '../interfaces/samples';
+import {Matrix, Sample} from '../interfaces/samples';
 import {ElectronSymService} from "./electronsym.service";
-
+import {Observable} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -23,12 +23,25 @@ export class SamplesService {
             console.warn( "Could not load electron ipc" );
         }
     }
+	getSamples(update : boolean=false) : Observable<Sample[]>{
+		var id=this.request;
+		this.request+=1;
+		let dataTablesParameters : any={ data: "samples" , update: update};
+		return new Observable<Sample[]>((observer)=>{
+			this.ipc.once( "getData-" + id, ( event, arg ) => {
+                dataTablesParameters.recordsTotal= arg.recordsTotal;
+                dataTablesParameters.recordsFiltered=arg.recordsFiltered;
+                dataTablesParameters.stats = arg.stats;
+                observer.next(arg.data);
+            });
+			this.ipc.send( "getData" , id, dataTablesParameters);
+		})
+	}
   
 
   saveSample(new_samples : any) : Promise<any>{
       var id = this.request;
       this.request += 1;
-      this.ipc.send( "action" , id, {data: new_samples, action : "saveSample"});
       return new Promise<any>((resolve, reject)=>{
          this.ipc.once("action-"+id, (event, arg)=>{
             if (arg.code == 0 ){
@@ -37,13 +50,14 @@ export class SamplesService {
                 reject(arg.message);
             }
          });
+		this.ipc.send( "action" , id, {data: new_samples, action : "saveSample"});
       });
   }
   
   setMatrix(matrix : Matrix) : Promise<any>{
       var id = this.request;
       this.request += 1;
-      this.ipc.send( "action", id , {data  : matrix, action :  "setMatrix" });
+      
       return new Promise<any>(( resolve, reject ) => {
           this.ipc.once( "action-" + id, ( event, arg ) => {
               if ( arg.code == 0 ){
@@ -52,13 +66,13 @@ export class SamplesService {
                   reject(arg);
               }
           });
+		this.ipc.send( "action", id , {data  : matrix, action :  "setMatrix" });
       });
   }
   
   deleteMatrix(matrix_uid:string) : Promise<any>{
       var id = this.request;
       this.request += 1;
-      this.ipc.send( "action", id , {data  : matrix_uid, action :  "deleteMatrix" });
       return new Promise<any>(( resolve, reject ) => {
           this.ipc.once( "action-" + id, ( event, arg ) => {
               if ( arg.code == 0 ){
@@ -67,6 +81,7 @@ export class SamplesService {
                   reject(arg);
               }
           });
+		this.ipc.send( "action", id , {data  : matrix_uid, action :  "deleteMatrix" });
       });
   }
   

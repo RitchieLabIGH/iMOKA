@@ -1,7 +1,7 @@
 <ng-container *ngIf="session"> <ng-container
 	*ngIf="session.profile.process_config.profiles.length == 0">
 <div class="main" fxLayout="row wrap">
-  <div fxFlex="30%" fxFlex.lt-md="100%">
+  <div fxFlex="50%" fxFlex.lt-md="100%">
 	<mat-card> 
     <mat-card-title>Welcome to iMOKA</mat-card-title>
 	<mat-card-content>
@@ -13,16 +13,16 @@
 	</mat-card-content>
    </mat-card>
   </div> 
-  <div fxFlex="70%" fxFlex.lt-md="100%" >
+  <div fxFlex="50%" fxFlex.lt-md="100%" >
       <app-video></app-video>
     </div>
 </div>
 </ng-container> <ng-container *ngIf="session.profile.process_config.profiles.length != 0">
 <div fxLayout="row wrap" class="main">
-  <div fxFlex="30%"  [fxHide]="!main_plot" fxFlex.lt-md="100%">
+  <div fxFlex="50%"   fxFlex.lt-md="100%">
     <mat-card *ngIf="session.matrices.length > 0" >
       <mat-card-content style="height : 250px;">
-          <plotly-plot *ngIf="plots.matrices && main_plot"  [useResizeHandler]="true"  (plotly_click)="selectMatrix($event)" [data]="plots.matrices.data" [layout]="plots.matrices.layout"></plotly-plot>             
+          <plotly-plot *ngIf="plots.matrices"  [useResizeHandler]="true"  (plotly_click)="selectFilter($event, 'matrix')" [data]="plots.matrices.data" [layout]="plots.matrices.layout"></plotly-plot>             
       </mat-card-content>
     </mat-card>
     <mat-card *ngIf="session.matrices.length == 0">
@@ -30,16 +30,40 @@
       <mat-card-content>You can create them in your <a routerLink="/dred">workspace</a> page or import the aggregated k-mer lists in the <a routerLink="/files">file manager</a> </mat-card-content>
     </mat-card>
    </div>
-   <div fxFlex="30%" [fxHide]="main_plot" fxFlex.lt-md="100%"  >
-    <mat-card *ngIf="plots.matrix && ! main_plot" >
+  <div fxFlex="50%" fxFlex.lt-md="100%" >
+      <app-video></app-video>
+  </div>
+  <ng-container *ngIf="samples && samples.length > 0">
+  <div fxFlex="100%"><h3>Samples Information</h3></div>
+  <div fxFlex="50%" *ngIf="plots.k_lengths; let plot" fxFlex.lt-md="100%"  >
+    <mat-card>
       <mat-card-content style="height : 250px;" >
-        <plotly-plot  [useResizeHandler]="true" (plotly_click)="selectMatrix()" [data]="plots.matrix.data" [layout]="plots.matrix.layout"></plotly-plot>
+        <plotly-plot  [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'kl')" [data]="plot.data" [layout]="plot.layout"></plotly-plot>
       </mat-card-content>  
     </mat-card>
   </div>
-  <div fxFlex="70%" fxFlex.lt-md="100%" >
-      <app-video></app-video>
-    </div>
+  <div fxFlex="50%" *ngIf="plots.metadata; let plot" fxFlex.lt-md="100%"  >
+    <mat-card>
+      <mat-card-content style="height : 250px;" >
+        <plotly-plot  [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'metadata')" [data]="plot.data" [layout]="plot.layout"></plotly-plot>
+      </mat-card-content>  
+    </mat-card>
+  </div>
+  <div fxFlex="50%" *ngIf="plots.total_counts; let plot" fxFlex.lt-md="100%"  >
+    <mat-card>
+      <mat-card-content style="height : 250px;" >
+        <plotly-plot  [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'tc')" [data]="plot.data" [layout]="plot.layout"></plotly-plot>
+      </mat-card-content>  
+    </mat-card>
+  </div>
+  <div fxFlex="50%" *ngIf="plots.suffix_counts; let plot" fxFlex.lt-md="100%"  >
+    <mat-card>
+      <mat-card-content style="height : 250px;" >
+        <plotly-plot  [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'sc')" [data]="plot.data" [layout]="plot.layout"></plotly-plot>
+      </mat-card-content>  
+    </mat-card>
+  </div>
+  </ng-container>
 </div>
 
 </ng-container> </ng-container>

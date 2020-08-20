@@ -77,14 +77,7 @@ export class KMerListComponent implements OnInit, OnDestroy {
 						annotations : {keys : ["name","start","length", "repetitive", "highest_expression"], annots: [] },
 						dataDir: 'https://cdn.jsdelivr.net/npm/ideogram@1.21/dist/data/bands/native/',
 						annotationsLayout: 'heatmap',
-					    orientation: 'horizontal',
-						demarcateCollinearChromosomes: true,
-					    geometry: 'collinear',
-      					chrHeight: 100,
-						chrWidth: 12,
-      					chrMargin: 20,
-						annotationHeight: 30,
-						annotLabelHeight: 10,
+      					chrHeight: 400,
 						legend : [],
 						heatmaps : [],
 						rotatable : false,
@@ -217,12 +210,8 @@ export class KMerListComponent implements OnInit, OnDestroy {
 			if ( ideo.data.annots.length > 0 ){
 				config.onDrawAnnots=()=>{
 					let correct_size= ()=>{
-						let last_el=$("#_ideogramMiddleWrap canvas:last");
-						if ( last_el.length == 0 ){
-							setTimeout(correct_size, 100);	
-						} else {
-							$("svg#_ideogram").attr("width", (parseFloat(last_el.css("left").replace("px", "")) + parseFloat(last_el.attr("width")) )+"px" );		
-						}
+						$("#_ideogramInnerWrap").css("overflow-x", "auto");
+						$("#_ideogramMiddleWrap").css("height", (parseInt($("svg#_ideogram").attr("height"))+80)+"px" );
 					}
 					setTimeout(correct_size, 100);
 				}	

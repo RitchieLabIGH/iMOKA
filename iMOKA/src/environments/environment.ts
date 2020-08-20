@@ -2,46 +2,18 @@
 // `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
+import {possible_files, queue_example, samples_example, matrices_example} from './examples';
+
 export const environment : any = {
   production: false,
   defaultLanguage : "EN",
   default_profile : true,
-	debug : {
-		files : ["assets/data/agg.json"],
-		queue : 
-		[{  type : "completed",
-			result : "success",
-			code :0,
-			times : {
-				added : Date.now(),
-				started : Date.now()+10000,
-				completed : Date.now()+50000
-			},
-			job : {
-				
-				uid : "1235456", 
-				original_request : {
-					name : "preprocess"
-				},
-			},
-			stderr : "Exmaple of short stderr",
-			stdout : "Exmaple of short stdout"
-		},{ type : "running",
-			times : {
-				added : Date.now(),
-				started : Date.now(),
-			},
-			job : {
-				
-				uid : "1235457", 
-				original_request : {
-					name : "aggregation"
-				},
-			}, 
-			stderr : "Exmaple of long stderr\n".repeat(100),
-			stdout : "Exmaple of long stdout\n".repeat(100)
-		}]
-	},
+  debug : {
+		files : possible_files[0] ,
+		queue : queue_example,
+		samples : samples_example[2],
+		matrices : matrices_example,
+   },
 };
 
 /*

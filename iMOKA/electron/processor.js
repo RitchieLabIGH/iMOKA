@@ -648,11 +648,13 @@ class Processor {
 								samples.push(sample);
 							}
 						});
+						this.current_samples=samples;
 						resolve(samples);
 					});
 				} else {
 					this.getSSH().then((ssh)=>{
 						this.getRemoteSamples(ssh).then((samples)=>{
+							this.current_samples=samples;
 							resolve(samples)
 						})
 					}).catch((err)=>{
