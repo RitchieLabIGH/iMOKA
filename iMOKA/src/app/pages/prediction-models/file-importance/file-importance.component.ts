@@ -60,15 +60,20 @@ export class FileImportanceComponent implements OnInit, AfterContentInit {
 		fi.display_data = [];
 		if (fi.to_display < 100) {
 			for (let i = fi.from_pos; i <= fi.from_pos + fi.to_display; i++) {
-				fi.display_data.push(fi.data_boxplot[i]);
+				if (i < fi.data_boxplot.length ){
+					fi.display_data.push(fi.data_boxplot[i]);	
+				}
 			}
 		} else {
 			fi.display_data.push({ showlegend: false, x: [], y: [], type: "scatter" });
 			for (let i = fi.from_pos; i <= fi.from_pos + fi.to_display; i++) {
-				fi.display_data[0].x.push(fi.data_barplot[0].x[i]);
-				fi.display_data[0].y.push(fi.data_barplot[0].y[i]);
+				if (i < fi.data_barplot[0].x.length ){
+					fi.display_data[0].x.push(fi.data_barplot[0].x[i]);
+					fi.display_data[0].y.push(fi.data_barplot[0].y[i]);
+				}
 			}
 		}
+		this.data.feature_importance=fi;
 	}
 
 	updateSample(sample?: string) {

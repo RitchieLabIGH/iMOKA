@@ -1,6 +1,7 @@
 import { Component, OnInit, NgZone, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { UemService } from '../../services/uem.service';
-import { SamplesService } from '../../services/samples.service'
+import { SamplesService } from '../../services/samples.service';
+import { FileService } from '../../services/file.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Session } from '../../interfaces/session';
 import { Matrix, Sample } from '../../interfaces/samples';
@@ -24,6 +25,7 @@ class PlotlyGraph {
 
 export class DashboardComponent implements OnInit, OnDestroy {
 	session: Session;
+	current_matrix: Matrix;
 	subscriptions: Subscription[] = [];
 	error: string;
 	filters: any = {};
@@ -32,6 +34,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	samples_filter: boolean[];
 	constructor(private uem: UemService, private zone: NgZone,
 		private sb: MatSnackBar, public dialog: MatDialog, private sampleService: SamplesService,
+		private fileService :FileService,
 	) { }
 
 
@@ -43,6 +46,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 			this.updateSampleGraphs();
 		}))
 		this.subscriptions.push(this.uem.getSession().subscribe(session => {
+			console.log(session)
 			this.session = session;
 			this.updateCurrentMatrix()
 		}, err => {
@@ -100,6 +104,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 				})
 				mats.data[0].values.push(count)
 			})
+			this.current_matrix = mat;
 			this.zone.run(() => {
 				this.plots.matrices = mats;
 			})
@@ -259,5 +264,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
 			this.updateMetadataGraph();
 		}
 	}
+	
+	countGrp(grp : string){
+		return this.current_matrix.groups.filter((g)=>g==grp).length
+	}
+	openFile(file: string): Promise<any> {
+		return new Promise<any>((resolve, reject) => {
+			this.fileService.load(file).then((resp) => {
+				resolve(resp);
+			}).catch((err) => {
+				reject(err);
 
+			});
+		});
+	}
 }

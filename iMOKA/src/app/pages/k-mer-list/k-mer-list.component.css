@@ -2,6 +2,11 @@ table {
   width: 100%;
 }
 
+.file_name{
+		position: fixed;
+		padding: 15px;
+}
+
 .main-content {
 	height:80vh;
 	overflow-y :auto;

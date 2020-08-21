@@ -1,4 +1,6 @@
-<mat-tab-group dynamicHeight mat-align-tabs="center"> <mat-tab label="K-mer list">
+<span *ngIf="session && session.files" class="file_name">File <span >{{ session.files.kmers.file | long_str : 20}}</span></span>
+<mat-tab-group dynamicHeight mat-align-tabs="center"> 
+<mat-tab label="K-mer list">
 <div class="tab-container">
   <mat-card> <mat-card-content>
   <div fxLayout="column" fxLayoutGap="12px">

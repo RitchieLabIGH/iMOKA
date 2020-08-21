@@ -21,6 +21,8 @@ export class ElectronSymService implements IpcRenderer {
 			if (environment.default_profile) {
 				this._session.profile.process_config.current_profile = 0;
 				this._session.profile.process_config.profiles = [new Setting()];
+				this._session.profile.process_config.profiles[0].max_cpu=4;
+				this._session.profile.process_config.profiles[0].os="Interface development";
 				if (environment.debug.matrices ){
 					this._session.matrices=environment.debug.matrices; 
 				}

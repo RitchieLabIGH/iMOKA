@@ -5,8 +5,6 @@ export class Session {
     files : any={};
     matrices : Matrix[]=[];
 	last_kmer_table_request :  KmerDataTableOptions;
-	version : number;
-	stats : any[]=[];
 }
 
 export class Profile {
@@ -40,7 +38,7 @@ export class Setting {
     setting_name:string = "New setting";
     storage_folder : string= "~/iMOKA/";
 	original_image : string;
-	image_version : string;
+	image_version : string="v1.0";
 	singularity_version:string;
 	remote_image:boolean;
     username : string;
@@ -54,7 +52,8 @@ export class Setting {
     annotations : AnnotationConfiguration[];
 	os ? : string;
 	max_cpu ? :number;
-	update : boolean = false;
+	update ? : boolean = false;
+	
 }
 
 

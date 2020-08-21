@@ -9,7 +9,7 @@ export const environment : any = {
   defaultLanguage : "EN",
   default_profile : true,
   debug : {
-		files : possible_files[0] ,
+		files : possible_files[1] ,
 		queue : queue_example,
 		samples : samples_example[2],
 		matrices : matrices_example,
