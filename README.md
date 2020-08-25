@@ -6,6 +6,8 @@ iMOKA is a software that enables a comprehensive analysis of sequencing data fro
 ## How to use the software
  **The iMOKA_core and iMOKA_GUI are downlodable from the [Release page of GitHub](https://github.com/RitchieLabIGH/iMOKA/releases) in the assets section.**
  
+**Checkout the iMOKA video [presentation](https://youtu.be/KNrYGpEFm2k) and [tutorials](https://www.youtube.com/playlist?list=PLn1zt4v34Yz-AYvQRWc1QxwatYmXmWA3S)!**
+ 
 The core software is distributed as [Singularity](https://sylabs.io/singularity/) image and need as only dependency singularity version 3 or higher ( currently available only on Linux distributions). 
 The graphical user interface (GUI), that allows to visualize the results and to use the core software in local environment or in SLURM clusters, is a multiplatform application implemented using [Electron](https://www.electronjs.org/).
 
@@ -13,6 +15,12 @@ The graphical user interface (GUI), that allows to visualize the results and to 
 
 ## How to contribute
 The folders iMOKA_core and iMOKA contains the sources of the CLI and the GUI parts of the software, with dedicated README files, doxygen documentations (for the C++ component ) but, in case of doubt, don't hesitate to contact the maintainers.
+
+### Authors: 
+
+- Claudio Lorenzi <claudio.lorenzi@gmail.com>
+- Sylvain Barriere <sylvain.barriere@igh.cnrs.fr>
+
 
 ## Acknowledgment
 
@@ -32,10 +40,12 @@ This project is founded by the University of Montpellier (France) as part of the
 #### GUI:
 - igvteam ( igv.js ): https://github.com/igvteam/igv.js/
 - plotly ( plotly.js) : https://github.com/plotly/plotly.js/
+- ideogram : https://github.com/eweitz/ideogram
 - d3js :  https://github.com/d3
 - electron : https://www.electronjs.org/
 - angular : https://angular.io/
 - angular-material : https://material.angular.io/
+
 
 
 
