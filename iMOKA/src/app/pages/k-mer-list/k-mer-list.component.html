@@ -1,4 +1,4 @@
-<span *ngIf="session && session.files" class="file_name">File <span >{{ session.files.kmers.file | long_str : 20}}</span></span>
+<span *ngIf="session && session.files" class="file_name">Result <span >{{ getFileName(session.files.kmers.file) }}</span></span>
 <mat-tab-group dynamicHeight mat-align-tabs="center"> 
 <mat-tab label="K-mer list">
 <div class="tab-container">

@@ -149,7 +149,26 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		});
 	}
 
-
+	getFileName(){
+		if (this.session ){
+			let fname=this.session.files.kmers.file;
+			if ( fname.length > 20 ){
+				fname="..."+fname.substr(-20)
+			}
+			if (this.session.files.kmers.original_request){
+				let mat = this.session.matrices.find((mt)=>{return mt.uid == this.session.files.kmers.original_request})
+				if (mat){
+					return " matrix " + mat.name
+				} else {
+					return " file " + fname ; 
+				}
+			} else {
+				return " file " + fname;
+			}
+		} else {
+			return "";
+		}
+	}
 
 	loadKmerTracks() {
 		this.browser.loadTrack({ type: "kmers", source: this.trackService, request_type: "sequences", name: "Sequences", visibilityWindow: -1, groups: this.groups, predictors: this.predictors, onClick: (el: { query_index: any; }) => { this.showInfo(el.query_index, "sequences"); } });

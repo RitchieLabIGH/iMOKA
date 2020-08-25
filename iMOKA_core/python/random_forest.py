@@ -41,7 +41,6 @@ from sklearn.metrics import confusion_matrix
 from sklearn.preprocessing import normalize
 from sklearn.utils import class_weight
 from sklearn.decomposition import PCA
-from sklearn.model_selection import ShuffleSplit
 from sklearn.preprocessing import StandardScaler
 
 def plot(data, groups):
@@ -119,8 +118,9 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
             support[best]=True
             fi[best]=0
         ### Producing an example of tree built with the best features
+        seed= round(np.random.rand()*100000)
         tree= DecisionTreeClassifier(random_state=seed, class_weight="balanced", min_samples_split=0.05);
-        acc = np.mean(cross_validate(tree, values[:,support], Y, scoring="balanced_accuracy", cv=ShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus,  return_train_score=False)["test_score"] )
+        acc = np.mean(cross_validate(tree, values[:,support], Y, scoring="balanced_accuracy", cv=BalancedShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus,  return_train_score=False)["test_score"] )
         tree.fit(values[:,support], Y)
         tree_file= "{}_models/{}_tree_acc_{}.dot".format(file_output, i, acc)
         export_graphviz(tree,
@@ -146,7 +146,7 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
         ### 
         for m in models:
             print("Training {} ".format(m))
-            clf=GridSearchCV(models[m]["clf"], models[m]["parameters"], cv=ShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus, scoring="balanced_accuracy");
+            clf=GridSearchCV(models[m]["clf"], models[m]["parameters"], cv=BalancedShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus, scoring="balanced_accuracy");
             clf.fit(values[:,support], Y);
             print("Grid search found the following values:")
             print(clf.best_params_)
@@ -154,7 +154,7 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
             uaccuracies = []
             tmp_y_proba = cross_val_predict(clf.best_estimator_,values[:,support], Y,cv=cross_v, n_jobs=cpus, method="predict_proba")
             tmp_y_pred = np.argmax(tmp_y_proba, axis=1)
-            tmp_acc =  cross_validate(clf.best_estimator_, values[:,support], Y, scoring="balanced_accuracy", cv=ShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus,  return_train_score=True)
+            tmp_acc =  cross_validate(clf.best_estimator_, values[:,support], Y, scoring="balanced_accuracy", cv=BalancedShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus,  return_train_score=True)
             acc = np.mean( tmp_acc["test_score"])
             acc_train = np.mean(tmp_acc["train_score"] )
             models_acc.append({
@@ -167,7 +167,7 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
                 "best_parameters" : clf.best_params_
                 });
             if len(classnames) == 2:
-                models_acc[len(models_acc)-1]["roc"]=np.mean( cross_validate(clf.best_estimator_, values[:,support], Y, scoring="roc_auc", cv=ShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus, return_train_score=False)["test_score"])
+                models_acc[len(models_acc)-1]["roc"]=np.mean( cross_validate(clf.best_estimator_, values[:,support], Y, scoring="roc_auc", cv=BalancedShuffleSplit(n_splits=cross_v, test_size=perc_test), n_jobs=cpus, return_train_score=False)["test_score"])
                 print("Model {} processed. Accuracy: {:.2f} ( {:.2f} roc auc ) ".format(m, models_acc[len(models_acc)-1]["acc"],models_acc[len(models_acc)-1]["roc"] ))
             else :
                 print("Model {} processed. Accuracy: {:.2f} ".format(m, models_acc[len(models_acc)-1]["acc"]))
