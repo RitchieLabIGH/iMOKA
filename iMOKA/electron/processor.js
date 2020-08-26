@@ -978,6 +978,7 @@ class Processor {
 				ssh.execCommand("mkdir -p "+this.options.storage_folder + "/.singularity/ && realpath "+this.options.storage_folder).then((result)=>{
 					let promise;
 					if ( this.options.update ){
+						this.download_block=true;
 						if ( this.options.remote_image){
 							promise=ssh.execCommand("wget "+this.options.original_image+" -O "+this.options.storage_folder + "/.singularity/iMOKA").catch((err)=>{
 								console.log("Error copying the singularity image");
@@ -986,17 +987,31 @@ class Processor {
 						} else {
 							promise=ssh.putFile(this.options.original_image, this.options.storage_folder + "/.singularity/iMOKA").catch((err)=>{
 								console.log("Error copying the singularity image");
+								this.download_block=false;
 								this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Error copying the singularity image"})
 							});
 						}
-						this.mess.sendMessage({type : "action", action :"block", progress : -1 , message : "Downloading singularity image on "+this.options.ssh_address+". Don't close the software!"})
+						let block_download= ()=>{
+							if (this.download_block){
+								ssh.execCommand("ls -hs "+this.options.storage_folder + "/.singularity/iMOKA").then((res)=>{
+									this.mess.sendMessage({type : "action", action :"block", progress : -1 , message : "Downloading singularity image on "+this.options.ssh_address+": "+(res.stdout.split(" ")[0])})
+									setTimeout(block_download, 500)	
+								})
+										
+							}else {
+								this.mess.release(this.block_download_message)	
+							}
+						}
+						block_download();
 						promise.then((res)=>{
+							this.download_block=false;
 							if ( res.code == 0 ){
+								this.block_download_message="Image copied successfully!";
 								this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Image copied successfully!"})
 							} else {
+								this.block_download_message="Error copying the image";
 								this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Error copying the image", details : res.stderr})
 							}
-							
 						});
 					}
 					if (result.code != 0){

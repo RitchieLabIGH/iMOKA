@@ -22,6 +22,7 @@ export class NavComponent implements OnInit{
 	session: Session;
 	messages: Message[]=[];
 	hideAlert : boolean=true;
+	active_block: boolean = false;
 	init_message:string="Loading your profile...";
 	blocked : any;
 	constructor(private breakpointObserver: BreakpointObserver, private zone : NgZone, private uem: UemService,private alert: MatSnackBar,) {
@@ -41,6 +42,7 @@ export class NavComponent implements OnInit{
 					}
 					case "action" : {
 						if ( message.action == "block"){
+							this.active_block=true;
 							this.zone.run(()=>{
 								this.blocked=message;
 							})

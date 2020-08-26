@@ -8,14 +8,13 @@
 export OMP_NUM_THREADS=$SLURM_NTASKS
 threads=$SLURM_NTASKS
 
-export SINGULARITY_BINDPATH="/nfs/work/td/,/lustre/lorenzic/"
 
 
 module purge
 module load singularity/3.3
 
-imoka_img=$(realpath /lustre/lorenzic/iMOKA/.singularity/iMOKA )
-imoka_config=$(realpath /nfs/work/td/iMOKA_config.json)
+imoka_img=$(realpath ./iMOKA.img )
+imoka_config=$(realpath ./iMOKA_config.json)
 grep -f ../training.tsv ../../create_matrix.tsv > ./training_matrix.tsv
 grep -f ../test.tsv ../../create_matrix.tsv > ./test_matrix.tsv
 
