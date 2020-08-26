@@ -76,6 +76,11 @@
 				</mat-form-field>
 				</ng-container>
                 <mat-form-field fxFlex="15" >
+                  <mat-select [(ngModel)]="dtOptions.k_length" placeholder="k size" (openedChange)="! $event && refreshTable('search')" multiple>
+                    <mat-option *ngFor="let k of dtOptions.stats.k_len" [value]="k.value" >{{k.value}} ({{k.count }}) </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field fxFlex="15" >
                   <mat-label>Search</mat-label>
                   <input matInput [(ngModel)]="dtOptions.search.value"  >
                    <button mat-icon-button matSuffix (click)="refreshTable('search')">
@@ -131,7 +136,7 @@
 								</mat-list-item></mat-list></td>
 							</ng-container>
 							<ng-container matColumnDef="k_len">
-							<th mat-header-cell *matHeaderCellDef mat-sort-header>K size</th>
+							<th mat-header-cell *matHeaderCellDef mat-sort-header>k size</th>
 							<td mat-cell *matCellDef="let row">{{row.k_len}}</td>
 							</ng-container>
 							<ng-container matColumnDef="total_suffix">
@@ -228,9 +233,8 @@
 							[(ngModel)]="matrixName" placeholder="New matrix">
 						</mat-form-field>
 						<button mat-raised-button matLine (click)="createMatrix()" 
-							[disabled]="getSelectedNumber()==0 || ! matrixTag">
+							[disabled]="getSelectedNumber()==0 || ! matrixTag" [color]="getMatrixFeedback()[0]" title="{{getMatrixFeedback()[1]}}" >
 								Create a matrix</button>
-						<mat-error *ngIf="matrix_error_messages"><span *ngFor="let mex of matrix_error_messages">{{mex}}</span></mat-error>
 					</div>
 				</div>
 			</div>

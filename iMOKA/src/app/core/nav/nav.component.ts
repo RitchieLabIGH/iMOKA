@@ -49,17 +49,20 @@ export class NavComponent implements OnInit{
 							break;	
 						}
 						if (message.action == "release"){
-							if ( this.blocked ){
+							if ( this.blocked && this.active_block){
 								this.zone.run(()=>{
 									message.progress=100;
 									this.blocked = message;
+									this.active_block=false;
 								});	
 							}
 							setTimeout(()=>{
 								this.zone.run(()=>{
-									this.blocked = undefined;
+									if (! this.active_block){
+										this.blocked = undefined;	
+									}
 								})	
-							}, 500);
+							}, 1000);
 							break;
 						}
 					}

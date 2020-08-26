@@ -24,25 +24,24 @@ export class SamplesListComponent implements OnInit {
     session: Session;
     dataSource: SampleTableSource;
     bulk_mod: any;
-    
     bulk_mod_samples : string[];
     matrixTag : string;
     matrixName : string="New matrix";
     possibleTags : any;
-    matrix_error_messages : string[];
     dtOptions: any = {
-        displayedColumns: ["cbs", "name", "tags",  "edit", "info"],
+        displayedColumns: ["cbs", "name", "tags", "k_len", "edit", "info"],
         search: { value: "" },
         order: { name: 'name', asc: true },
         metadataKeyFilter: [],
         metadataKeyValFilter: {},
+		k_length : [],
         minCount: 0,
         pageSize: 10,
         pageIndex: 0,
         draw: 0,
         recordsTotal: 0,
         recordsFiltered: 0,
-        stats: {}
+        stats: {},
     };
 
     checked = {};
@@ -190,10 +189,14 @@ export class SamplesListComponent implements OnInit {
         this.zone.run(() => { this.cd.markForCheck() } );
     }
 
-    snackMessage({ title, message, opts }: { title: any; message:any; opts:any; }) {
+    snackMessage({ title, message, opts }: { title?: any; message?:any; opts?:any; }) {
+		if (! opts){
+			opts={duration : 2000};
+		}
         if ( !opts.duration ) {
             opts.duration = 2000;
         }
+		
         this.zone.run(() => {
             this.snack.open( title, message, opts );
         } )
@@ -252,9 +255,35 @@ export class SamplesListComponent implements OnInit {
             this.possibleTags=undefined;
         } 
     }
+
+	getMatrixFeedback() : string[]{
+		if ( ! this.dataSource || ! this.dataSource.samples){
+			return ["", ""]
+		}
+		let  k_len, sam, s_met;
+		for ( let i=0; i<this.dataSource.samples.length; i++ ){
+			sam=this.dataSource.samples[i]
+			if (this.checked[sam.name]){
+				if ( ! k_len){
+                   k_len = sam.k_len;
+               } else if ( k_len != sam.k_len) {
+                   return ["warn", "The size of the k-mer is not the same for all the selected samples"]
+               }
+				let s_met =sam.metadata.find((met)=>{return met.key == this.matrixTag});
+				if (! s_met){
+					return ["warn", "Sample "+sam.name+" doesn't contain the tag "+this.matrixTag]
+				}
+			}
+		}
+		return ["primary", "Create a matrix with the given tag"];
+	}
     
     createMatrix(){
-        this.matrix_error_messages = undefined;
+		let mf=this.getMatrixFeedback();
+		if (mf[0]!= "primary"){
+			this.snackMessage( { title: mf[1], message : "ERROR", opts:{} } ) ;
+			return;
+		}
         let matrix = new Matrix();
         let cmet=this.dtOptions.stats.metadata.find((met: { key: string; })=>{
            return met.key == this.matrixTag; 
@@ -285,7 +314,7 @@ export class SamplesListComponent implements OnInit {
            }
         });
         if ( messages.length > 0 ){
-            this.matrix_error_messages = messages;
+			this.snackMessage( { title: messages.join("\n"), message : "ERROR", opts:{} } ) ;
         } else {
             matrix.rescale_factor = 1e9;
             matrix.name = this.matrixName; 
@@ -293,11 +322,11 @@ export class SamplesListComponent implements OnInit {
                 this.snackMessage({ title: "Matrix " + matrix.name + " created successfully.", message: "SUCCESS", opts: {} });
             }).catch((err)=>{
                 if (err.message ){
-                    this.matrix_error_messages=[err.message];
+                    this.snackMessage( { title: err.message, message : "ERROR", opts:{} } ) ;
                 } else if ( typeof err == "string" ){
-                    this.matrix_error_messages=[err];
+					this.snackMessage( { title: err, message : "ERROR", opts:{} } )
                 } else {
-                    this.matrix_error_messages=[JSON.stringify(err)];
+					this.snackMessage( { title: JSON.stringify(err), message : "ERROR", opts:{} } )
                 }
                 
             });
