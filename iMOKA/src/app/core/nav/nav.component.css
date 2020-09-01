@@ -7,7 +7,9 @@
   overflow: hidden;
 }
 
-
+a {
+	font-weight: normal;
+}
 
 .sidenav .mat-toolbar {
   background: inherit;

@@ -7,6 +7,7 @@ import { InfoComponent, InfoData, InfoListElement } from '../../core/info/info.c
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { Session } from '../../interfaces/session';
 import { UemService } from '../../services/uem.service';
+import {SamplesService} from '../../services/samples.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -20,7 +21,7 @@ import { Subscription } from 'rxjs';
 export class OpenFilesComponent implements OnInit, OnDestroy {
 	constructor(private fileService: FileService,
 		private zone: NgZone, private uem: UemService,
-		private bottomSheet: MatBottomSheet,
+		private bottomSheet: MatBottomSheet, private sampleService : SamplesService,
 		private _snackBar: MatSnackBar, public dialog: MatDialog) {
 
 	};
@@ -29,6 +30,7 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 	subscription: Subscription;
 	status: any[];
 	new_name: string;
+	confirm_delete : any;
 	loading: boolean;
 	ngOnInit() {
 		this.subscription = this.uem.getSession().subscribe((new_session) => {
@@ -58,6 +60,12 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 						this.status.push({ ftype: k, des: ft.des });
 					}
 				})
+				let m_id= this.current_matrix ? this.session.matrices.findIndex((mat)=> {return mat.uid == this.current_matrix.uid}) : -1;
+				if ( m_id  ==-1){
+					this.current_matrix=undefined;
+				} else {
+					this.openExperiment(this.session.matrices[m_id]);
+				}
 				if ( ! this.current_matrix &&  this.session.matrices.length > 0 ){
 					this.openExperiment(this.session.matrices[0]);
 				}
@@ -127,6 +135,7 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 	}
 
 	showInfoMatrix() {
+		console.log(this.current_matrix)
 		let data = new InfoData("Information for the matrix " + this.current_matrix.name);
 		let infos = "<p><strong>UID </strong>: " + this.current_matrix.uid + "<br/>";
 		if (this.current_matrix.group_tag_key) {
@@ -145,14 +154,80 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 
 	closeFile(ftype: string) {
 		this.fileService.closeData(ftype).then((message) => {
+			console.log(message)
 		});
 	}
 	toastMessage(message: string, title: string) {
 		this._snackBar.open(message, title, { duration: 2000 })
 	}
 	
+	delete(what : string){
+      if ( this.confirm_delete == what){
+          this.sampleService.deleteMatrix(what).then((res)=>{
+              this.toastMessage(res.message, "SUCCESS");
+			  this.refresh();
+              this.confirm_delete=undefined;
+          }).catch((err)=>{
+              this.toastMessage(err.message, "ERROR");
+          });
+      } else {
+          this.confirm_delete=what;
+          this.toastMessage("You are going to delete this experiment and all \
+			the associated files. If you are sure, click delete again.", "WARNING");
+      }
+      
+  }
+	
 	refresh(){
 		this.uem.refreshSession();
+	}
+	
+	import(){
+		this.fileService.getFileName({title : "Select the zip file",properties : ['openFile'] , filters : [{name : "Compressed file" , extensions : ["zip"]}]  }).then((data_file)=>{
+			if (!data_file || data_file.canceled || data_file.filePaths.length != 1) {
+					this.toastMessage("Choose a file.", "Warning");
+					return;
+				} else {
+					this.fileService.importExperiment(data_file.filePaths[0]).then((resp: any) => {
+						if (resp.code == 0 ){
+							this.refresh();
+							let data = new InfoData("Experiment " +resp.message.name + " imported.");
+							resp.message.messages.forEach((mex)=>{
+								data.information_list.push(new InfoListElement(mex.title, mex.description, mex.message));	
+							})
+							this.zone.run(() => {
+								this.bottomSheet.open(InfoComponent, { data: data });
+							});
+						} else {
+							this.toastMessage(resp.message, "Error!" );
+						}
+						console.log(resp)
+					});
+				}
+		})
+	}
+	
+	export(){
+		let data = new InfoData("Export the experiment " + this.current_matrix.name);
+		let export_exp = function(args: any) {
+			args.that.fileService.getFileName({ title: "Save the experiment in this directory as "+ args.that.current_matrix.uid+".zip",buttonLabel : "Select", properties : ["createDirectory", "openDirectory"]  }).then((data_file:  any) => {
+				if (!data_file || data_file.canceled || data_file.filePaths.length != 1) {
+					args.that.toastMessage("Choose a directory with the Select button.", "Warning");
+					return;
+				} else {
+					args.that.fileService.exportExperiment(args.uid, data_file.filePaths[0], args.with_samples).then((resp: any) => {
+						console.log(resp)
+					});
+				}
+			});
+		}
+		data.information_list.push(new InfoListElement("Export only the results", undefined, export_exp, { with_samples : false, uid: this.current_matrix.uid, that: this, title: "Export" ,description:"Export the folder containing all the experiments, but not the samples. It can be imported in another environment using the dedicated button. The file name will be: "+ this.current_matrix.uid+".zip"  }));
+		if (! this.current_matrix.imported){
+			data.information_list.push(new InfoListElement("Export the results and the samples", undefined, export_exp, { with_samples : true, uid: this.current_matrix.uid, that: this, title: "Export" ,description:"Export the folder containing all the experiments and the samples. It can be imported in another environment using the dedicated button. The file name will be: "+ this.current_matrix.uid+".zip" }));	
+		}
+		this.zone.run(() => {
+			this.bottomSheet.open(InfoComponent, { data: data });
+		});	
 	}
 
 }

@@ -40,6 +40,22 @@ class iMokaBE extends EventEmitter {
 			throw "Processor not loaded";
 		}
 	}
+	
+	exportExperiment(request){
+		if (this.processor){
+			return this.processor.exportExperiment(request);
+		} else {
+			throw "Processor not loaded";
+		}
+	}
+	
+	importExperiment(request){
+		if (this.processor){
+			return this.processor.importExperiment(request);
+		} else {
+			throw "Processor not loaded";
+		}
+	}
 
 	runJob(request) {
 		if (this.processor ){
@@ -111,6 +127,8 @@ class iMokaBE extends EventEmitter {
 			})
 		}) ;
 	}
+	
+	
 	
 	
 	getKmerTable(request = {all : false, file_type : "matrix"} ) {
@@ -249,10 +267,16 @@ class iMokaBE extends EventEmitter {
 	updating_matrices= false;
 	
 	updateMatrices(){
+		
 		if ( ! this.updating_matrices ){
-			this.updating_matrices=true;
+			
 			 return new Promise((resolve, reject)=>{
 				if ( this.processor){
+					let time_from_last=(new Date()).getTime() - this.last_matrix_update
+					if ( typeof(this.last_matrix_update) != "undefined"  && time_from_last < 2000 ){  /// If elapsed less than 2 seconds, skip the update
+						resolve();
+					}
+					this.updating_matrices=true;
 					this.processor.getMatrices(true).then((matrices)=>{
 						matrices.sort((m1, m2)=>{return m1.name < m2.name ? -1 :1;});
 						if (this.user_session.data.files.kmers && this.user_session.data.files.kmers.original_request){
@@ -263,9 +287,19 @@ class iMokaBE extends EventEmitter {
 								}
 							});
 						}
-						this.user_session.data.matrices=matrices;
+						/// Cleanup of the aggregated info to reduce space
+						let matrices_copy =this.clone(matrices)
+						matrices_copy.forEach((mat)=>{ 
+							if (mat.aggregated){
+								delete mat.aggregated.count_normalization;
+								delete mat.aggregated.genes;
+								delete mat.aggregated.events;	
+							}
+						})
+						this.user_session.data.matrices=matrices_copy;
 						this.user_session.save();
 						this.updating_matrices = false;
+						this.last_matrix_update = (new Date()).getTime()
 						resolve()
 					}).catch((err)=>{
 						reject(err);
@@ -1221,6 +1255,7 @@ class iMokaBE extends EventEmitter {
 	
 	loadProfileFiles(){
 		return new Promise((resolve, reject)=>{
+			
 			this.updateMatrices().finally(()=>{
 				if (this.user_session.data.files ){
 					let promises=[];

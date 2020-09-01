@@ -81,10 +81,14 @@ class ClusterQueue {
 		});
 	}
 	
+	checkResSSH(res){
+		return res ? res.code == 0 || res.code == null : false;
+	}
+	
 	runJob(job){
 		return new Promise((resolve, reject)=>{
 			this.ssh.execCommand("mkdir -p "+job.wd).then((result)=>{
-				  if ( result.code != 0 ){
+				  if (! this.checkResSSH(result) ){
 					  reject(result)
 					  return;
 				  }
@@ -143,7 +147,7 @@ class ClusterQueue {
 		
 		let run_command = this.buildClusterCommand(job.command, job.job);
 		this.ssh.execCommand(run_command).then((result)=>{
-			if (result.code == 0 && result.stdout && result.stdout.length > 0 ){
+			if (this.checkResSSH(result) && result.stdout && result.stdout.length > 0 ){
 				job.uid = this.settings.parse_job_number(result.stdout);
 				this.current_queue.data.queue.push(job);
 				this.current_queue.save();
@@ -177,7 +181,7 @@ class ClusterQueue {
 				this.current_queue.data.queue.forEach((job)=>{
 					if ( ! job.completed || job.result == "No info"   ){
 						this.ssh.execCommand("cat "+job.job.wd+"runscript.sh.out && cat "+job.job.wd+"runscript.sh.err >&2" ).then((log)=>{
-							if ( log.code == 0  ){
+							if ( this.checkResSSH(log)  ){
 								job.stderr= log.stderr;
 								job.stdout = log.stdout;
 							} 

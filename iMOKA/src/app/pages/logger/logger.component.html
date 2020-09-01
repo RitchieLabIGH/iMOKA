@@ -1,7 +1,17 @@
 <div fxLayout="row wrap" class="main">
   <mat-card fxFlex="100%" *ngIf="session.profile.process_config.profiles[session.profile.process_config.current_profile]; let curr_profile">
     <mat-card-title>Jobs in the current profile
-    {{curr_profile.setting_name}} ( {{curr_profile.connection_type}} )</mat-card-title> <mat-card-content>
+    {{curr_profile.setting_name}} ( {{curr_profile.connection_type}} )</mat-card-title>
+    
+    <mat-card-content *ngIf="! ( dataSource?.all_queue  )" class="main-content">
+      <p>Loading your jobs, please wait...</p>
+    </mat-card-content>
+    
+    <mat-card-content *ngIf="dataSource?.all_queue?.length == 0" class="main-content">
+      <p>You haven't run any job yet.</p>
+    </mat-card-content>
+     
+    <mat-card-content *ngIf="dataSource?.all_queue?.length > 0 " class="main-content">
     <div>
       <button style="margin-right:1em;" mat-raised-button (click)="refreshTable()" >Refresh now</button>
       <mat-form-field>

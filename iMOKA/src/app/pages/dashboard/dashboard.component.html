@@ -45,8 +45,10 @@
   </div>
   </div>
   <div fxFlex>
+    <ng-container *ngIf="session.matrices.length > 0">
     <h3>Matrices information</h3>
-    <div fxLayout="row wrap" *ngIf="session.matrices.length > 0" class="main">
+    <div fxLayout="row wrap"  class="main">
+    
     <div fxFlex="50%" >
     <mat-card>
       <mat-card-content style="height : 250px;">
@@ -112,10 +114,7 @@
     </mat-card>
     </div>
     </div>
-    <mat-card *ngIf="session.matrices.length == 0">
-      <mat-card-title><h4>There are no matrices in your workspace</h4></mat-card-title>
-      <mat-card-content>You can create them in your <a routerLink="/dred">workspace</a> page or import the aggregated k-mer lists in the <a routerLink="/files">file manager</a> </mat-card-content>
-    </mat-card>
+    </ng-container>
   </div>
   
   </ng-container>

@@ -215,6 +215,7 @@ ipcMain.on("action" , (event, id, request) => {
     		action.then((res)=>{
     			win.webContents.send("action-"+request.id, { "message": res , code:0} );
     		}).catch((err)=>{
+				console.log(err)
     			win.webContents.send("action-"+request.id, { "message": err , code:1} );
     			mess.sendMessage({ "message": err, "type" : "error" } );
     		});
@@ -248,16 +249,20 @@ ipcMain.on("action" , (event, id, request) => {
 
 
 function getFile(arg){
-    if (! arg.defaultPath ){
+    if (typeof arg.defaultPath == "undefined" ){
         if ( ! store.get("lastDir") ){
             store.set("lastDir",  { path : app.getPath('home') } )
         }
         arg.defaultPath=store.get("lastDir").path;
     }
 	dialog.showOpenDialog(win, arg).then((response)=>{
-		console.log("Selected");
 	    if (! response.canceled &&  response.filePaths.length > 0 ) {
-	        let newpath = response.filePaths[0].substring(0,response.filePaths[0].lastIndexOf("\/")+1);
+			let newpath, full_path = response.filePaths[0];
+			if ( fs.existsSync(full_path) && fs.lstatSync(full_path).isDirectory() ){
+				newpath=full_path;
+			}else{
+				newpath = response.filePaths[0].substring(0,response.filePaths[0].lastIndexOf("\/")+1);
+			}
 	        store.set("lastDir", { path : newpath } )
 	    }
 		win.webContents.send("action-"+arg.id, response);
@@ -266,15 +271,15 @@ function getFile(arg){
 
 
 function getNewFile(arg) {
-    if (! arg.defaultPath ){
+	
+    if (typeof arg.defaultPath == "undefined" ){
+		console.log("ciao")
         if ( ! store.get("lastDir") ){
             store.set("lastDir",  { path : app.getPath('home') } )
         }
         arg.defaultPath=store.get("lastDir").path;
     }
-    console.log("Get new file recived")
     dialog.showSaveDialog(win, arg).then((fileName)=>{
-     	console.log("selected")
         if (! fileName.canceled) {
         	let newpath = fileName.filePath.substring(0,fileName.filePath.lastIndexOf("\/")+1);
         	store.set("lastDir", { path : newpath } )

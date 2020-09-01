@@ -2,12 +2,18 @@ const electron = require('electron');
 const fs = require('fs');
 const os = require('os');
 const node_ssh = require('node-ssh');
+var ncp = require('ncp').ncp;
+ncp.limit = 16;
+var path = require("path");
+
 const child_process = require('child_process');
 const { Observable } = require('rxjs');
 const iMOKA = require('./iMOKA.js')
 const rimraf = require("rimraf");
 const ClusterQueue = require("./clusterQueue.js");
 const SimCry = require("simple-crypto-js").default;
+const compressing = require('compressing');
+
 
 const secret_key="TwoNo7esShyOfAn0ct4ve";
 let imoka =new iMOKA();
@@ -164,21 +170,28 @@ class Processor {
 	deleteMatrix(matrix_uid){
 		return new Promise((resolve, reject)=>{
 			if ( this.isInit()){
-				let matrix_dir=this.options.storage_folder+"/experiments/"+matrix_uid;
+				let matrix_dir, muid_arr=matrix_uid.split(" ");
+				
+				if ( muid_arr.length == 1 ){
+					matrix_dir=this.options.storage_folder+"/experiments/"+matrix_uid;
+				} else {
+					if (muid_arr[1] == "RF"){
+						matrix_dir=this.options.storage_folder+"/experiments/"+muid_arr[0]+"/RF/"+muid_arr[2]+"*"
+					} else {
+						matrix_dir=this.options.storage_folder+"/experiments/"+muid_arr[0]+"/SOM/"+muid_arr[2]+"*"
+					}
+				}
+				
 				if (this.options.connection_type == 'local'){
-					if (fs.existsSync(matrix_dir) ){
-						rimraf(matrix_dir, (err)=>{ if (err ){
+						rimraf(matrix_dir, (err)=>{ if (err){
 							reject(err)
 						} else {
 							resolve("Matrix removed")
 						} } );
-					}else {
-						reject("Matrix not found!");
-					}
 				} else {
 					this.getSSH().then((ssh)=>{
-						ssh.execCommand("rm -fr "+matrix_dir).then((res)=>{
-							if (res.code == 0 ){
+						ssh.execCommand("ls "+matrix_dir+" && rm -fr "+matrix_dir).then((res)=>{
+							if ( this.checkResSSH(res) ){
 								resolve("Matrix removed")
 							} else {
 								reject(res.stderr)
@@ -253,7 +266,7 @@ class Processor {
 				this.mess.block({message : "Retrieving the remote SOM..."})
 				this.getSSH().then((ssh)=>{
 					ssh.execCommand("cat "+fname).then((res)=>{
-						if (res.code == 0){
+						if (this.checkResSSH(res)){
 							let mat=JSON.parse(res.stdout);
 							mat.file_name = fname;
 							resolve(mat);
@@ -283,7 +296,7 @@ class Processor {
 				this.mess.block({message : "Retrieving the remote Model..."})
 				this.getSSH().then((ssh)=>{
 					ssh.execCommand("cat "+model_file).then((res)=>{
-						if (res.code == 0){
+						if (this.checkResSSH(res)){
 							let mat=JSON.parse(res.stdout);
 							mat.file_name = model_file;
 							resolve(mat);
@@ -398,26 +411,26 @@ class Processor {
 			let matrix_dir=this.options.storage_folder+"/experiments/";
 			let res= await ssh.execCommand("mkdir -p "+matrix_dir+" && ls -l "+matrix_dir +" | awk '/^d/ {print $NF}'");
 			this.matrices=[];
-			if (res.code == 0 && res.stdout.length > 1){
+			if (this.checkResSSH(res) && res.stdout.length > 1){
 				let muids= res.stdout.split("\n"), muid;
 				for (let i=0; i<muids.length; i++){
 					muid=muids[i];
 					let res = await ssh.execCommand("cat "+matrix_dir+"/"+muid+"/matrix.json");
-					if (res.code == 0 && res.stdout.length > 0){
+					if (this.checkResSSH(res) && res.stdout.length > 0){
 						let curr_matrix = JSON.parse(res.stdout);
 						res = await ssh.execCommand("cat "+matrix_dir+"/"+muid+"/reduced.matrix.json");
-						if (res.code == 0 && res.stdout.length > 0){
+						if (this.checkResSSH(res) && res.stdout.length > 0){
 							curr_matrix.reduced = JSON.parse(res.stdout)
 						}
 						res = await ssh.execCommand("cat "+matrix_dir+"/"+muid+"/aggregated.info.json");
-						if ( res.code == 0 && res.stdout.length > 0 ){
+						if ( this.checkResSSH(res) && res.stdout.length > 0 ){
 							curr_matrix.aggregated = JSON.parse(res.stdout);
 						}
 						let mod_dir=matrix_dir+muid+"/RF/";
 						let cmd="mkdir -p "+mod_dir+" && ls -l "+mod_dir+"*.info.json | awk '{n=split($NF, arr, \"/\"); getline line < $NF;  print arr[n] \"\t\" line}' ";
 						res = await ssh.execCommand(cmd)
 						curr_matrix.models = [];
-						if (res.code == 0 && res.stdout.length > 0 ){
+						if (this.checkResSSH(res) && res.stdout.length > 0 ){
 							let mods = res.stdout.split("\n");
 							mods.forEach((frf)=>{
 								if ( frf.length > 0 ){
@@ -432,7 +445,7 @@ class Processor {
 						cmd="mkdir -p "+mod_dir+" && ls -l "+mod_dir+"*.info.json | awk '{n=split($NF, arr, \"/\"); getline line < $NF;  print arr[n] \"\t\" line}' ";
 						res = await ssh.execCommand(cmd)
 						curr_matrix.som = [];
-						if (res.code == 0 && res.stdout.length > 0 ){
+						if (this.checkResSSH(res) && res.stdout.length > 0 ){
 							let mods = res.stdout.split("\n");
 							mods.forEach((fsom)=>{
 								if ( fsom.length > 0 ){
@@ -458,6 +471,337 @@ class Processor {
 			throw e
 		}
 	}
+	
+	
+	async importExperiment(request){
+		let experiments = []
+		try {
+			if ( this.options.connection_type == 'local' ){
+				let base_folder=this.options.storage_folder+"/extraction/", res;
+				if ( fs.existsSync(base_folder)){
+					this.mess.block("Found another extraction process incompleted. Removing the folder...")
+					res = await new Promise((resolve, reject) =>{
+						rimraf(base_folder, (err)=>{if ( err ){reject(err);} else {resolve()}});
+					})
+				}
+				this.mess.block("Uncompressing the folder")
+				fs.mkdirSync(base_folder)
+				res = await compressing.zip.uncompress(request.input_file, base_folder )
+				if (res) { throw res }
+				let folder_names = fs.readdirSync(base_folder), exp_folder=this.options.storage_folder+"/experiments/", sam_folder=this.options.storage_folder+"/samples/";
+				let current_folders= fs.readdirSync(exp_folder);
+				console.log(current_folders)
+				for ( let  exp_n=0;exp_n < folder_names.length ; exp_n++ ){
+					let exp=folder_names[exp_n]
+					this.mess.block("Processing "+exp)
+					let exp_m = {title : exp, message : [] , description : "" };
+					
+					if ( current_folders.includes(exp)){
+						exp_m.message.push("ERROR! An experiment with the UID "+exp+ " exists already in your data space.")
+						exp_m.description="Already exists."
+					} else {
+						let files= fs.readdirSync(base_folder+"/"+exp )
+						console.log(files)
+						if ( files.includes("samples")){
+							exp_m.description = "Experiment with samples"
+							let new_samples = fs.readdirSync(base_folder+"/"+exp +"/samples/" ),current_samples = fs.readdirSync(sam_folder);
+							let success=0;
+							for ( let i=0; i< new_samples.length; i++){
+								let sam=new_samples[i];
+								if ( current_samples.includes(sam)){
+									exp_m.message.push("Sample "+sam+" already exists. It has not been imported.")
+								} else {
+									let sam_meta=base_folder+"/"+exp +"/samples/"+sam+"/"+sam+".metadata.json";
+									let mat = JSON.parse(fs.readFileSync(sam_meta));
+									mat.count_file = sam_folder+"/"+sam+"/"+sam+".tsv.sorted.bin";
+									fs.writeFileSync(sam_meta, JSON.stringify(mat));
+									fs.renameSync(base_folder+"/"+exp +"/samples/"+sam+"/", sam_folder+"/"+sam+"/")
+									success+=1;
+								}
+							}
+							exp_m.message.push("Imported "+success+" samples.");
+							res = await new Promise((resolve, reject) =>{
+								rimraf(base_folder+"/"+exp+"/samples/", (err)=>{if ( err ){reject(err);} else {resolve()}});
+							});
+						} else {
+							exp_m.description = "Experiment without samples"
+						}
+						let mat = JSON.parse(fs.readFileSync(base_folder+"/"+exp+"/matrix.json"));
+						if ( ! mat.imported ){
+							let current_samples = fs.readdirSync(sam_folder),  missing=[];
+							for (let i=0; i< mat.names.length ; i++){
+								let mat_name=mat.names[i];
+								if (current_samples.includes(mat_name)){
+									mat.count_files[i]= sam_folder+"/"+mat_name+"/"+mat_name+".tsv.sorted.bin";
+								} else {
+									missing.push(mat_name);
+								}
+							}
+							if (missing.length > 0) {
+								mat.imported = true;
+								if ( exp_m.description != "Experiment without samples"){
+									exp_m.message.push("Missing samples: "+missing.join(", "));	
+								}
+							} else {
+								if ( exp_m.description != "Experiment without samples"){
+									exp_m.message.push("All samples imported correctly.");
+								}
+							}
+						}
+						fs.writeFileSync(base_folder+"/"+exp+"/matrix.json", JSON.stringify(mat));
+						fs.renameSync(base_folder+"/"+exp, exp_folder+"/"+exp)
+					}
+					experiments.push(exp_m);
+				}
+				if ( fs.existsSync(base_folder)){
+					res = await new Promise((resolve, reject) =>{
+						rimraf(base_folder, (err)=>{if ( err ){reject(err);} else {resolve()}});
+					})
+				}
+			} else {
+				let base_folder=this.options.storage_folder+"/extraction/", res , sam_folder=this.options.storage_folder+"/samples/";
+				let ssh = await this.getSSH();
+				this.mess.block("Copying the file...")
+				await ssh.putFile(request.input_file, this.options.storage_folder+"/tmp.zip")
+				this.mess.block("Extracting the file")
+				res =  await  ssh.execCommand("rm -fr "+base_folder+" && mkdir -p "+base_folder+" && unzip "+this.options.storage_folder+"/tmp.zip -d "+base_folder+" && rm "+this.options.storage_folder+"/tmp.zip");
+				if ( ! this.checkResSSH(res) ) throw res.stderr;
+				res = await ssh.execCommand("ls "+base_folder)
+				if ( ! this.checkResSSH(res) ) throw res.stderr;
+				let folders = res.stdout.split("\n");
+				let current_folders= (await ssh.execCommand("ls "+this.options.storage_folder+"/experiments/")).stdout.split("\n");
+				for ( let exp_n=0 ; exp_n < folders.length; exp_n++){
+					let exp = folders[exp_n];
+					this.mess.block("Processing "+exp)
+					let exp_m = {title : exp, message : [] , description : "" };
+					if ( current_folders.includes(exp)){
+						exp_m.message.push("ERROR! An experiment with the UID "+exp+ " exists already in your data space.")
+						exp_m.description="Already exists."
+					} else {
+						let files= (await ssh.execCommand("ls "+base_folder+"/"+exp+"/" )).stdout.split("\n")
+						console.log(files)
+						if ( files.includes("samples")){
+							exp_m.description = "Experiment with samples"
+							let new_samples = (await ssh.execCommand("ls "+base_folder+"/"+exp+"/samples/ ")).stdout.split("\n").filter((f)=>{return f.length > 1;}),
+							 current_samples = (await ssh.execCommand("ls "+sam_folder)).stdout.split("\n").filter((f)=>{return f.length > 1;});
+							let success=0;
+							for ( let i=0; i< new_samples.length; i++){
+								let sam=new_samples[i];
+								if ( current_samples.includes(sam)){
+									exp_m.message.push("Sample "+sam+" already exists. It has not been imported.")
+								} else {
+									let sam_meta=base_folder+"/"+exp +"/samples/"+sam+"/"+sam+".metadata.json";
+									let mat = JSON.parse((await ssh.execCommand("cat "+sam_meta)).stdout) ;
+									mat.count_file = sam_folder+"/"+sam+"/"+sam+".tsv.sorted.bin";
+									res= await ssh.execCommand("echo '"+JSON.stringify(mat)+"' > "+sam_meta);
+									if ( ! this.checkResSSH(res) ) throw res.stderr;
+									res = await ssh.execCommand("mv "+base_folder+"/"+exp+"/samples/"+sam+"/ "+sam_folder+"/"+sam+"/")
+									if ( ! this.checkResSSH(res) ) throw res.stderr;
+									success+=1;
+								}
+							}
+							exp_m.message.push("Imported "+success+" samples.");
+							res = await ssh.execCommand("rm -fr "+base_folder+"/"+exp+"/samples/" )
+							if ( ! this.checkResSSH(res) ) throw res.stderr;
+						} else {
+							exp_m.description = "Experiment without samples"
+						}
+						res = (await ssh.execCommand("cat "+base_folder+"/"+exp+"/matrix.json"))
+						if ( ! this.checkResSSH(res) ) throw res.stderr;
+						let mat = JSON.parse(res.stdout);
+						if ( ! mat.imported ){
+							let current_samples = (await ssh.execCommand("ls "+sam_folder)).stdout.split("\n").filter((f)=>{return f.length > 1;}),  missing=[];
+							for (let i=0; i< mat.names.length ; i++){
+								let mat_name=mat.names[i];
+								if (current_samples.includes(mat_name)){
+									mat.count_files[i]= sam_folder+"/"+mat_name+"/"+mat_name+".tsv.sorted.bin";
+								} else {
+									missing.push(mat_name);
+								}
+							}
+							if (missing.length > 0) {
+								mat.imported = true;
+								if ( exp_m.description != "Experiment without samples"){
+									exp_m.message.push("Missing samples: "+missing.join(", "));	
+								}
+							} else {
+								if ( exp_m.description != "Experiment without samples"){
+									exp_m.message.push("All the samples associated with the matrix are present.");
+								}
+							}
+						}
+						res= await ssh.execCommand("echo '"+JSON.stringify(mat)+"' > "+base_folder+"/"+exp+"/matrix.json");
+						if ( ! this.checkResSSH(res) ) throw res.stderr;
+						res = await ssh.execCommand("mv "+base_folder+"/"+exp+"/ "+this.options.storage_folder+"/experiments/"+exp+"/")
+						if ( ! this.checkResSSH(res) ) throw res.stderr;
+					}
+					experiments.push(exp_m);
+				}
+				res = await ssh.execCommand("rm -fr "+base_folder);
+				if ( ! this.checkResSSH(res) ) throw res.stderr;
+			}
+			this.mess.release("Done!")
+			return {code : 0 , name : request.input_file , messages : experiments};
+		} catch (err){
+			console.log(err);
+			this.mess.release("Error! " + JSON.stringify(err))
+			throw err;
+		}
+		
+	}
+	
+	exportExperiment(request){
+		return new Promise((resolve, reject)=>{
+			let uid= request.experiment_uid;
+			let in_dir=this.options.storage_folder+"/experiments/"+uid, out_file= request.folder+"/"+uid+".zip";
+			if (fs.existsSync(out_file)) {
+				reject("The file "+out_file+" already exists.")
+				return;	
+			}
+			this.mess.block("Starting the export ")
+			if ( this.options.connection_type == 'local' ){
+				let rm_dir_after = false;
+				let preprocess = new Promise((resolv, rej)=>{
+					if ( request.with_samples ){
+						fs.mkdirSync(this.tmp_dir+"/"+uid)
+						rm_dir_after=true;
+						ncp(in_dir, this.tmp_dir+"/"+uid, (err)=>{
+							console.log(err)
+							if(err){
+								rej(err)
+							} else {
+								let matrix=  this.matrices.find((mat)=>{return mat.uid == uid}), sam;
+								console.log(matrix)
+								fs.mkdirSync(this.tmp_dir+"/"+uid+"/samples/");
+								for ( let idx=0; idx < matrix.names.length; idx++){
+									sam=matrix.names[idx];
+									fs.mkdirSync(this.tmp_dir+"/"+uid+"/samples/"+sam+"/");	
+									fs.symlinkSync( this.options.storage_folder+"/samples/"+sam+"/"+sam+".tsv.sorted.bin" , this.tmp_dir+"/"+uid+"/samples/"+sam+"/"+sam+".tsv.sorted.bin")
+									fs.symlinkSync( this.options.storage_folder+"/samples/"+sam+"/"+sam+".metadata.json" , this.tmp_dir+"/"+uid+"/samples/"+sam+"/"+sam+".metadata.json")
+								}
+								resolv(this.tmp_dir+"/"+uid);		
+							}
+						})
+					}else{
+						resolv(in_dir);	
+					}
+				});
+				preprocess.then((dir_to_compress)=>{
+				this.compressLocalFolder(dir_to_compress, out_file).then((res)=>{
+					if (rm_dir_after){
+						rimraf(dir_to_compress, (err)=>{
+							if ( err ){
+								console.log(err)
+								this.mess.release("Error removing the directory! "+err)
+								reject(err)
+							}else{
+								this.mess.release("Done!")
+								resolve(res)
+							}				
+						}); 
+					} else {
+						this.mess.release("Done!")
+						resolve(res)
+					}
+					}).catch((err)=>{this.mess.release("Error compressing the directory! "+err);reject(err);})
+				}).catch((err)=>{this.mess.release("Error preprocessing the directory! "+err);reject(err)});			
+			} else {
+				this.exportRemoteExperiment(uid,  out_file,  request.with_samples ).then((res)=>{
+					this.mess.release("Done!")
+					resolve(res)
+				}).catch((err)=>{
+					this.mess.release("Error!")
+					reject(err);
+				})
+			}
+		})
+	}
+	
+	
+	async exportRemoteExperiment(uid, out_file, with_samples){
+		let ssh = await this.getSSH();
+		
+		if ( with_samples){
+			let matrix= this.matrices.find((mat)=>{return mat.uid == uid});
+			let res = await ssh.execCommand("cp -r "+this.options.storage_folder+"/experiments/"+uid+" "+this.options.storage_folder+"/" );
+			if (! this.checkResSSH(res)){
+				throw res.stderr;
+			}
+			let samples_folder=this.options.storage_folder+"/samples/", tmp_folder=this.options.storage_folder+"/"+uid+"/samples/";
+			let sam;
+			
+			for ( let idx=0; idx < matrix.names.length; idx++){
+				sam=matrix.names[idx];
+				res = await ssh.execCommand("mkdir -p "+tmp_folder+sam+" && ln -s "+samples_folder+sam+"/"+sam+".metadata.json "+samples_folder+sam+"/"+sam+".*.bin "+tmp_folder+sam+"/ ");
+				if (! this.checkResSSH(res)){
+					throw res.stderr;
+				}
+			}
+			this.mess.block("Compressing the folder. This might take a while, take a break :)")
+			res= await ssh.execCommand("cd "+this.options.storage_folder+" && zip -n bin -r ./"+uid+".zip ./"+uid)
+			if (! this.checkResSSH(res)){
+				throw res.stderr;
+			}
+			res = await ssh.execCommand("rm -fr "+this.options.storage_folder+"/"+uid)
+			if (! this.checkResSSH(res)){
+				throw res.stderr;
+			}
+			
+		} else {
+			this.mess.block("Compressing the folder...")
+			let res= await ssh.execCommand("cd "+this.options.storage_folder+"/experiments && zip -r ../"+uid+".zip ./"+uid)
+			if (! this.checkResSSH(res)){
+				throw res.stderr;
+			}
+		}
+		this.mess.block("Downloading...")
+		await ssh.getFile(out_file, this.options.storage_folder+"/"+uid+".zip");
+		await ssh.execCommand("rm "+ this.options.storage_folder+"/"+uid+".zip");
+		return;	
+	}
+	
+	compressLocalFolder(dir_to_compress, out_file){
+		return new Promise((resolve, reject)=>{
+			console.log(dir_to_compress)
+			this.mess.block("Compressing the folder...")
+			compressing.zip.compressDir(dir_to_compress, out_file).catch(err=>{
+					console.log(err)
+					this.mess.release("Error compressing the directory! "+err)
+					reject(err)
+				}).then(()=>{
+					this.mess.release("Folder successfully compressed to "+out_file)
+					resolve("Folder successfully compressed to "+out_file)	
+			});	
+		});
+	}
+	
+	getRemoteFolder(remote_path, local_path){
+		return new Promise((resolve, reject)=>{
+			let processing={ok: 0, err : 0};
+			this.getSSH().then((ssh)=>{
+					ssh.getDirectory(local_path, remote_path, {recursive : true, tick : (pA, pB, error)=>{
+						if ( error ){
+							processing.err+=1
+						} else {
+							processing.ok+=1
+						}
+						this.mess.block("Copying files: " + processing.ok+" ( "+processing.err+" failed )");
+					}}).catch((err)=>{
+						reject(err)
+					}).then((res)=>{
+						if (res){
+							this.mess.release("Folder copied.")
+							resolve(local_path)
+						} else {
+							this.mess.release("Error copying the directory "+remote_path+" to "+local_path)
+							reject("Error copying the directory "+remote_path+" to "+local_path)
+						}
+						
+					});
+				});
+		})
+		
+	}
 
 	importKmerList(request){
 		return new Promise((resolve, reject)=>{
@@ -477,7 +821,7 @@ class Processor {
 					ssh.execCommand("mkdir -p "+mat_dir).catch((err)=>{
 						reject(err)
 					}).then((res)=>{
-						if (res.code == 0){
+						if (this.checkResSSH(res)){
 							fs.writeFileSync(this.tmp_dir+"/matrix.json", JSON.stringify(new_matrix));
 							fs.writeFileSync(this.tmp_dir+"/aggregated.info.json", JSON.stringify(agg));
 							this.mess.block({ message : "Importing "+new_matrix.name})
@@ -521,7 +865,7 @@ class Processor {
 							ssh.execCommand("mkdir -p "+mat_dir).catch((err)=>{
 								reject(err);
 							}).then((res)=>{
-								if (res.code != 0 ){
+								if (! this.checkResSSH(res)){
 									reject(res.stderr)
 								}else {
 									fs.writeFileSync(this.tmp_dir+"/tmp_matrix.json", JSON.stringify(matrix));
@@ -545,11 +889,16 @@ class Processor {
 		});
 	}
 	
+	
+	
+	
 	async getRemoteFile(file, des_file){
 		let ssh = await this.getSSH();
 		let res = await ssh.getFile(des_file, file);
 		return res;
 	}
+
+	
 
 	async setSampleRemote(ssh, samples){
 		
@@ -559,7 +908,7 @@ class Processor {
 			sam = samples[i];
 			sample_dir = this.options.storage_folder+"/samples/"+sam.name;
 			res = await ssh.execCommand("ls "+sample_dir)
-			if (res.code != 0 || res.stderr.length > 1){
+			if (! this.checkResSSH(res)){
 				throw res.stderr
 			} 
 			sam.predictions = undefined;
@@ -674,7 +1023,7 @@ class Processor {
 		try {
 		let samples= [], samples_dir = this.options.storage_folder+"/samples/";
 		let res = await ssh.execCommand("mkdir -p "+samples_dir+" && ls -l "+samples_dir+" | awk '/^d/ {print $NF}' ")
-		if ( res.code == 0 ){
+		if (this.checkResSSH(res) ){
 			let files=res.stdout.split("\n").filter((fname)=>{return fname.length > 0});
 			this.mess.block({message : "Retrieving remote samples 0/"+files.length, progress : 0})
 			let meta = await ssh.execCommand("cat "+samples_dir+"/*/*.metadata.json")
@@ -695,7 +1044,7 @@ class Processor {
 					let fname=samples_dir+s_dir+"/"+s_dir+".json", sample;
 					sample = {name : s_dir, libType : "NA", minCount : "NA", metadata : [], source : [], message : "In process"}
 					res = await ssh.execCommand("[[ -f "+fname+" ]] &&  cat "+fname)
-					if ( res.code == 0 && res.stdout.length > 1){
+					if ( this.checkResSSH(res) && res.stdout.length > 1){
 						let tmp_j = JSON.parse(res.stdout);
 						let oSample = samples.find((s)=>{
 							return s.name == sample.name; 
@@ -710,7 +1059,7 @@ class Processor {
 						sample.message = "Imported";
 						fname=samples_dir+"/"+s_dir+"/fastqc/"+s_dir+"_fastqc.html"
 						res = await ssh.execCommand("[[ -f "+fname+" ]] && ls "+fname)
-						if (res.code == 0 &&  res.stdout.length > 1){
+						if (this.checkResSSH(res) &&  res.stdout.length > 1){
 							sample.fastqc = "remote://"+fname;
 						}
 						
@@ -934,7 +1283,7 @@ class Processor {
 			if (this.ssh){
 				resolve(this.ssh)
 			} else {
-				let ssh = new node_ssh(), ssh_prom;
+				let ssh = new node_ssh.NodeSSH(), ssh_prom;
 				if ( this.options.ssh_auth == "UsernamePassword"){
 					if (! this.options.username ) throw "Username not given";
 					if (! this.options.ssh_address ) throw "Host address not given";
@@ -1005,7 +1354,7 @@ class Processor {
 						block_download();
 						promise.then((res)=>{
 							this.download_block=false;
-							if ( res.code == 0 ){
+							if ( this.checkResSSH(res) ){
 								this.block_download_message="Image copied successfully!";
 								this.mess.sendMessage({type : "action", action :"release", progress : -1 , message : "Image copied successfully!"})
 							} else {
@@ -1014,7 +1363,7 @@ class Processor {
 							}
 						});
 					}
-					if (result.code != 0){
+					if (!this.checkResSSH(res)){
 						reject(result.stderr);
 						return;
 					}
@@ -1027,7 +1376,7 @@ class Processor {
 							result_promise = ssh.execCommand("singularity --version");
 						}
 						result_promise.then((result)=>{
-							if ( result.code != 0 ){
+							if ( ! this.checkResSSH(result) ){
 								reject(result.stderr)
 							};
 							if (this.checkSingularityVersion(result.stdout)) {
@@ -1132,7 +1481,7 @@ class Processor {
 							this.removeLocalFile(local_file);
 							let cluster_command=this.buildClusterCommand(remote_script, job_opts);
 							ssh.execCommand( cluster_command ).then((response)=>{
-								if (response.code == 0 ){
+								if (this.checkResSSH(response)){
 									let job_n = this.getJobNumber(response.stdout);
 									this.observeJob(job_n, remote_script).subscribe(observer);
 								} else {
@@ -1160,7 +1509,7 @@ class Processor {
 				let command=setting["check_job"]+job_n;
 				let tick= function() {
 					ssh.execCommand(command).then((response)=>{
-						if (response.code == 0){
+						if (this.checkResSSH(response)){
 							let result = setting.parse_jobs(response.stdout);
 							if ( result ){
 								observer.next(result[0]);
@@ -1237,6 +1586,10 @@ class Processor {
 		content+="export SINGULARITY_BINDPATH=\""+this.options.storage_folder+",$SINGULARITY_BINDPATH\"\n"
 		content+=command +"\n";
 		return content;
+	}
+	
+	checkResSSH(res){
+		return res ? res.code == 0 || res.code == null : false;
 	}
 
 }

@@ -1,7 +1,12 @@
 		<mat-card> 
 		<mat-card-title>
 			Samples List
-		</mat-card-title><mat-card-content>
+		</mat-card-title>
+        <mat-card-content *ngIf="! (dataSource?.samples?.length > 0)">
+          <p>Your data space is empty.</p>
+          <button mat-raised-button (click)="newSample()">Add a new sample</button>
+        </mat-card-content>
+        <mat-card-content *ngIf="dataSource?.samples?.length > 0">
 		<div *ngIf="bulk_mod" fxLayout="column" fxLayoutGap="32px"
 			fxLayoutAlign="flex-start">
 			<div fxFlex>

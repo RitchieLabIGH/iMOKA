@@ -39,7 +39,7 @@ class LocalQueue {
 			this.current_queue.data.running.forEach((job)=>{
 				if ( job.job.uid == uid) {
 					done=true;
-					child_process.execSync("echo \"###KILLED\" >> "+this.locker + "/" + job.job.uid+".err && kill -9 "+job.pid);
+					child_process.execSync("echo \"###KILLED\" >> "+this.locker + "/" + job.job.uid+".err && kill -9 -"+job.pid);
 				}
 			});
 			if ( ! done ){

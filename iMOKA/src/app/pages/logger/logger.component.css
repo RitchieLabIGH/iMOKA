@@ -20,4 +20,6 @@ table {
 	padding: 15px;
 }
 
-
+.main-content {
+	min-height:80vh; 
+}

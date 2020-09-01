@@ -8,6 +8,12 @@ body {
 	font-family: Roboto, "Helvetica Neue", sans-serif; 
 }
 
+a {
+	  text-decoration: none;
+	  color : "#3F51B5";
+	  font-weight: bold;
+}
+
 .container {
 	padding : 15px 30px 15px 30px;
 }
@@ -165,3 +171,7 @@ div.row {
   margin:0 auto;
 }
 
+.push-right{
+	position: absolute !important;
+	right:0;
+}

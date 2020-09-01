@@ -38,7 +38,7 @@ export class NavComponent implements OnInit{
 			if (message && this.session ) {
 				switch (message.type) {
 					case "alert": {
-						this.alert.open(message.message, "Warning", { duration: 2000 })
+						this.alert.open(message.message, "Message", { duration: 5000 })
 					}
 					case "action" : {
 						if ( message.action == "block"){
@@ -62,13 +62,13 @@ export class NavComponent implements OnInit{
 										this.blocked = undefined;	
 									}
 								})	
-							}, 1000);
+							}, this.blocked && this.blocked.length > 10 ? 3000 : 1000);
 							break;
 						}
 					}
 					default: {
 						this.messages.push(message)
-						this.showAlert(typeof message.message == "string" ? message.message : JSON.stringify(message.message), message.title ? message.title : "Warning!");
+						this.showAlert(typeof message.message == "string" ? message.message : JSON.stringify(message.message), message.title ? message.title : "Message");
 					}
 				}
 			} else {

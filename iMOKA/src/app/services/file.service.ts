@@ -38,7 +38,7 @@ export class FileService {
             this.ipc.send("action", id, openDialogPropriety  );
         } );
     }
-    async getNewFile(openDialogPropriety) {
+    async getNewFile(openDialogPropriety:any) {
         var id=this.requests;
         this.requests+=1;
         openDialogPropriety.action = "getNewFile";
@@ -61,6 +61,29 @@ export class FileService {
             this.ipc.send("action",id,  { action : "saveKmerTable" , file : file_name, id :id, file_type : file_type });
         } );
     }
+
+	async exportExperiment(uid: string, output_folder : string, with_samples : boolean){
+		var id=this.requests;
+        this.requests+=1;
+        return new Promise<string>(( resolve, reject ) => {
+            this.ipc.once( "action-"+id, ( event, arg ) => {
+                resolve( arg );
+            } );
+            this.ipc.send("action",id,  { action : "exportExperiment" , folder : output_folder, id :id, experiment_uid : uid ,with_samples: with_samples});
+        } );
+	}
+	
+	async importExperiment(input_file:string){
+		var id=this.requests;
+        this.requests+=1;
+        return new Promise<string>(( resolve, reject ) => {
+            this.ipc.once( "action-"+id, ( event, arg ) => {
+                resolve( arg );
+            } );
+            this.ipc.send("action",id,  { action : "importExperiment" , input_file: input_file});
+        } );
+	}
+
     async load( file: string, ft:string = "deprecated") {
         var id = this.requests;
         this.requests += 1;

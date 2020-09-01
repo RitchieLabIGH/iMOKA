@@ -1,108 +1,104 @@
-		<mat-card> 
-		<mat-card-title>
-		K-mer Matrices 
-		</mat-card-title> <mat-card-content>
-		<div fxLayout="column">
-		<div fxFlex>
-			<div  class="mat-elevation-z6 table-container">
-				
-			<table mat-table matSort (matSortChange)="refreshTable($event)"
-							[dataSource]="matrixSource">
-							<ng-container matColumnDef="name">
-							<th mat-header-cell *matHeaderCellDef mat-sort-header>
-								Sample name</th>
-							<td mat-cell *matCellDef="let row" title="UID: {{row.uid}}">
-								<mat-form-field >
-									<input matInput [(ngModel)]="row.name" [disabled]="! modName[row.uid]">
-									<button matSuffix  mat-button *ngIf="! modName[row.uid]" title="modify the name" (click)="modName[row.uid]=row.name" ><mat-icon>edit</mat-icon></button>
-									<button matSuffix mat-button *ngIf="modName[row.uid]" title="save the modification"  (click)="saveRowName(row.uid);" ><mat-icon>save</mat-icon></button>
-									<button matSuffix mat-button *ngIf="modName[row.uid]" title="cancel the modification" (click)="row.name=modName[row.uid];modName[row.uid]=undefined; " ><mat-icon>undo</mat-icon></button>
-								</mat-form-field>
-							 </td>
-							</ng-container>
-							<ng-container matColumnDef="tag">
-							<th mat-header-cell *matHeaderCellDef>Reference tag</th>
-							<td mat-cell *matCellDef="let row"><ng-container  *ngIf="row.imported">-</ng-container><ng-container  *ngIf="! row.imported">{{row.group_tag_key}}</ng-container></td>
-							</ng-container>
-							<ng-container matColumnDef="groups">
-							<th mat-header-cell *matHeaderCellDef >groups</th>
-							<td mat-cell *matCellDef="let row">
-							<mat-list dense>
-								<mat-list-item *ngFor="let grp of row.stats">
-								{{grp.name}} ( {{grp.samples}} )
-								</mat-list-item>
-							</mat-list>
-							
-							</td>
-							</ng-container>
-							<ng-container matColumnDef="reduced">
-							<th mat-header-cell *matHeaderCellDef>Reduced <button mat-icon-button (click)="openBottomSheet('reduced')" ><mat-icon >info</mat-icon></button></th>
-							<td mat-cell *matCellDef="let row">
-								<ng-container  *ngIf="row.imported">-</ng-container>
-								<ng-container  *ngIf="! row.imported">
-								<ng-container *ngIf="row.stats.length > 1">
-									<ng-container *ngIf="row.reduced">
-										<button mat-icon-button *ngIf="row.reduced.kept" (click)="reduce(row)">
-											<mat-icon>redo</mat-icon>
-										</button>
-										<button mat-icon-button [color]="row.reduced.kept ? 'primary' : 'warn' "
-										[title]="row.reduced.kept ? 'Job completed' : 'Job running'" 
-										(click)="infoReduced(row)">
-										<mat-icon> info </mat-icon>
-										</button>
-									</ng-container>
-									<button mat-icon-button *ngIf="!row.reduced" (click)="reduce(row)">
-										<mat-icon>play_circle_outline</mat-icon>
-									</button>
-								</ng-container>
-								<button mat-icon-button *ngIf="row.stats.length == 1" title="Only matrix with contrast can be reduced ( two or classes are required)"
-									disabled >
-									<mat-icon >info</mat-icon>
-								</button>
-								</ng-container>
-							</td>
-							</ng-container>
-							<ng-container matColumnDef="aggregated">
-							<th mat-header-cell *matHeaderCellDef >Aggregated <button mat-icon-button (click)="openBottomSheet('aggregated')" ><mat-icon >info</mat-icon></button></th>
-							<td mat-cell *matCellDef="let row">
-								<ng-container  *ngIf="row.imported">-</ng-container>
-								<ng-container  *ngIf="!row.imported">
-								<button mat-icon-button *ngIf="!row.reduced || ! row.reduced.kept" disabled
-									 title="You need to reduce the matrix first">
-									<mat-icon>info</mat-icon>
-								</button>
-								<button mat-icon-button *ngIf="row.reduced && row.reduced.kept"
-									(click)="aggregate(row);">
-									<mat-icon  *ngIf="!row.aggregated">play_circle_outline</mat-icon>
-									<mat-icon  *ngIf="row.aggregated">redo</mat-icon>
-								</button>
-								<button mat-icon-button *ngIf="row.aggregated" color="primary"
-										(click)="infoAggregated(row)">
-										<mat-icon> info </mat-icon>
-								</button>
-								</ng-container>
-							</td>
-							</ng-container>
-							<ng-container matColumnDef="remove">
-							<th mat-header-cell *matHeaderCellDef >Delete</th>
-							<td mat-cell *matCellDef="let row">
-								<button mat-icon-button  title="You will remove only the matrices, while the single samples will be preserved."
-									(click)="delete(row);">
-									<mat-icon>remove_circle_outline</mat-icon>
-								</button>
-							</td>
-							</ng-container>
-							
-							<tr mat-header-row
-								*matHeaderRowDef="dtOptions.displayedColumns;sticky : true;"></tr>
-							<tr mat-row cdk-row
-								*matRowDef="let row; columns: dtOptions.displayedColumns"></tr>
-						</table>
-						</div>
-						<mat-paginator [length]="dtOptions.recordsFiltered"
-						[pageSize]="dtOptions.pageSize" [pageIndex]="dtOptions.pageIndex"
-						(page)="refreshTable($event)" [pageSizeOptions]="[10, 15, 20]"></mat-paginator>
-						</div>
-		</div>
 
-		</mat-card-content> </mat-card>
+<mat-card> <mat-card-title> K-mer Matrices </mat-card-title> 
+<mat-card-content *ngIf="! (matrixSource?.all_matrices?.length > 0)" >
+You don't have any matrix in your data space. You can create a new matrix with samples in your data space or import external aggregated matrix in the <a routerLink="/files">the file manager page</a>.  
+</mat-card-content>
+
+<mat-card-content *ngIf=" matrixSource?.all_matrices?.length > 0" >
+<div fxLayout="column">
+  <div fxFlex>
+    <div class="mat-elevation-z6 table-container">
+      <table mat-table matSort (matSortChange)="refreshTable($event)" [dataSource]="matrixSource">
+        <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Sample name</th>
+        <td mat-cell *matCellDef="let row" title="UID: {{row.uid}}"><mat-form-field> <input matInput [(ngModel)]="row.name" [disabled]="! modName[row.uid]">
+          <button matSuffix mat-button *ngIf="! modName[row.uid]" title="modify the name" (click)="modName[row.uid]=row.name">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button matSuffix mat-button *ngIf="modName[row.uid]" title="save the modification" (click)="saveRowName(row.uid);">
+            <mat-icon>save</mat-icon>
+          </button>
+          <button matSuffix mat-button *ngIf="modName[row.uid]" title="cancel the modification" (click)="row.name=modName[row.uid];modName[row.uid]=undefined; ">
+            <mat-icon>undo</mat-icon>
+          </button>
+          </mat-form-field></td>
+        </ng-container>
+        <ng-container matColumnDef="tag">
+        <th mat-header-cell *matHeaderCellDef>Reference tag</th>
+        <td mat-cell *matCellDef="let row"><ng-container *ngIf="row.imported">-</ng-container>
+          <ng-container *ngIf="! row.imported">{{row.group_tag_key}}</ng-container></td>
+        </ng-container>
+        <ng-container matColumnDef="groups">
+        <th mat-header-cell *matHeaderCellDef>groups</th>
+        <td mat-cell *matCellDef="let row"><mat-list dense> <mat-list-item *ngFor="let grp of row.stats"> {{grp.name}} ( {{grp.samples}} ) </mat-list-item> </mat-list></td>
+        </ng-container>
+        <ng-container matColumnDef="reduced">
+        <th mat-header-cell *matHeaderCellDef>Reduced
+          <button mat-icon-button (click)="openBottomSheet('reduced')">
+            <mat-icon>info</mat-icon>
+          </button>
+        </th>
+        <td mat-cell *matCellDef="let row"><ng-container *ngIf="row.imported">
+          <button mat-icon-button title="The aggregated matrix was imported, so you don't have the data required to run the reduction step." disabled> 
+            <mat-icon >warning</mat-icon>
+          </button> 
+          </ng-container> <ng-container *ngIf="! row.imported"> <ng-container *ngIf="row.stats.length > 1"> <ng-container *ngIf="row.reduced">
+          <button mat-icon-button *ngIf="row.reduced.kept" (click)="reduce(row)">
+            <mat-icon>redo</mat-icon>
+          </button>
+          <button mat-icon-button [color]="row.reduced.kept ? 'primary' : 'warn' " [title]="row.reduced.kept ? 'Job completed' : 'Job running'" (click)="infoReduced(row)">
+            <mat-icon> info </mat-icon>
+          </button>
+          </ng-container>
+          <button mat-icon-button *ngIf="!row.reduced" (click)="reduce(row)">
+            <mat-icon>play_circle_outline</mat-icon>
+          </button>
+          </ng-container>
+          <button mat-icon-button *ngIf="row.stats.length == 1" title="Only matrix with contrast can be reduced ( two or classes are required)" disabled>
+            <mat-icon>info</mat-icon>
+          </button>
+          </ng-container></td>
+        </ng-container>
+        <ng-container matColumnDef="aggregated">
+        <th mat-header-cell *matHeaderCellDef>Aggregated
+          <button mat-icon-button (click)="openBottomSheet('aggregated')">
+            <mat-icon>info</mat-icon>
+          </button>
+        </th>
+        <td mat-cell *matCellDef="let row">
+        <ng-container *ngIf="row.imported">
+          <button mat-icon-button title="The aggregated matrix was imported, so you don't have the data required to run again the aggregation step." disabled> 
+            <mat-icon >warning</mat-icon>
+          </button>
+          
+          </ng-container> <ng-container *ngIf="!row.imported">
+          <button mat-icon-button *ngIf="!row.reduced || ! row.reduced.kept" disabled title="You need to reduce the matrix first">
+            <mat-icon>info</mat-icon>
+          </button>
+          <button mat-icon-button *ngIf="row.reduced && row.reduced.kept" (click)="aggregate(row);">
+            <mat-icon *ngIf="!row.aggregated">play_circle_outline</mat-icon>
+            <mat-icon *ngIf="row.aggregated">redo</mat-icon>
+          </button>
+          </ng-container>
+          <button mat-icon-button *ngIf="row.aggregated" color="primary" (click)="infoAggregated(row)">
+            <mat-icon> info </mat-icon>
+          </button></td>
+        </ng-container>
+        <ng-container matColumnDef="remove">
+        <th mat-header-cell *matHeaderCellDef>Delete</th>
+        <td mat-cell *matCellDef="let row">
+          <button mat-icon-button title="You will remove only the matrices, while the single samples will be preserved." (click)="delete(row);">
+            <mat-icon>remove_circle_outline</mat-icon>
+          </button>
+        </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="dtOptions.displayedColumns;sticky : true;"></tr>
+        <tr mat-row cdk-row *matRowDef="let row; columns: dtOptions.displayedColumns"></tr>
+      </table>
+    </div>
+    <mat-paginator [length]="dtOptions.recordsFiltered" [pageSize]="dtOptions.pageSize" [pageIndex]="dtOptions.pageIndex" (page)="refreshTable($event)" [pageSizeOptions]="[10, 15, 20]"></mat-paginator>
+  </div>
+</div>
+
+</mat-card-content> </mat-card>

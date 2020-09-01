@@ -7,10 +7,11 @@
         {{el.title}}
       </mat-panel-title>
       <mat-panel-description *ngIf="el.subtitle">
-        {{el.subtitle}}
+        {{el.subtitle}} 
       </mat-panel-description>
     </mat-expansion-panel-header>
    	<div *ngIf="(el.content | typeof) === 'string'" [innerHTML]="el.content" style="max-height:200px;overflow:auto;" ></div>
+    <div *ngIf="(el.content | typeof) === 'object' && el.content.length" style="max-height:200px;overflow:auto;" ><p *ngIf="el.content.length == 1">{{el.content[0]}}</p><ul *ngIf="el.content.length > 1 "><li *ngFor="let m of el.content">{{m}}</li></ul> </div>
    	<div *ngIf="(el.content | typeof) === 'function'" ><p *ngIf="el.args.description">{{el.args.description}}</p><button mat-raised-button (click)="el.content(el.args)">{{el.args.title ? el.args.title : 'Select' }}</button></div>
   </mat-expansion-panel>
 </mat-accordion>

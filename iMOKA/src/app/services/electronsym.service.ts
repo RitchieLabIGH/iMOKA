@@ -188,6 +188,14 @@ export class ElectronSymService implements IpcRenderer {
 					list({}, { code: 0, data: data });
 
 				});
+			} else if(args[1].data == "matrix"){
+				full_channel = channel + "-" + args[0];
+				let data={ "message": "SUCCESS", code: 0, data : this._session.matrices , 
+						recordsTotal : this._session.matrices.length, recordsFiltered : this._session.matrices.length, stats : {}}
+				this._listeners[full_channel].forEach((list)=>{
+					list({}, data)
+				})
+				 
 			}
 		} else if (channel == "getSession") {
 			this.sendSession();
