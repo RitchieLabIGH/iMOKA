@@ -1,1 +1,5 @@
 theme: jekyll-theme-slate
+github: [metadata]
+repository : RitchieLabIGH/iMOKA
+plugins:
+  - "jekyll-github-metadata"
