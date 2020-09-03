@@ -16,7 +16,7 @@
     <!-- HEADER -->
     <div id="header_wrap" style="background:#3F51B5;position: sticky;top:0;max-height:10vh; min-height:45px;">
         <header style="text-align: center;">
-          <img src="/assets/images/iMOKA_white.png" 
+          <img src="{{ "/assets/images/iMOKA_white.png" | relative_url }}" 
                style="max-height:8vh; min-height:40px;border:0;-webkit-box-shadow:none;margin:auto;">
         </header>
     </div>
@@ -47,13 +47,13 @@
         <ul style="list-style-type: none;margin-top:60px; padding-right:10px;"></ul>
       </nav>
       <div id="right-column" style="position: absolute; top:15vh; display:none;">
-        <h4> <img src="/assets/images/electronlogo.png" class="iconic" > Download iMOKA GUI </h4>
+        <h4> <img src="{{ "/assets/images/electronlogo.png" | relative_url }}" class="iconic" > Download iMOKA GUI </h4>
         <ul style="list-style-type: none;padding-left:10px;">
           <li><a href="https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.0/iMOKA-linux-x64.zip"><i class="fab fa-linux"></i> for Linux x64</a></li>
           <li><a href="https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.0/iMOKA-win32-x64.zip"><i class="fab fa-windows"></i> for Windows</a></li>
           <li><a href="https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.0/iMOKA-darwin-x64.zip"><i class="fab fa-apple"></i> for Mac</a></li>
         </ul>
-        <h4> <img src="/assets/images/singularity.png" class="iconic" > Download iMOKA CLI </h4>
+        <h4> <img src="{{ "/assets/images/singularity.png" | relative_url }}" class="iconic" > Download iMOKA CLI </h4>
         <ul style="list-style-type: none;padding-left:10px;">
           <li><a href="https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.0/iMOKA" title="Image containing iMOKA CLI and all the dependency"><i class="far fa-circle"></i> Basic image</a></li>
           <li><a href="https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.0/iMOKA_extended" title="Image containing iMOKA CLI, all the dependency, the hg38 blat reference and the GENCODE V29 annotations."><i class="fas fa-circle"></i>  Extended image</a></li>
@@ -79,7 +79,7 @@
   </div>
 
    <!-- Global site tag (gtag.js) - Google Analytics -->
-<!-- <script async src="https://www.googletagmanager.com/gtag/js?id=UA-177186731-1"></script>
+ <script async src="https://www.googletagmanager.com/gtag/js?id=UA-177186731-1"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -87,7 +87,6 @@
   gtag('config', 'UA-177186731-1');
 </script>
 
- -->    
     <script src="https://code.jquery.com/jquery-3.3.0.min.js" integrity="sha256-RTQy8VOmNlT6b2PIRur37p6JEBZUE7o8wPgMvu18MC4=" crossorigin="anonymous"></script>
     <script src="{{ "/assets/js/main.js" | relative_url }}"></script>
       
