@@ -7,7 +7,6 @@ var resizeFun = function() {
 		  if (rem < 0){
 			  $left_col.css('display', 'none');
 			  $right_col.css('display', 'none');
-			  $player.css('display', 'none');
 		  } else {
 			  $left_col.css('display', 'block');
 			  $right_col.css('display', 'block')
