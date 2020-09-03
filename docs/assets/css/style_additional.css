@@ -117,3 +117,15 @@
 	box-shadow: 0;
 }
 
+.navbar {
+	position:absolute;
+	top: 18px;
+	right : 25px;
+	font-size: 35px;
+	vertical-align: middle;
+}
+
+.navbar a {
+		color: white !important;
+		margin-right: 10px;
+}

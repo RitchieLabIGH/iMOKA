@@ -14,11 +14,16 @@
   <body>
 
     <!-- HEADER -->
-    <div id="header_wrap" style="background:#3F51B5;position: sticky;top:0;max-height:10vh; min-height:45px;">
+    <div id="header_wrap" style="background:#3F51B5;position: sticky;top:0; height:80px;">
         <header style="text-align: center;">
           <img src="{{ "/assets/images/iMOKA_white.png" | relative_url }}" 
-               style="max-height:8vh; min-height:40px;border:0;-webkit-box-shadow:none;margin:auto;">
+               style="height:60px;border:0;-webkit-box-shadow:none;margin:auto;margin-top:5px;">
+          <div class="navbar">
+            <a href="https://www.youtube.com/channel/UCjzSwpq7NShnNOQhqmaMKRg" target="_blank"><i class="fab fa-youtube"></i></a>
+            <a href="https://github.com/RitchieLabIGH/iMOKA" target="_blank"><i class="fab fa-github"></i></a>
+          </div>
         </header>
+        
     </div>
 
     <!-- MAIN CONTENT -->
@@ -40,10 +45,9 @@
   </div>
    
    
-   <div id="body_wrapper" style="height:90vh;overflow-y:auto; ">
+   <div id="body_wrapper" style="height:calc(100vh - 80px);overflow-y:auto; ">
     <div id="main_content_wrap" class="outer">
       <nav id="left-column" style="position:absolute; top:15vh;text-align: right;display:none;">
-        <a id="forkme_banner" href="https://github.com/RitchieLabIGH/iMOKA" title="View on GitHub">View on GitHub</a>
         <ul style="list-style-type: none;margin-top:60px; padding-right:10px;"></ul>
       </nav>
       <div id="right-column" style="position: absolute; top:15vh; display:none;">
