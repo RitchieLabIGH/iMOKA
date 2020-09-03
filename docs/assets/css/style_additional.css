@@ -1,0 +1,119 @@
+
+@keyframes dissolve {
+  0% {opacity : 1;}
+  100% {opacity : 0;}
+}
+
+#loading {
+  background: white;
+  width: 100vw;
+  height : 100vh;
+  position: fixed;
+  top: 0;
+  left:0;
+  z-index: 10000 ;
+}
+
+.dissolve {
+	animation-name: dissolve;
+	animation-duration: 1s;
+	animation-fill-mode: forwards;
+}
+
+.centered{
+  text-align : center;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  margin: 0;
+  position: absolute;
+}
+
+.sk-cube-grid {
+  width: 20vh;
+  height: 20vh;
+  margin :auto;
+}
+
+
+.sk-cube-grid .sk-cube {
+  width: 33%;
+  height: 33%;
+  float: left;
+  -webkit-animation: sk-cubeGridScaleDelay 1.3s infinite ease-in-out;
+          animation: sk-cubeGridScaleDelay 1.3s infinite ease-in-out; 
+  background-repeat: no-repeat;
+  background-size: cover;
+  border: 0;
+}
+
+.sk-cube-grid .sk-cube1 {
+  background-image : url("https://raw.githubusercontent.com/RitchieLabIGH/iMOKA/master/iMOKA/src/assets/images/grid_1.png");
+  -webkit-animation-delay: 0.2s;
+          animation-delay: 0.2s; }
+.sk-cube-grid .sk-cube2 {
+  background-image : url("https://raw.githubusercontent.com/RitchieLabIGH/iMOKA/master/iMOKA/src/assets/images/grid_2.png");
+  -webkit-animation-delay: 0.3s;
+          animation-delay: 0.3s; }
+.sk-cube-grid .sk-cube3 {
+  background-image : url("https://raw.githubusercontent.com/RitchieLabIGH/iMOKA/master/iMOKA/src/assets/images/grid_3.png");
+  -webkit-animation-delay: 0.4s;
+          animation-delay: 0.4s; }
+.sk-cube-grid .sk-cube4 {
+  background-image : url("https://raw.githubusercontent.com/RitchieLabIGH/iMOKA/master/iMOKA/src/assets/images/grid_4.png");
+  -webkit-animation-delay: 0.1s;
+          animation-delay: 0.1s; }
+.sk-cube-grid .sk-cube5 {
+  background-image : url("https://raw.githubusercontent.com/RitchieLabIGH/iMOKA/master/iMOKA/src/assets/images/grid_5.png");
+  -webkit-animation-delay: 0.2s;
+          animation-delay: 0.2s; }
+.sk-cube-grid .sk-cube6 {
+  background-image : url("https://raw.githubusercontent.com/RitchieLabIGH/iMOKA/master/iMOKA/src/assets/images/grid_6.png");
+  -webkit-animation-delay: 0.3s;
+          animation-delay: 0.3s; }
+.sk-cube-grid .sk-cube7 {
+  background-image : url("https://raw.githubusercontent.com/RitchieLabIGH/iMOKA/master/iMOKA/src/assets/images/grid_7.png");
+  -webkit-animation-delay: 0s;
+          animation-delay: 0s; }
+.sk-cube-grid .sk-cube8 {
+  background-image : url("https://raw.githubusercontent.com/RitchieLabIGH/iMOKA/master/iMOKA/src/assets/images/grid_8.png");
+  -webkit-animation-delay: 0.1s;
+          animation-delay: 0.1s; }
+.sk-cube-grid .sk-cube9 {
+  background-image : url("https://raw.githubusercontent.com/RitchieLabIGH/iMOKA/master/iMOKA/src/assets/images/grid_9.png");
+  -webkit-animation-delay: 0.2s;
+          animation-delay: 0.2s; }
+  
+@-webkit-keyframes sk-cubeGridScaleDelay {
+  0%, 70%, 100% {
+    -webkit-transform: scale3D(1, 1, 1);
+            transform: scale3D(1, 1, 1);
+  } 35% {
+    -webkit-transform: scale3D(0, 0, 1);
+            transform: scale3D(0, 0, 1); 
+  }
+}
+
+@keyframes sk-cubeGridScaleDelay {
+  0%, 70%, 100% {
+    -webkit-transform: scale3D(1, 1, 1);
+            transform: scale3D(1, 1, 1);
+  } 35% {
+    -webkit-transform: scale3D(0, 0, 1);
+            transform: scale3D(0, 0, 1);
+  } 
+} 
+
+
+
+.iconic {
+	width : 1em;
+	vertical-align: middle;
+	padding:0;
+	margin:0;
+	border:0;
+	-webkit-box-shadow: 0;
+	box-shadow: 0;
+}
+

@@ -16,7 +16,7 @@ The graphical user interface (GUI), that allows to visualize the results and to 
 ## How to contribute
 The folders iMOKA_core and iMOKA contains the sources of the CLI and the GUI parts of the software, with dedicated README files, doxygen documentations (for the C++ component ) but, in case of doubt, don't hesitate to contact the maintainers.
 
-### Authors: 
+### Authors 
 
 - Claudio Lorenzi <claudio.lorenzi@gmail.com>
 - Sylvain Barriere <sylvain.barriere@igh.cnrs.fr>
@@ -29,22 +29,23 @@ This project is founded by the University of Montpellier (France) as part of the
  <img src="https://www.montpellier.archi.fr/wp-content/uploads/2019/02/Logo_MUSE_Original.png" alt="drawing" height="100"/>  <img src="https://muse.edu.umontpellier.fr/files/2017/09/LOGO_original_RVB.png" alt="drawing" height="100"/> <img src="https://muse.edu.umontpellier.fr/files/2017/09/CNRS_fr_quadri.png" alt="drawing" height="100"/>
 
 
+
 #### Core:
-- mlpack : https://github.com/mlpack/mlpack
-- cxxopts : https://github.com/jarro2783/cxxopts
-- nlohmann/json: https://github.com/nlohmann/json
-- SimpSOM: https://github.com/fcomitani/SimpSOM
-- sklearn: https://scikit-learn.org/
+- mlpack : <https://github.com/mlpack/mlpack>
+- cxxopts : <https://github.com/jarro2783/cxxopts>
+- nlohmann/json: <https://github.com/nlohmann/json>
+- SimpSOM: <https://github.com/fcomitani/SimpSOM>
+- sklearn: <https://scikit-learn.org/>
 
 
 #### GUI:
-- igvteam ( igv.js ): https://github.com/igvteam/igv.js/
-- plotly ( plotly.js) : https://github.com/plotly/plotly.js/
-- ideogram : https://github.com/eweitz/ideogram
-- d3js :  https://github.com/d3
-- electron : https://www.electronjs.org/
-- angular : https://angular.io/
-- angular-material : https://material.angular.io/
+- igvteam ( igv.js ): <https://github.com/igvteam/igv.js/>
+- plotly ( plotly.js) : <https://github.com/plotly/plotly.js/>
+- ideogram : <https://github.com/eweitz/ideogram>
+- d3js :  <https://github.com/d3>
+- electron : <https://www.electronjs.org/>
+- angular : <https://angular.io/>
+- angular-material : <https://material.angular.io/>
 
 
 

@@ -5,30 +5,66 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,maximum-scale=2">
-    <link rel="stylesheet" type="text/css" media="screen" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
-
+        <link rel="stylesheet" type="text/css" media="screen" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+        <link rel="stylesheet" type="text/css" media="screen" href="{{ '/assets/css/style_additional.css?v=' | append: site.github.build_revision | relative_url }}">
+        <script src="https://kit.fontawesome.com/a3d708fdf4.js" crossorigin="anonymous"></script>
 {% seo %}
   </head>
 
   <body>
 
     <!-- HEADER -->
-    <div id="header_wrap" class="outer" style="background:#3F51B5">
-        <header class="inner" >
-          <img src="https://raw.githubusercontent.com/RitchieLabIGH/iMOKA/master/iMOKA/src/assets/images/iMOKA_white.png" 
-               style="width:100%;border:0;-webkit-box-shadow:none">
-          {% if site.github.is_project_page %}
-            <a id="forkme_banner" href="{{ site.github.repository_url }}">View on GitHub</a>
-          {% endif %}
-          
+    <div id="header_wrap" style="background:#3F51B5;position: sticky;top:0;max-height:10vh; min-height:45px;">
+        <header style="text-align: center;">
+          <img src="/assets/images/iMOKA_white.png" 
+               style="max-height:8vh; min-height:40px;border:0;-webkit-box-shadow:none;margin:auto;">
         </header>
     </div>
 
     <!-- MAIN CONTENT -->
+   <div id="loading"  >
+   <div class="centered">
+    <div class="sk-cube-grid"><div class="sk-cube-grid">
+    <div class="sk-cube sk-cube1"></div>
+    <div class="sk-cube sk-cube2"></div>
+    <div class="sk-cube sk-cube3"></div>
+    <div class="sk-cube sk-cube4"></div>
+    <div class="sk-cube sk-cube5"></div>
+    <div class="sk-cube sk-cube6"></div>
+    <div class="sk-cube sk-cube7"></div>
+    <div class="sk-cube sk-cube8"></div>
+    <div class="sk-cube sk-cube9"></div>
+  </div></div>
+    <h1 class="loading-message">Welcome to iMOKA</h1>
+    </div>
+  </div>
+   
+   
+   <div id="body_wrapper" style="height:90vh;overflow-y:auto; ">
     <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
+      <nav id="left-column" style="position:absolute; top:15vh;text-align: right;display:none;">
+        <a id="forkme_banner" href="https://github.com/RitchieLabIGH/iMOKA" title="View on GitHub">View on GitHub</a>
+        <ul style="list-style-type: none;margin-top:60px; padding-right:10px;"></ul>
+      </nav>
+      <div id="right-column" style="position: absolute; top:15vh; display:none;">
+        <h4> <img src="/assets/images/electronlogo.png" class="iconic" > Download iMOKA GUI </h4>
+        <ul style="list-style-type: none;padding-left:10px;">
+          <li><a href="https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.0/iMOKA-linux-x64.zip"><i class="fab fa-linux"></i> for Linux x64</a></li>
+          <li><a href="https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.0/iMOKA-win32-x64.zip"><i class="fab fa-windows"></i> for Windows</a></li>
+          <li><a href="https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.0/iMOKA-darwin-x64.zip"><i class="fab fa-apple"></i> for Mac</a></li>
+        </ul>
+        <h4> <img src="/assets/images/singularity.png" class="iconic" > Download iMOKA CLI </h4>
+        <ul style="list-style-type: none;padding-left:10px;">
+          <li><a href="https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.0/iMOKA" title="Image containing iMOKA CLI and all the dependency"><i class="far fa-circle"></i> Basic image</a></li>
+          <li><a href="https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.0/iMOKA_extended" title="Image containing iMOKA CLI, all the dependency, the hg38 blat reference and the GENCODE V29 annotations."><i class="fas fa-circle"></i>  Extended image</a></li>
+        </ul>
+      </div>
+      <section id="main_content" class="inner" style="padding-top:8px">
         {{ content }}
       </section>
+      <div id="player-container" style="width:100%; height:auto; text-align: center; padding-top:30px">
+        <iframe id="player" width="560" height="315" src="https://www.youtube.com/embed/KNrYGpEFm2k" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
     </div>
 
     <!-- FOOTER  -->
@@ -40,16 +76,20 @@
         <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
+  </div>
 
-    {% if site.google_analytics %}
-      <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-        ga('create', '{{ site.google_analytics }}', 'auto');
-        ga('send', 'pageview');
-      </script>
-    {% endif %}
+   <!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- <script async src="https://www.googletagmanager.com/gtag/js?id=UA-177186731-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-177186731-1');
+</script>
+
+ -->    
+    <script src="https://code.jquery.com/jquery-3.3.0.min.js" integrity="sha256-RTQy8VOmNlT6b2PIRur37p6JEBZUE7o8wPgMvu18MC4=" crossorigin="anonymous"></script>
+    <script src="{{ "/assets/js/main.js" | relative_url }}"></script>
+      
   </body>
 </html>
