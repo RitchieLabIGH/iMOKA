@@ -14,7 +14,12 @@ var resizeFun = function() {
 			  $left_col.css('left', dim )
 			  $right_col.css('right', dim)
 		  }
-    	  $("#player").attr('width', total/3 ).attr('height' , total / 5 ) 
+		  if (total > 768 ){
+			 $("#player").attr('width', total/3 ).attr('height' , total / 5 )	
+		  } else {
+			$("#player").attr('width', Math.round(total *0.8) ).attr('height' , Math.round(total *0.6) )
+		} 
+    	  
 		  
     	}
 

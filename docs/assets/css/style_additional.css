@@ -108,16 +108,37 @@
 
 .navbar {
 	position:absolute;
-	top: 18px;
-	right : 25px;
-	font-size: 35px;
+	top: 5px;
+	right : 15px;
+	font-size: 25px;
+	width:25px;
 	vertical-align: middle;
+	text-align: center;
+	
 }
 
 .navbar a {
 		color: white !important;
+}
+
+
+@media only screen and (min-width: 768px) {
+/* For desktop: */
+.navbar {
+	top: 18px;
+	right : 25px;
+	font-size: 35px;
+	
+}
+
+.navbar a {
 		margin-right: 10px;
 }
+
+}
+
+
+
 
 .iconic {
 	width : 1em;
