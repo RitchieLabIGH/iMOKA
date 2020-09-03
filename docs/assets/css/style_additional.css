@@ -106,17 +106,6 @@
 } 
 
 
-
-.iconic {
-	width : 1em;
-	vertical-align: middle;
-	padding:0;
-	margin:0;
-	border:0;
-	-webkit-box-shadow: 0;
-	box-shadow: 0;
-}
-
 .navbar {
 	position:absolute;
 	top: 18px;
@@ -129,3 +118,13 @@
 		color: white !important;
 		margin-right: 10px;
 }
+
+.iconic {
+	width : 1em;
+	vertical-align: middle;
+	padding:0;
+	margin:0;
+	border:0;
+	box-shadow: 0;
+}
+
