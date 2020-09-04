@@ -10,7 +10,7 @@
     "node-ssh": "^11.0.0",
     "rimraf": "^3.0.2",
     "rxjs": "^6.6.2",
-    "simple-crypto-js": "^2.2.0"
+    "simple-crypto-js": "^2.3.0"
   },
   "devDependencies": {},
   "scripts": {
