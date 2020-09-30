@@ -71,8 +71,8 @@ std::string help() {
 					"\e[1mreduce\e[0m: Reduce a k-mer matrix in according to the clusterization power of each k-mer"
 							"\e[1mcluster\e[0m: filter a k-mer matrix in according to their underlying clusters ",
 					"\e[1maggregate\e[0m: reduce the number of k-mers aggregating the redundant ones",
-					"\e[1mconfig\e[0m: print the configuration file necessary for the mapping and annotation procedures",
-					"\e[1mmodels\e[0m: create models using ML approach from a reduced and non redundant matrix in text format." };
+					"\e[1mconfig\e[0m: print the configuration file necessary for the mapping and annotation procedures"
+					 };
 	for (auto s : acts)
 		ss << "  - " << s << "\n";
 	ss << "\n";
@@ -108,17 +108,11 @@ int main(int argc, char** argv) {
 	if (action == "create" || action == "extract" || action == "dump")
 		done = imoka::process::BinaryMatrixHandler(logStreamBuff).run(argc,
 				argv);
-	else if (action == "reduce" || action == "models" || action == "cluster")
+	else if (action == "reduce" ||  action == "cluster")
 		done = imoka::process::Classification(logStreamBuff).run(argc, argv);
 	else if (action == "aggregate" || action == "config")
 		done = imoka::process::Aggregation(logStreamBuff).run(argc, argv);
 	else if (action == "test") {
-		std::string text= "Ciao come stai\tdove vai!    Allora \nio ti chiamo.\n";
-		std::vector<std::string> cont;
-		IOTools::split(cont, text);
-		std::cout << "Main text: \n"<<text << "\n";
-		for ( auto & t : cont ) std::cout << "["<<t << "]";
-		std::cout << "\n";
 		done=true;
 	} else {
 		std::ostream logStream(logStreamBuff);
