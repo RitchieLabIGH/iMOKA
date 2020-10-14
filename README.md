@@ -3,6 +3,10 @@
 
 iMOKA is a software that enables a comprehensive analysis of sequencing data from large cohorts to generate robust classification models or explore specific genetic elements associated with disease etiology. iMOKA uses a fast and accurate feature reduction step that combines a Naïve Bayes Classifier augmented by an adaptive Entropy filter and a graph-based filter to rapidly reduce the search space. By using a flexible file format and distributed indexing, iMOKA can easily integrate data from multiple experiments and also reduces disk space requirements.
 
+## How to cite iMOKA
+
+Lorenzi, C., Barriere, S., Villemin, J. et al. iMOKA: k-mer based software to analyze large collections of sequencing data. Genome Biol 21, 261 (2020). https://doi.org/10.1186/s13059-020-02165-2
+
 ## How to use the software
  **The iMOKA_core and iMOKA_GUI are downlodable from the [Release page of GitHub](https://github.com/RitchieLabIGH/iMOKA/releases) in the assets section.**
  
@@ -16,7 +20,7 @@ The graphical user interface (GUI), that allows to visualize the results and to 
 ## How to contribute
 The folders iMOKA_core and iMOKA contains the sources of the CLI and the GUI parts of the software, with dedicated README files, doxygen documentations (for the C++ component ) but, in case of doubt, don't hesitate to contact the maintainers.
 
-### Authors: 
+### Maintainers: 
 
 - Claudio Lorenzi <claudio.lorenzi@gmail.com>
 - Sylvain Barriere <sylvain.barriere@igh.cnrs.fr>
