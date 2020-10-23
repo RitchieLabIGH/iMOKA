@@ -1283,12 +1283,17 @@ class Processor {
 			if (this.ssh){
 				resolve(this.ssh)
 			} else {
-				let ssh = new node_ssh.NodeSSH(), ssh_prom;
+				let ssh = new node_ssh.NodeSSH(), ssh_prom, pwd;
 				if ( this.options.ssh_auth == "UsernamePassword"){
 					if (! this.options.username ) throw "Username not given";
 					if (! this.options.ssh_address ) throw "Host address not given";
 					if (! this.options.password ) throw "Password not given";
-					let pwd = this.decrypt(this.options.password);
+					try {
+						pwd = this.decrypt(this.options.password);	
+					} catch (e){
+						throw "Due to a security update, you need to reinsert your password in the Setting page.";
+					}
+					
 					ssh_prom = ssh.connect({
 						host : this.options.ssh_address,
 						username :this.options.username,
@@ -1363,7 +1368,7 @@ class Processor {
 							}
 						});
 					}
-					if (!this.checkResSSH(res)){
+					if (!this.checkResSSH(result)){
 						reject(result.stderr);
 						return;
 					}
