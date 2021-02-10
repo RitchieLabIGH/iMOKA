@@ -1,6 +1,6 @@
 
 import {Sample} from '../app/interfaces/samples';
-export const possible_files = [[], ["assets/data/agg.json"]]
+export const possible_files = [[], ["assets/data/agg.json", "assets/data/rf.json", "assets/data/som.json" ],]
 
 export const queue_example= [{  type : "completed",
 			result : "success",

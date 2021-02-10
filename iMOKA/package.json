@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "electron/main.js",
   "scripts": {
+  	"serve" : "ng serve",
     "ng": "ng",
     "build": "ng build --prod",
     "test": "ng test",

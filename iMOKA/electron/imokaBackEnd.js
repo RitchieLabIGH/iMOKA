@@ -487,7 +487,6 @@ class iMokaBE extends EventEmitter {
 			let file_type = this.checkDataType(new_data)
 	        if (file_type){
 	            this.data[file_type]=new_data;
-	            
 	            if ( file_type == "kmers"){
 	         	   this.data[file_type].kmers.forEach((n, idx) =>{
 	         		  if ( n.fc ){

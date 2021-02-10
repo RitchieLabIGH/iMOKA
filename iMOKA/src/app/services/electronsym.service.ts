@@ -21,14 +21,15 @@ export class ElectronSymService implements IpcRenderer {
 			if (environment.default_profile) {
 				this._session.profile.process_config.current_profile = 0;
 				this._session.profile.process_config.profiles = [new Setting()];
-				this._session.profile.process_config.profiles[0].max_cpu=4;
-				this._session.profile.process_config.profiles[0].os="Interface development";
-				if (environment.debug.matrices ){
-					this._session.matrices=environment.debug.matrices; 
+				this._session.profile.process_config.profiles[0].max_cpu = 4;
+				this._session.profile.process_config.profiles[0].os = "Interface development";
+				if (environment.debug.matrices) {
+					this._session.matrices = environment.debug.matrices;
 				}
 			}
 			if (environment.debug.files) {
 				environment.debug.files.forEach((f) => {
+					console.log("opening ", f)
 					this.http.get(f).subscribe((data) => {
 						this.openFile(data, f)
 					})
@@ -83,10 +84,54 @@ export class ElectronSymService implements IpcRenderer {
 			this.initEvents();
 			this._session.files["kmers"] = { file: file_name, info: content.info, original_request: file_name };
 			this.release("File k-mer read.")
+			if (this.data.som) {
+				this.linkKmerSOM();
+			}
 			this.sendSession();
+		} else if (content.samplesSOM) {
+			this.data.som = content
+			this.initSOM()
+			if (this.data.kmers) {
+				this.linkKmerSOM();
+			}
+			this._session.files["som"] = { file: file_name, info: content.info, original_request: file_name };
+			this.release("File som read.")
+		} else if (content.features_importances) {
+			this.data.importance = content
+			this._session.files["importance"] = { file: file_name, info: content.info, original_request: file_name };
+			this.release("File importance read.")
 		} else {
+			console.log(content)
 			this.release("File not recognized!")
 		}
+	}
+	linkKmerSOM() {
+		this.data.kmers.kmers.forEach((el) => {
+			let idx = this.data.som.labels.findIndex((k) => { return k == el.kmer });
+			if (idx == -1) {
+				el.bmu = undefined;
+			} else {
+				el.bmu = this.data.som.kmerbmu[idx];
+			}
+		});
+	}
+	initSOM() {
+		this.data.som.info = { "nodes": this.data.som.nbKmerBynode, "samples": [], "features": [] };
+		this.data.som.samplesSOM.forEach((sam) => {
+			sam.projSOM.forEach((n, idx) => {
+				if (this.data.som.nbKmerBynode[idx] == 0) n = undefined;
+
+			});
+			this.data.som.info.samples.push({ "name": sam.labelsamples, "group": sam.classori })
+		});
+		this.data.som.nodefeatureimpotance.forEach((n, idx) => {
+			if (this.data.som.nbKmerBynode[idx] == 0) n = undefined;
+
+		});
+		this.data.som.labels.forEach((lab, idx) => {
+			this.data.som.info.features.push({ "name": lab, "bmu": this.data.som.kmerbmu[idx] });
+		});
+
 	}
 
 
@@ -188,15 +233,92 @@ export class ElectronSymService implements IpcRenderer {
 					list({}, { code: 0, data: data });
 
 				});
-			} else if(args[1].data == "matrix"){
+			} else if (args[1].data == "matrix") {
 				full_channel = channel + "-" + args[0];
-				let data={ "message": "SUCCESS", code: 0, data : this._session.matrices , 
-						recordsTotal : this._session.matrices.length, recordsFiltered : this._session.matrices.length, stats : {}}
-				this._listeners[full_channel].forEach((list)=>{
+				let data = {
+					"message": "SUCCESS", code: 0, data: this._session.matrices,
+					recordsTotal: this._session.matrices.length, recordsFiltered: this._session.matrices.length, stats: {}
+				}
+				this._listeners[full_channel].forEach((list) => {
 					list({}, data)
 				})
-				 
+
+			} else if (args[1].data == "SOMclusters") {
+				let data_to_send = [];
+				for (let i = 0; i < this.data.som.samplesSOM.length; i++) {
+					data_to_send.push(this.clone(this.data.som.samplesSOM[i]));
+					data_to_send[data_to_send.length - 1].projSOM = this.projSOMnormalize(data_to_send[data_to_send.length - 1].projSOM, args[1].norm);
+				}
+				let resp = { "data": data_to_send, "message": "SUCCESS", "draw": 1, code: 0 };
+				full_channel = channel + "-" + args[0];
+				this._listeners[full_channel].forEach((list) => {
+					list({}, resp)
+				})
+			} else if (args[1].data == "SOMsampleDistrib") {
+				let nclustid = args[1].nclustid;
+				let clusters = this.data.som.samplesSOM.map(x => x.bmu[nclustid]);
+				let uniqueclus = [...new Set(clusters)].sort();
+				let data_to_send = [];
+				let countbyclust = []
+				this.data.som.meanbycat.forEach(() => {
+					countbyclust.push([...Array(uniqueclus.length).fill(0)]);
+				})
+				this.data.som.samplesSOM.forEach((elem) => {
+					countbyclust[elem.classnumber][elem.bmu[nclustid]] += 1;
+				})
+				this.data.som.meanbycat.forEach((elemcat, i) => {
+					data_to_send.push({ "x": uniqueclus.map(x => "Cluster " + x), "y": countbyclust[i], "name": elemcat.classname, "type": "bar" });
+				})
+				let resp = { "data": data_to_send, "message": "SUCCESS", "draw": 1, code: 0 };
+				full_channel = channel + "-" + args[0];
+				this._listeners[full_channel].forEach((list) => {
+					list({}, resp)
+				})
+			} else if (args[1].data == "SOMimportance") {
+				full_channel = channel + "-" + args[0];
+				let data_to_send = [];
+				data_to_send.push({ "projRAW": this.clone(this.data.som.nodefeatureimpotance), "name": "nodeFeatureImportance" });
+				data_to_send[0].projSOM = this.projSOMnormalize(data_to_send[0].projRAW, "raw");
+				data_to_send.push({ "projRAW": this.clone(this.data.som.nbKmerBynode), "name": "nbKmerByNode" });
+				data_to_send[1].projSOM = this.projSOMnormalize(data_to_send[1].projRAW, "raw");
+				let resp = { "data": data_to_send, "message": "SUCCESS", "draw": 1, code: 0 }
+				this._listeners[full_channel].forEach((list) => {
+					list({}, resp)
+				})
+			} else if (args[1].data == "SOMaverageclass"){
+				if (! this.data.som.averageclass)
+		        	this.data.som.averageclass={};
+		    	let  data_to_send = [];
+				for ( let i=0; i < this.data.som.meanbycat.length; i++ ){
+			    	data_to_send.push({"projSOM":this.projSOMnormalize(this.data.som.meanbycat[i].meanmatrix,args[1].norm),"labelsamples":"Mean "+this.data.som.meanbycat[i].classname,"classori":this.data.som.meanbycat[i].classname,"classnumber":this.data.som.meanbycat[i].classid});
+				}
+		    	let resp={ "data" : data_to_send,  "message": "SUCCESS" ,"draw" : 1, code : 0}
+				full_channel = channel + "-" + args[0]; 
+				this._listeners[full_channel].forEach((list) => {
+					list({}, resp)
+				})
+			} else if (args[1].data == "importance_models"){
+				full_channel = channel + "-" + args[0];
+				let resp={"data": this.data.importance.best_feature_models,  "message": "SUCCESS" ,"draw" : 1, code : 0}
+				this._listeners[full_channel].forEach((list) => {
+					list({}, resp)
+				})
+			} else if (args[1].data == "importance"){
+				full_channel = channel + "-" + args[0];
+				let resp={"data": this.data.importance.features_importances,  "message": "SUCCESS" ,"draw" : 1, code : 0}
+				this._listeners[full_channel].forEach((list) => {
+					list({}, resp)
+				})
+			} else if (args[1].data == "importance_samples_probabilities"){
+				full_channel = channel + "-" + args[0];
+				let resp={"data": this.data.importance.samples_probabilities,  "message": "SUCCESS" ,"draw" : 1, code : 0}
+				this._listeners[full_channel].forEach((list) => {
+					list({}, resp)
+				})	
+			} else {
+				console.log("TODO")
 			}
+
 		} else if (channel == "getSession") {
 			this.sendSession();
 		}
@@ -206,32 +328,59 @@ export class ElectronSymService implements IpcRenderer {
 		}
 
 	}
+	projSOMnormalize(proj, normstyle) {
+		let minmap, maxmap, out = [];
+		minmap = Math.min(...proj);
+		maxmap = Math.max(...proj);
+		if (normstyle == "normByNode") {
+			proj.forEach((item, index, arr) => {
+				out.push((item - this.data.som.minmatrix[index]) / (this.data.som.maxmatrix[index] - this.data.som.minmatrix[index]));
+			});
+		} else if (normstyle == "centerAvrg") {
+			proj.forEach((item, index, arr) => {
+				if ((this.data.som.meanmatrix[index] - minmap) > (maxmap - this.data.som.meanmatrix[index])) {
+					maxmap = this.data.som.meanmatrix[index] + (this.data.som.meanmatrix[index] - minmap);
+				} else {
+					minmap = this.data.som.meanmatrix[index] - (maxmap - this.data.som.meanmatrix[index]);
+				}
+				out.push((((item - this.data.som.meanmatrix[index]) - minmap) / (maxmap - minmap)));
+			});
+		} else if (normstyle == "raw") {
+			proj.forEach((item, index, arr) => {
+				out.push((item - minmap) / (maxmap - minmap));
+			});
+		};
+		return out;
+	}
+
 
 	getIdeo(config) {
 		console.log(config)
-		let annotations={keys: ["name","start","length", "repetitive", "highest_expression"],
-			 annots : [] },  aln, hexpr, unique_n;
-			let tmp_annot={};
-			for ( var k = 0 ; k < this.data.kmers.kmers.length ; k++ ){
-					if (this.data.kmers.kmers[k].alignments ){
-	                    for (var i=0; i <  this.data.kmers.kmers[k].alignments.length; i++ ){
-	                        aln=this.data.kmers.kmers[k].alignments[i];
-							if (! tmp_annot[aln.chromosome]) tmp_annot[aln.chromosome]=[]
-							hexpr=[0, -1];
-							this.data.kmers.kmers[k].means.forEach((m, idx)=>{
-								if ( m > hexpr[0] ) {
-									hexpr=[m, idx]
-								}
-							})
-							unique_n=this.data.kmers.kmers[k].alignments.length  == 1 ? 0 : 1;
-							tmp_annot[aln.chromosome].push(["seq_"+k+"_"+i, aln.start, aln.end-aln.start, unique_n, hexpr[1] ])
+		let annotations = {
+			keys: ["name", "start", "length", "repetitive", "highest_expression"],
+			annots: []
+		}, aln, hexpr, unique_n;
+		let tmp_annot = {};
+		for (var k = 0; k < this.data.kmers.kmers.length; k++) {
+			if (this.data.kmers.kmers[k].alignments) {
+				for (var i = 0; i < this.data.kmers.kmers[k].alignments.length; i++) {
+					aln = this.data.kmers.kmers[k].alignments[i];
+					if (!tmp_annot[aln.chromosome]) tmp_annot[aln.chromosome] = []
+					hexpr = [0, -1];
+					this.data.kmers.kmers[k].means.forEach((m, idx) => {
+						if (m > hexpr[0]) {
+							hexpr = [m, idx]
 						}
-					}
+					})
+					unique_n = this.data.kmers.kmers[k].alignments.length == 1 ? 0 : 1;
+					tmp_annot[aln.chromosome].push(["seq_" + k + "_" + i, aln.start, aln.end - aln.start, unique_n, hexpr[1]])
+				}
 			}
-			Object.keys(tmp_annot).forEach((key)=>{
-				if ( key.match( /^chr[0-9XY]+$/ )) annotations.annots.push({"chr": key.replace("chr", ""), "annots" : tmp_annot[key]})
-				
-			})
+		}
+		Object.keys(tmp_annot).forEach((key) => {
+			if (key.match(/^chr[0-9XY]+$/)) annotations.annots.push({ "chr": key.replace("chr", ""), "annots": tmp_annot[key] })
+
+		})
 		return annotations;
 	}
 

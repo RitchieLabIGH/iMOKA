@@ -69,7 +69,7 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 		}
 	}
 	updateFeatures() {
-		this.featureSource.data = this.session ? this.session.files.som.info.features.filter((el) => {
+		this.featureSource.data = this.session && this.session.files.som ? this.session.files.som.info.features.filter((el) => {
 			return this.selectedNodes.length == 0 || this.selectedNodes.includes(el.bmu);
 		}) : [];
 
@@ -84,8 +84,11 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 		this.normOption = "normByNode";
 		this.subscriptions.push(this.uem.getSession().subscribe((session) => {
 			this.session = session;
-			this.updateFeatures();
-			this.update();
+			if (this.session.files.som){
+				this.updateFeatures();
+				this.update();	
+			}
+			
 		}));
 	}
 
@@ -100,8 +103,6 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 		});
 
 	}
-
-
 
 	barclustdistClick(data) {
 		this.clustFilterl = [data.points[0].pointIndex];
@@ -238,6 +239,7 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 	getSamplesClusterDistrib(): Promise<any> {
 		return new Promise<any>((resolve, reject) => {
 			this.trackService.getData({ "data": "SOMsampleDistrib", "nclustid": this.clust }).subscribe((resp) => {
+				console.log(resp)
 				this.data.clusterdist = { data: resp, layout: { barmode: 'stack' } }
 				resolve();
 			}, (err) => {
