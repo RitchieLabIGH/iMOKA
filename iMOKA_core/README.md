@@ -41,6 +41,13 @@ Where:
 	- A local file ( the full path is necessary )
 	- A remote file ( include the htpp:// or the ftp:// ).
 	- One or more SRR or ERR entries, that will be downloaded
+	
+In case of paired end or if you want to pool multiple samples, add them in the third column separating them with a semicolumn. For example:
+```
+sample_A	Responsive	A_R1.fq.gz;A_R2.fq.gz
+sample_B	Responsive	B_R1.fq.gz;B_R2.fq.gz
+...
+```
 
 To run the preprocess script, you can use the following command:
 ```
