@@ -33,7 +33,7 @@ rc_read(){
 }
 
 print_info(){
-    echo -e "\n\n   Kmer Analysis Preprocessing\n"
+    echo -e "\n\n   iMOKA Preprocessing\n"
     echo -e "\tInput: \t\t\t${input_file}"
     echo -e "\tOutput: \t\t${outputDir}"
     echo -e "\tLibrary type: \t\t${library_type}"    
@@ -225,7 +225,7 @@ while read line; do
         echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] Detected paired"
         file_1=$(echo ${s_files} | awk  'BEGIN {RS=" "} /[_]?[R_]1[\._]/ {print}')
         file_2=$(echo ${s_files} | awk  'BEGIN {RS=" "} /[_]?[R_]2[\._]/ {print}')
-        if [[ "${file_1}" == "" ]] || [[ "${file_1}" == "" ]] ; then
+        if [[ "${file_1}" == "" ]] || [[ "${file_1}" == "" ]] || [[ "${file_1}" == "${file_2}" ]] ; then
             file_1=$(echo ${s_files} | awk  'BEGIN {RS=" "} NR==1 {print}')
             file_2=$(echo ${s_files} | awk  'BEGIN {RS=" "} NR==2 {print}')
         fi
@@ -262,8 +262,7 @@ while read line; do
     done
     echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] running KMC dump"    
 	kmc_tools transform ./tmp_dir/tmp.kmc dump -s ./tmp_dir/tmp.txt 2>> ${logdir}/kmc_tools.err >> ${logdir}/kmc_tools.out
-    echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] formatting the file"    
-	awk '{print $1 "\t" $2}' ./tmp_dir/tmp.txt > ./${s_name}.tsv
+	mv ./tmp_dir/tmp.txt ./${s_name}.tsv
 	count_file=$(realpath ./${s_name}.tsv)
     echo -e "${count_file}\t${s_name}\t${s_class}" > ./tmp_dir/kma.input
     echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] creating the binary file"    
