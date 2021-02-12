@@ -33,7 +33,7 @@ rc_read(){
 }
 
 print_info(){
-    echo -e "\n\n   Kmer Analysis Preprocessing\n"
+    echo -e "\n\n   iMOKA Preprocessing\n"
     echo -e "\tInput: \t\t\t${input_file}"
     echo -e "\tOutput: \t\t${outputDir}"
     echo -e "\tLibrary type: \t\t${library_type}"    
@@ -262,8 +262,7 @@ while read line; do
     done
     echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] running KMC dump"    
 	kmc_tools transform ./tmp_dir/tmp.kmc dump -s ./tmp_dir/tmp.txt 2>> ${logdir}/kmc_tools.err >> ${logdir}/kmc_tools.out
-    echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] formatting the file"    
-	awk '{print $1 "\t" $2}' ./tmp_dir/tmp.txt > ./${s_name}.tsv
+	mv ./tmp_dir/tmp.txt ./${s_name}.tsv
 	count_file=$(realpath ./${s_name}.tsv)
     echo -e "${count_file}\t${s_name}\t${s_class}" > ./tmp_dir/kma.input
     echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] creating the binary file"    
