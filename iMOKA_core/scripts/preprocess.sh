@@ -225,7 +225,7 @@ while read line; do
         echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] Detected paired"
         file_1=$(echo ${s_files} | awk  'BEGIN {RS=" "} /[_]?[R_]1[\._]/ {print}')
         file_2=$(echo ${s_files} | awk  'BEGIN {RS=" "} /[_]?[R_]2[\._]/ {print}')
-        if [[ "${file_1}" == "" ]] || [[ "${file_1}" == "" ]] ; then
+        if [[ "${file_1}" == "" ]] || [[ "${file_1}" == "" ]] || [[ "${file_1}" == "${file_2}" ]] ; then
             file_1=$(echo ${s_files} | awk  'BEGIN {RS=" "} NR==1 {print}')
             file_2=$(echo ${s_files} | awk  'BEGIN {RS=" "} NR==2 {print}')
         fi
