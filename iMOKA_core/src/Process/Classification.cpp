@@ -146,6 +146,7 @@ bool Classification::classificationFilterMulti(std::string file_in,
 		std::ofstream ofs(file_out_thr), tlog(file_out_thr + ".log");
 
 		ofs << std::fixed << std::setprecision(3);
+		tlog << std::fixed << std::setprecision(1);
 		std::vector<uint64_t> groups = mat.groups;
 		std::map<uint64_t, uint64_t> group_counts = mat.group_counts;
 		double max_entropy = 1000000.00, entropy, perc;
@@ -220,7 +221,7 @@ bool Classification::classificationFilterMulti(std::string file_in,
 					}
 				}
 				if (tot_lines % 1000000 == 0) {
-					perc = 0; // ((line.getKmer().to_int() - from_kmer.to_int())*100) / (long double)batch_size;  /// TODO: there is something wrong wiht the int conversion
+					perc = (( line.getKmer().to_int() - from_kmer.to_int() ) / (long double)batch_size)*100;
 					tlog << perc << "\t" << tot_lines << "\t" << kept << "\t"
 							<< minEntropy << "\t"
 							<< IOTools::format_time(
