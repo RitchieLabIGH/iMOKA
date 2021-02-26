@@ -5,11 +5,12 @@
   "main": "main.js",
   "dependencies": {
     "compressing": "^1.5.1",
-    "electron-dl": "^3.0.2",
+    "electron-dl": "^3.1.0",
     "ncp": "^2.0.0",
-    "node-ssh": "^11.0.0",
+    "node-ssh": "^11.1.1",
+    "random-access-file": "^2.1.5",
     "rimraf": "^3.0.2",
-    "rxjs": "^6.6.2",
+    "rxjs": "^6.6.3",
     "simple-crypto-js": "^2.5.0"
   },
   "devDependencies": {},

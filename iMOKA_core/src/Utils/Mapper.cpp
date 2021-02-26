@@ -17,7 +17,7 @@ void Mapper::setup(json user_conf, json def_conf) {
 	IOTools::getParameter(user_conf["aligner"], def_conf["aligner"], "parallel", threads);
 	IOTools::getParameter(user_conf["aligner"], def_conf["aligner"], "io_order", io_order);
 	IOTools::getParameter(user_conf["aligner"], def_conf["aligner"], "output_type", output_type);
-	int r = system(std::string("command -v " + command).c_str());
+	int r = system(std::string("command -v " + command +" > /dev/null ").c_str());
 	if ( r != 0 ){
 		error_message ="Error! command " + command + " not found!.";
 	}
@@ -37,6 +37,9 @@ bool Mapper::isCommentLine(std::string line ){
 std::string Mapper::align(std::string in_file) {
 	std::string out_file;
 	out_file = in_file + "."+output_type;
+	if ( IOTools::fileExists(out_file) ){
+		return out_file;
+	}
 	if (threads==-1){
 		threads = omp_get_max_threads();
 	}
@@ -60,11 +63,9 @@ std::string Mapper::align(std::string in_file) {
 									+ ".err " ;
 
 	}
-	std::cerr << "\n###[DEBUG]: " << cmd << "\n";
-
 	int r = system(cmd.c_str());
-	if (r == -1) {
-		std::cerr << "ERROR! : impossible to start the command \n" << cmd
+	if (r != 0) {
+		std::cerr << "ERROR! : impossible to run the command \n" << cmd
 				<< "\n";
 		exit(r);
 	}

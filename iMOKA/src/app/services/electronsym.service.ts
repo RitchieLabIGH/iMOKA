@@ -39,6 +39,9 @@ export class ElectronSymService implements IpcRenderer {
 			this._session.profile.name = "ElectronSymProfile";
 		}
 	}
+	postMessage(){
+		throw new Error("Method not implemented.");
+	}
 
 	eventNames(): (string | symbol)[] {
 		throw new Error("Method not implemented.");

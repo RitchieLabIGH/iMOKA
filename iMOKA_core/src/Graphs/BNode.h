@@ -32,6 +32,9 @@ public:
 	bool masked=false;
 	uint64_t id;
 	bool root = true;
+	friend bool operator<(const BNode& l, const BNode& r){
+			return (*std::max(l.values.begin(), l.values.end())) < (*std::max(r.values.begin() , r.values.end()));
+	    }
 };
 }
 }

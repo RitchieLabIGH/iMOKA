@@ -1,0 +1,57 @@
+<h1 mat-dialog-title>Other track</h1>
+  <mat-dialog-content fxLayout="column">
+		<mat-form-field fxFlex>
+			<mat-label>Name</mat-label>
+			<input matInput [(ngModel)]="track.name"> 
+		</mat-form-field>
+		<mat-form-field fxFlex>
+			<mat-label>Automatic type</mat-label>
+			<mat-select [(ngModel)]="track.type">
+				<mat-option [value]="undefined">Auto</mat-option>
+				<mat-option value="annotation">Annotation</mat-option>
+				<mat-option value="wig">Wig</mat-option>
+				<mat-option value="alignment">Alignment</mat-option>
+				<mat-option value="variant">Variant</mat-option>
+				<mat-option value="seg">Segmented copy number</mat-option>
+          		<mat-option value="spliceJunctions">Splice Junction</mat-option>
+          		<mat-option value="gwas">GWAS</mat-option>
+          		<mat-option value="interaction">Interaction</mat-option>
+                <mat-option value="genepred">Genpred</mat-option>
+                <mat-option value="refgene">Refgene</mat-option>
+			</mat-select> 
+		</mat-form-field>
+		<mat-form-field fxFlex>
+			<mat-label>Automatic format</mat-label>
+			<mat-select [(ngModel)]="track.format">
+				<mat-option [value]="undefined">Auto</mat-option>
+    			<mat-option *ngFor="let fmt of formats" [value]="fmt">{{fmt}}</mat-option>
+			</mat-select> 
+		</mat-form-field>
+		<div fxFlex>
+		<mat-slide-toggle [(ngModel)]="local" (change)="track.url=undefined; track.index=undefined;">{{local ? 'Local' : 'Remote' }}</mat-slide-toggle>
+		</div>
+		<ng-container *ngIf="!local">
+			<mat-form-field fxFlex>
+				<mat-label>URL</mat-label>
+				<input matInput [(ngModel)]="track.path"> 
+			</mat-form-field>
+			<mat-form-field fxFlex>
+				<mat-label>Index</mat-label>
+				<input matInput [(ngModel)]="track.index"> 
+			</mat-form-field>
+		</ng-container>
+		<ng-container *ngIf="local">
+			<div fxFlex >
+				<button *ngIf="!track.path" mat-raised-button (click)="addFile('path')">Track file</button>
+				<button *ngIf="track.path" mat-raised-button (click)="track.path=undefined;">{{fileName('path')}}</button>
+            </div>
+			<div fxFlex >
+				<button *ngIf="!track.index" mat-raised-button (click)="addFile('index')">Index file</button>
+				<button *ngIf="track.index" mat-raised-button (click)="track.index=undefined;">{{fileName('index')}}</button>
+			</div>
+		</ng-container>
+  	</mat-dialog-content>
+	<mat-dialog-actions>
+		<button mat-button mat-dialog-close>Cancel</button>
+		<button mat-button (click)="submit()" [disabled]="!isOk()">Load</button>
+	</mat-dialog-actions>

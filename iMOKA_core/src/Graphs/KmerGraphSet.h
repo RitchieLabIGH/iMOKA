@@ -28,7 +28,6 @@ public:
 	virtual ~KmerGraphSet();
 	void makeEdges();
 	void makeGraphsFromBestExtension(double);
-	void correctHolmBonferroni(double);
 	void generateSequencesFromGraphs(double);
 	void alignSequences(Mapper &);
 	void recoverWinners(double corr);
@@ -36,8 +35,9 @@ public:
 	void filter(double , uint64_t);
 	bool load(std::string in_file, double threshold);
 	void annotate(std::string, std::string, double);
+	void findRegions(std::string);
 	void rescale();
-	void processUnAnnotated(std::vector<bool>);
+	void processUnAnnotated();
 	uint64_t size() { return nodes.size(); };
 	void setPerfectMatch(bool perfect_match ) {this->perfect_match=perfect_match;};
 	std::vector<std::string> graph_type;
@@ -70,6 +70,8 @@ public:
 	bool has_matrix=false;
 private:
 	bool perfect_match=false;
+	std::vector<std::set<uint64_t>> regions;
+	std::vector<bool> sequences_done;
 	std::vector<double> max_values;
 	uint64_t w; // it's the offset
 	std::string matrix_file="None";

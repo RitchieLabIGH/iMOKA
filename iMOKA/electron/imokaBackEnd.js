@@ -7,6 +7,8 @@ const Processor  = require('./processor.js');
 const LocalQueue = require('./localQueue.js');
 const stream = require('stream');
 const { Observable } = require('rxjs');
+const getContent = require('./utils/getContent');
+var parser = new require('xml2js').Parser();
 
 // // imokaBE class constructor
 
@@ -128,7 +130,30 @@ class iMokaBE extends EventEmitter {
 		}) ;
 	}
 	
-	
+	getIGVAnnotations = async (name)=>{
+		try {
+			let xml=await getContent("https://s3.amazonaws.com/igv.org.genomes/"+name+"/"+name+"_annotations.xml");
+			let ann=await parser.parseStringPromise(xml), out=[];
+			if ( ann["Global"]){
+				if ( ann["Global"]["Resource"] ){
+					for ( let res of ann["Global"]["Resource"])
+						out.push(res["$"])
+				}
+				if ( ann["Global"]["Category"]){
+					for ( let cat of ann["Global"]["Category"] ){
+						let grp ={ name : cat["$"].name , annotations : []} 
+						for ( let res of cat["Resource"])
+							grp.annotations.push(res["$"])
+						out.push(grp)
+					}
+				}
+			}
+			return out;
+		} catch (err) {
+			console.log(err)
+			return undefined;
+		}
+	}
 	
 	
 	getKmerTable(request = {all : false, file_type : "matrix"} ) {
@@ -391,7 +416,7 @@ class iMokaBE extends EventEmitter {
 		
 		for ( let i =0 ; i < ranks.length; i++){
 			ranks[i].sort((a,b)=>{
-				if (this.data.kmers.kmers[a].values[i] == this.data.kmers.kmers[b].values[i] ){
+				if (this.data.kmers.kmers[a].values[i] == this.data.kmers.kmers[b].values[i] &&  this.data.kmers.kmers[a].pvalues ){
 					return this.data.kmers.kmers[a].pvalues[i] > this.data.kmers.kmers[b].pvalues[i] ? 1 : -1;
 				} else {
 					return this.data.kmers.kmers[a].values[i] > this.data.kmers.kmers[b].values[i] ? -1 : 1;	
@@ -804,6 +829,9 @@ class iMokaBE extends EventEmitter {
 	    		})
 	    		if ( ! dat.ev_types.includes(ev.type) ) dat.ev_types.push(ev.type);
 	    	})
+			if ( dat.alignments && dat.alignments.length > 2 && dat.ev_types.indexOf("multimap") == -1){
+				dat.ev_types.push("multimap")
+			}
 	    }
 	    return dat;
 	    
@@ -1163,7 +1191,7 @@ class iMokaBE extends EventEmitter {
 		    }
 		    let recordsFiltered=this.data.kmers.kmers.length;
 		    if (! this.data.kmers.current_search.kmers || this.data.kmers.current_search.kmers != request.search || this.data.kmers.current_search.subset != request.subset  || this.data.kmers.current_search.eventsFilter != request.eventsFilter || this.data.kmers.current_search.minPred!=request.minPred ){
-		        if ( request.bmu.length > 0  || request.search.value.length >= 2 || request.subset.length > 0 || request.eventsFilter.length != this.data.kmers.info.events.length || request.minCount != 0 || request.minPred != 0 || request.minFC != 0 || request.minPval != 0 ){
+		        if ( request.bmu.length > 0  || request.search.value.length >= 2 || request.subset.length > 0 || request.eventsFilter.length != this.data.kmers.info.events.length || request.minCount != 0 || request.minPred != 0 || request.minFC != 0 || request.minPval != 0 || request.maxMap > 0 ){
 		            this.data.kmers.current_search.kmers = request.search;
 		            this.data.kmers.current_search.subset = request.subset;
 		            this.data.kmers.current_search.bmu = request.bmu;
@@ -1176,6 +1204,7 @@ class iMokaBE extends EventEmitter {
 		            for ( var e=0; e < this.data.kmers.kmers.length; e++){
 		                this.data.kmers.masks.kmers[e]=false;
 		                if ( request.bmu.length == 0 ||  request.bmu.includes(this.data.kmers.kmers[e].bmu) ){
+						if ( request.maxMap < 1  || (this.data.kmers.kmers[e].alignments && this.data.kmers.kmers[e].alignments.length <= request.maxMap )  ) {
 		                if (request.minPred  == 0 || this.data.kmers.kmers[e].values.find((n)=>{ return n >=  request.minPred ;} ) != undefined  ){
 		              	if (request.minFC  == 0 || ! this.data.kmers.kmers[e].fc || this.data.kmers.kmers[e].fc.find((n)=>{ if ( typeof n == "number") { return  Math.abs(n) >=  request.minFC; } else { return true;} } ) != undefined   ){
 		           		if (request.minPval  == 0 || ! this.data.kmers.kmers[e].pvalues || this.data.kmers.kmers[e].pvalues.find((n)=>{ return n <=  request.minPval ;} ) != undefined  ){
@@ -1185,7 +1214,8 @@ class iMokaBE extends EventEmitter {
 		                			if ( this.data.kmers.current_search.kmers.value.length < 2 || JSON.stringify(this.data.kmers.kmers[e]).includes(this.data.kmers.current_search.kmers.value) ) this.data.kmers.masks.kmers[e]=true;
 		                		}
 		                	}}}}}
-		                }
+		                }}
+						
 		                if (! this.data.kmers.masks.kmers[e]) recordsFiltered--;
 		            }
 		            

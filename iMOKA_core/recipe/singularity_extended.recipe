@@ -4,7 +4,7 @@ From: #write here the base_img or use the script ./scripts/generate_singularity_
 
 	
 %files
-	/home/claudio/Utils/hg38/blat_ref /blat_ref/
+	/home/claudio/Utils/hg38/blat_ref /
 %labels
    Version v0.1
 

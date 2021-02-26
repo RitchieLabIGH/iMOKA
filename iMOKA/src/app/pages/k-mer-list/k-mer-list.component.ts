@@ -23,12 +23,12 @@ import { Subscription } from 'rxjs';
 
 import { RandomForestComponent } from './dialog/random-forest/random-forest.component';
 import { NewSomComponent } from './dialog/som/new-som.component';
-	
-import Ideogram from '../../plugins/ideogram/dist/js/ideogram.min.js';
 
+import Ideogram from '../../plugins/ideogram/dist/js/ideogram.min.js';
+import { FileService } from '../../services/file.service'
 import igv from '../../plugins/igv/igv.js';
 import * as $ from 'jquery';
-
+import { genomes } from '../../../assets/data/genomes';
 
 
 @Component({
@@ -45,7 +45,7 @@ export class KMerListComponent implements OnInit, OnDestroy {
 	constructor(private trackService: TracksService, public dialog: MatDialog,
 		private _snackBar: MatSnackBar, private zone: NgZone,
 		private cd: ChangeDetectorRef, private bottomSheet: MatBottomSheet
-		, private uem: UemService
+		, private uem: UemService, private fileService: FileService
 	) {
 	};
 
@@ -63,35 +63,50 @@ export class KMerListComponent implements OnInit, OnDestroy {
 	browserSequenceTrack: any;
 	browserKmerTrack: any;
 	subscriptions: Subscription[] = [];
-	
-	ideo_visible : boolean=false;
-	ideo_chromosomes : string[] =["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"] 
-	ideogram_type : string[] = [];
-	ideo_table_norm : string="raw";
-	ideogram_possible_types : {key : string, name : string}[] = [];
-	ideogram_stats : { header : string[] , data : number[][] , row_names : string[], tot_rows : number[], tot_global:number, tot_columns : number[] };
-	ideogram : Ideogram;
-	ideo_config : any={
-						organism : 'human', 
-						container : '#ideo-container' , 
-						annotations : {keys : ["name","start","length", "repetitive", "highest_expression"], annots: [] },
-						dataDir: 'https://cdn.jsdelivr.net/npm/ideogram@1.21/dist/data/bands/native/',
-						annotationsLayout: 'heatmap',
-      					chrHeight: 400,
-						legend : [],
-						heatmaps : [],
-						rotatable : false,
-						chromosomes : [],
-		};
 
-	addExternalTrackFile(track: ExternalTrack) {
+	ideo_visible: boolean = false;
+	ideo_chromosomes: string[] = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "X", "Y"]
+	ideogram_type: string[] = [];
+	ideo_table_norm: string = "raw";
+	ideogram_possible_types: { key: string, name: string }[] = [];
+	ideogram_stats: { header: string[], data: number[][], row_names: string[], tot_rows: number[], tot_global: number, tot_columns: number[] };
+	ideogram: Ideogram;
+	ideo_config: any = {
+		organism: 'human',
+		container: '#ideo-container',
+		annotations: { keys: ["name", "start", "length", "repetitive", "highest_expression"], annots: [] },
+		dataDir: 'https://cdn.jsdelivr.net/npm/ideogram@1.21/dist/data/bands/native/',
+		annotationsLayout: 'heatmap',
+		chrHeight: 400,
+		legend: [],
+		heatmaps: [],
+		rotatable: false,
+		chromosomes: [],
+	};
+	addExternalTrack(track: ExternalTrack) {
+		
 		this.zone.run(() => {
-			this.browser.loadTrack({ url: track.path, name: track.name }).catch((error: any) => {
+			if ( track.format == "auto") track.format=undefined;
+			if ( track.type == "auto") track.type=undefined;
+			let toadd={ url: track.path, indexURL: track.index, name: track.name , format : track.format, type : track.type };
+			console.log(toadd)
+			this.browser.loadTrack(toadd).catch((error: any) => {
 				if (error) {
 					console.log(error);
 				}
 			});
 		});
+	}
+	addExternalTrackFile(track_n: string) {
+		if (!track_n) return;
+		let track;
+		if (track_n.includes("_")) {
+			track = this.externalTracks[parseInt(track_n.split("_")[0])].annotations[parseInt(track_n.split("_")[1])];
+		} else {
+			track = this.externalTracks[parseInt(track_n.split("_")[0])];
+		}
+		if (track) this.addExternalTrack(track);
+
 	};
 
 	ngOnInit() {
@@ -111,7 +126,8 @@ export class KMerListComponent implements OnInit, OnDestroy {
 							}
 						}
 					});
-					igv.createBrowser(document.getElementById('igv-browser'), { genome: this.genome }).then((browser: any) => {
+					console.log(genomes[this.genome])
+					igv.createBrowser(document.getElementById('igv-browser'), { reference: genomes[this.genome] }).then((browser: any) => {
 						this.browser = browser;
 						this.trackService.getExternalTracks(this.genome).subscribe(extTracks => {
 							this.externalTracks = extTracks;
@@ -120,9 +136,9 @@ export class KMerListComponent implements OnInit, OnDestroy {
 					});
 				}
 
-			} else if ( ev.index == 2) {
-				if ( ! this.ideogram){
-					this.ideogram=true;
+			} else if (ev.index == 2) {
+				if (!this.ideogram) {
+					this.ideogram = true;
 					this.refreshIdeogram();
 				}
 			}
@@ -149,18 +165,18 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	getFileName(max_len: number=-1){
-		if (this.session ){
-			let fname=this.session.files.kmers.file;
-			if ( max_len > 0 && fname.length > max_len  ){
-				fname="..."+fname.substr(-max_len)
+	getFileName(max_len: number = -1) {
+		if (this.session) {
+			let fname = this.session.files.kmers.file;
+			if (max_len > 0 && fname.length > max_len) {
+				fname = "..." + fname.substr(-max_len)
 			}
-			if (this.session.files.kmers.original_request){
-				let mat = this.session.matrices.find((mt)=>{return mt.uid == this.session.files.kmers.original_request})
-				if (mat){
+			if (this.session.files.kmers.original_request) {
+				let mat = this.session.matrices.find((mt) => { return mt.uid == this.session.files.kmers.original_request })
+				if (mat) {
 					return " matrix " + mat.name
 				} else {
-					return " file " + fname ; 
+					return " file " + fname;
 				}
 			} else {
 				return " file " + fname;
@@ -171,8 +187,8 @@ export class KMerListComponent implements OnInit, OnDestroy {
 	}
 
 	loadKmerTracks() {
-		this.browser.loadTrack({ type: "kmers", source: this.trackService, request_type: "sequences", name: "Sequences", visibilityWindow: -1, groups: this.groups, predictors: this.predictors, onClick: (el: { query_index: any; }) => { this.showInfo(el.query_index, "sequences"); } });
-		this.browser.loadTrack({ type: "kmers", source: this.trackService, name: "Kmers", request_type: "kmers", visibilityWindow: -1, groups: this.groups, predictors: this.predictors, onClick: (el: { query_index: any; }) => { this.showInfo(el.query_index, "kmers"); } }, this.browser);
+		this.browser.loadTrack({ type: "imoka", source: this.trackService, request_type: "sequences", name: "Sequences", visibilityWindow: 1000000, groups: this.groups, predictors: this.predictors, onClick: (el: { query_index: any; }) => { this.showInfo(el.query_index, "sequences"); } });
+		this.browser.loadTrack({ type: "imoka", source: this.trackService, name: "Kmers", request_type: "kmers", visibilityWindow: 1000000, groups: this.groups, predictors: this.predictors, onClick: (el: { query_index: any; }) => { this.showInfo(el.query_index, "kmers"); } }, this.browser);
 	}
 
 	refreshTable(event?: any) {
@@ -191,103 +207,104 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		}
 		this.dataSource.loadKmer(this.dtOptions).then(() => this.cd.markForCheck());
 	}
-	
-	refreshIdeogram(){
-		if ( this.ideogram_possible_types.length == 0){
-			this.ideogram_possible_types=[{key : "unique", name:"Unique k-mers"},
-				 { key : "repetitive", name : "Repetitive k-mers"}];
+
+	refreshIdeogram() {
+		if (this.ideogram_possible_types.length == 0) {
+			this.ideogram_possible_types = [{ key: "unique", name: "Unique k-mers" },
+			{ key: "repetitive", name: "Repetitive k-mers" }];
 			this.ideo_config.legend = [
-				{name : 'Repetitive k-mer', rows : [ {color : '#F00', name : 'Unique'}, {color : '#00F', name : 'Repetitive'} ]},
-				{name : 'Highest expression', rows : []}
-				]
-			
-			this.ideo_config.heatmaps= [
-				{key : 'repetitive', thresholds : [['0', '#F00'], ['1', '#00F']] },
-				{key : 'highest_expression', thresholds : [] }];
-				
+				{ name: 'Repetitive k-mer', rows: [{ color: '#F00', name: 'Unique' }, { color: '#00F', name: 'Repetitive' }] },
+				{ name: 'Highest expression', rows: [] }
+			]
+
+			this.ideo_config.heatmaps = [
+				{ key: 'repetitive', thresholds: [['0', '#F00'], ['1', '#00F']] },
+				{ key: 'highest_expression', thresholds: [] }];
+
 			this.ideo_config.annotationTracks = [
-				{id: 'repetitive', displayName: 'Repetitive level'},
-    			{id: 'highest_expression', displayName: 'Expression track'},]
-			let colors=['#F0F', '#0F0','#F00', '#00F', '#0FF' ];
-			
-			this.info.kmers.groups_names.forEach((gn, idx)=>{
-				this.ideo_config.legend[1].rows.push({color : colors[idx], name : "Class "+gn })
-				this.ideogram_possible_types.push({ name : "Class "+gn , key : idx+"" })
-				this.ideo_config.heatmaps[1].thresholds.push([idx+'', colors[idx]])
+				{ id: 'repetitive', displayName: 'Repetitive level' },
+				{ id: 'highest_expression', displayName: 'Expression track' },]
+			let colors = ['#F0F', '#0F0', '#F00', '#00F', '#0FF'];
+
+			this.info.kmers.groups_names.forEach((gn, idx) => {
+				this.ideo_config.legend[1].rows.push({ color: colors[idx], name: "Class " + gn })
+				this.ideogram_possible_types.push({ name: "Class " + gn, key: idx + "" })
+				this.ideo_config.heatmaps[1].thresholds.push([idx + '', colors[idx]])
 			});
 		}
-		
+
 		this.trackService.getIdeogram({
-				filter : this.ideogram_type,
-				table_filtered : this.ideo_visible,
-				chromosomes :  this.ideo_config.chromosomes }).then((ideo)=>{
+			filter: this.ideogram_type,
+			table_filtered: this.ideo_visible,
+			chromosomes: this.ideo_config.chromosomes
+		}).then((ideo) => {
 			let config = JSON.parse(JSON.stringify(this.ideo_config))
-			if ( config.chromosomes.length == 0 ) {
-				config.chromosomes=JSON.parse(JSON.stringify(this.ideo_chromosomes));	
-			} 
-			config.annotations= ideo.data;
-			if ( ideo.data.annots.length > 0 ){
-				config.onDrawAnnots=()=>{
-					let correct_size= ()=>{
+			if (config.chromosomes.length == 0) {
+				config.chromosomes = JSON.parse(JSON.stringify(this.ideo_chromosomes));
+			}
+			config.annotations = ideo.data;
+			if (ideo.data.annots.length > 0) {
+				config.onDrawAnnots = () => {
+					let correct_size = () => {
 						$("#_ideogramInnerWrap").css("overflow-x", "auto");
-						$("#_ideogramMiddleWrap").css("height", (parseInt($("svg#_ideogram").attr("height"))+80)+"px" );
+						$("#_ideogramMiddleWrap").css("height", (parseInt($("svg#_ideogram").attr("height")) + 80) + "px");
 					}
 					setTimeout(correct_size, 100);
-				}	
+				}
 			}
 			this.ideogram = new Ideogram(config);
 			this.ideoStats(config);
-		}).catch((err)=>{
+		}).catch((err) => {
 			console.log(err);
 		})
 	}
-	
-	ideoStats(config:any){
-		this.ideogram_stats= {header: ["Unique", "Repetitive"], row_names : [], data : [], tot_rows : [],tot_columns:[], tot_global : 0};
-		let base_row=[0,0]
-		this.info.kmers.groups_names.forEach((gn, idx)=>{
+
+	ideoStats(config: any) {
+		this.ideogram_stats = { header: ["Unique", "Repetitive"], row_names: [], data: [], tot_rows: [], tot_columns: [], tot_global: 0 };
+		let base_row = [0, 0]
+		this.info.kmers.groups_names.forEach((gn, idx) => {
 			base_row.push(0)
-			this.ideogram_stats.header.push("Class "+gn)	
+			this.ideogram_stats.header.push("Class " + gn)
 		});
-		config.chromosomes.forEach((chr)=>{
-			let ann = config.annotations.annots.find((el)=>{return el.chr == chr})
-			if ( ann ){
-				this.ideogram_stats.row_names.push("chr"+chr);
-				let counts=[...base_row];
-				ann.annots.forEach((el)=>{
-					counts[el[3]]+=1;
-					counts[2+el[4]]+=1;
+		config.chromosomes.forEach((chr) => {
+			let ann = config.annotations.annots.find((el) => { return el.chr == chr })
+			if (ann) {
+				this.ideogram_stats.row_names.push("chr" + chr);
+				let counts = [...base_row];
+				ann.annots.forEach((el) => {
+					counts[el[3]] += 1;
+					counts[2 + el[4]] += 1;
 				})
 				this.ideogram_stats.data.push(counts);
 				this.ideogram_stats.tot_rows.push(ann.annots.length);
-				this.ideogram_stats.tot_global+=ann.annots.length;
-			}	
+				this.ideogram_stats.tot_global += ann.annots.length;
+			}
 		})
-		if ( this.ideogram_stats.data.length > 0){
-			this.ideogram_stats.data[0].forEach((el, col)=>{
-				let col_tot=0;
-				this.ideogram_stats.data.forEach((arr)=>{
-					col_tot+=arr[col];
-				})	
-				this.ideogram_stats.tot_columns.push(col_tot);	
+		if (this.ideogram_stats.data.length > 0) {
+			this.ideogram_stats.data[0].forEach((el, col) => {
+				let col_tot = 0;
+				this.ideogram_stats.data.forEach((arr) => {
+					col_tot += arr[col];
+				})
+				this.ideogram_stats.tot_columns.push(col_tot);
 			})
 		}
 	}
-	
-	ideoCount(count : number, row : number, column : number){
-		switch(this.ideo_table_norm){
+
+	ideoCount(count: number, row: number, column: number) {
+		switch (this.ideo_table_norm) {
 			case "raw":
 				return count;
 			case "col":
-				return (count /this.ideogram_stats.tot_columns[column])*100;
+				return (count / this.ideogram_stats.tot_columns[column]) * 100;
 			case "chr":
-				return (count /this.ideogram_stats.tot_rows[row])*100;
+				return (count / this.ideogram_stats.tot_rows[row]) * 100;
 			case "global":
-				return (count / this.ideogram_stats.tot_global )*100;
+				return (count / this.ideogram_stats.tot_global) * 100;
 		}
 		return count;
 	}
-	
+
 	initDtOptions(): KmerDataTableOptions {
 		return {
 			displayedColumns: ['best_rank', 'kmer', 'position', 'genes', 'events'],
@@ -300,6 +317,7 @@ export class KMerListComponent implements OnInit, OnDestroy {
 			minPred: 0,
 			minFC: 0,
 			minPval: 1,
+			maxMap: -1,
 			pageSize: 10,
 			pageIndex: 0,
 			draw: 0,
@@ -358,7 +376,14 @@ export class KMerListComponent implements OnInit, OnDestroy {
 			tosearch = request.chromosome + ":" + request.start + "-" + request.end;
 		}
 		this.changeTab(1).then(() => {
-			this.browser.search(tosearch);
+			if ( this.browser ){
+				this.browser.search(tosearch);	
+			} else {
+				setTimeout(()=>{
+					this.searchBrowser(tosearch);
+				}, 500);
+			}
+			
 		})
 
 	}
@@ -382,7 +407,7 @@ export class KMerListComponent implements OnInit, OnDestroy {
 
 	loadExternalTrack() {
 		const dialogRef = this.dialog.open(OpenTrackComponent, { data: { tracks: this.externalTracks } })
-		dialogRef.afterClosed().subscribe(track => track && this.addExternalTrackFile(track));
+		dialogRef.afterClosed().subscribe(track => track && this.addExternalTrack(track));
 	}
 
 	showGeneOntology() {
@@ -398,21 +423,21 @@ export class KMerListComponent implements OnInit, OnDestroy {
 
 	extract() {
 		let data = new InfoData("Extraction");
-		let extract_file = function(args: any) {
-			args.that.fileService.getNewFile({ title: "Create a new file" }).then((data_file: string | any[]) => {
+		let extract_file = (args: any) => {
+			this.fileService.getNewFile({ title: "Create a new file" }).then((data_file: string) => {
 				if (!data_file || data_file.length == 0) {
-					args.that.toastMessage("No file selected", "Warning", 2);
+					this.toastMessage("No file selected", "Warning");
 					return;
 				} else {
-					args.that.fileService.saveKmerTable(data_file, args.ftype).then((resp: any) => {
-						args.that.toastMessage("File saved corectly", "Success", 0);
+					this.fileService.saveKmerTable(data_file, args.ftype).then((resp: any) => {
+						this.toastMessage("File saved corectly", "Success");
 					});
 				}
 			});
 		}
-		data.information_list.push(new InfoListElement("Normalized k-mer matrix", "a text file containing the normalized k-mer counts", extract_file, { ftype: "matrix", that: this }));
-		data.information_list.push(new InfoListElement("Raw k-mer matrix", "a text file containing the raw k-mer counts", extract_file, { ftype: "matrix_raw", that: this }));
-		data.information_list.push(new InfoListElement("TSV file", "a text file containing the informations displayed in the k-mer table", extract_file, { ftype: "tsv", that: this }));
+		data.information_list.push(new InfoListElement("Normalized k-mer matrix", "a text file containing the normalized k-mer counts", extract_file, { ftype: "matrix" }));
+		data.information_list.push(new InfoListElement("Raw k-mer matrix", "a text file containing the raw k-mer counts", extract_file, { ftype: "matrix_raw" }));
+		data.information_list.push(new InfoListElement("TSV file", "a text file containing the informations displayed in the k-mer table", extract_file, { ftype: "tsv" }));
 		this.zone.run(() => {
 			this.bottomSheet.open(InfoComponent, { data: data });
 		});
@@ -422,10 +447,10 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		let analyse_data = (args) => {
 			switch (args.what) {
 				case "rf":
-					this.zone.run(() => {this.dialog.open(RandomForestComponent)});
+					this.zone.run(() => { this.dialog.open(RandomForestComponent) });
 					break
 				case "som":
-					this.zone.run(()=>{this.dialog.open(NewSomComponent)});
+					this.zone.run(() => { this.dialog.open(NewSomComponent) });
 					break;
 				default:
 					this.toastMessage("Analysis " + args.what + " type not found.", "ERROR!")
@@ -435,8 +460,8 @@ export class KMerListComponent implements OnInit, OnDestroy {
 
 		let data = new InfoData("Analysis");
 		if (this.session.profile.process_config.profiles.length > 0 && this.session.files.kmers.original_request != this.session.files.kmers.file) {
-			data.information_list.push(new InfoListElement("Random Forest", undefined, analyse_data, {what : "rf", description : "Create prediction models using RF with a subset of k-mers."}))
-			data.information_list.push(new InfoListElement("SOM", undefined, analyse_data, {what : "som", description: "Aggregate the k-mers using a self organizing map and visualize the samples as aboundance maps"}))
+			data.information_list.push(new InfoListElement("Random Forest", undefined, analyse_data, { what: "rf", description: "Create prediction models using RF with a subset of k-mers." }))
+			data.information_list.push(new InfoListElement("SOM", undefined, analyse_data, { what: "som", description: "Aggregate the k-mers using a self organizing map and visualize the samples as aboundance maps" }))
 		} else {
 			if (this.session.profile.process_config.profiles.length == 0) {
 				data.information_list.push(new InfoListElement("You need to create a valid profile first."))

@@ -42,6 +42,7 @@ export class KmerDataTableOptions {
 	minCount: number;
 	minPred: number;
 	minFC: number;
+	maxMap : number = -1;
 	minPval: number;
 	pageSize: number;
 	pageIndex: number;

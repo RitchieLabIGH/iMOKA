@@ -540,7 +540,6 @@ static void getParameter(json & origin, json & def, std::string key,
 	if (!origin.is_null()) {
 		try {
 			destination = origin[key];
-			std::cout << key << " : " << destination << "\n";
 			return;
 		} catch (const std::exception& e) {
 			std::cerr << e.what() <<'\n';
@@ -553,7 +552,6 @@ static void getParameter(json & origin, json & def, std::string key,
 	}
 	try {
 		destination = def[key];
-		std::cout << key << " : " << destination << " (Default)\n";
 		return;
 	} catch (const std::exception& e) {
 		std::cerr << "ERROR: " << e.what() << "\n";

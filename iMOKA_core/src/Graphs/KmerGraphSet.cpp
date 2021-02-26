@@ -18,8 +18,6 @@ KmerGraphSet::~KmerGraphSet() {
 
 bool KmerGraphSet::load(std::string in_file, double threshold) {
 	nodes.clear();
-	uint64_t bufferSize = 10000 * omp_get_num_threads();
-	std::vector<std::string> buffer;
 	TextMatrix mat(in_file);
 	TextMatrixLine row;
 	predictors_groups = mat.col_groups;
@@ -295,52 +293,23 @@ void KmerGraphSet::generateSequencesFromGraphs(double thr) {
 	}
 	uint64_t tot = 0;
 	sequences.clear();
+	regions.clear();
 	for (uint64_t gi = 0; gi < graphs.size(); gi++) {
 		KmerGraph &g = graphs[gi];
+		regions.push_back({});
 		for (auto &s : g.sequences) {
 			if (s.sequence.size() > k_len + 3) {
 				s.id = tot++;
 				s.graph = gi;
 				g.sequences_idx.push_back(sequences.size());
 				sequences.push_back(s);
+				regions[gi].insert(s.id);
 			}
 		}
 		g.sequences.clear();
 	}
-	std::cerr << "Found " << tot << " sequences.\n";
 	infos["n_sequences"] = tot;
 	return;
-}
-
-void KmerGraphSet::correctHolmBonferroni(double thr) {
-	double pval_thr = std::pow(10, -thr);
-	std::cerr << "Pvalue threshold: " << pval_thr << "\n";
-	uint64_t m = sequences.size();
-	std::vector<uint64_t> order(m);
-	std::iota(order.begin(), order.end(), 0);
-	std::vector<bool> pass(sequences.size(), false);
-	for (int comp = 0; comp < sequences[0].best_kmer->values.size(); comp++) {
-		std::cerr << "sorting...";
-		std::cerr.flush();
-		std::sort(order.begin(), order.end(),
-				[&](const uint64_t &a, const uint64_t &b) {
-					return sequences[a].best_kmer->values[comp]
-							> sequences[b].best_kmer->values[comp];
-				});
-		std::cerr << "done.\nEvaluating new pvalues....";
-		std::cerr.flush();
-		for (uint64_t i = 0; i < order.size(); i++) {
-			pass[order[i]] = pass[order[i]]
-					|| sequences[order[i]].best_kmer->values[comp]
-							> (-log10(pval_thr / (m - i)));
-		}
-	}
-	for (uint64_t i = sequences.size() - 1; i >= 0; i--) {
-		if (!pass[i])
-			sequences.erase(sequences.begin() + i);
-	}
-	std::cerr << "New number of sequences = " << sequences.size() << "\n";
-
 }
 
 void KmerGraphSet::alignSequences(Mapper &mapper) {
@@ -355,7 +324,6 @@ void KmerGraphSet::alignSequences(Mapper &mapper) {
 	std::ifstream ifs(output_file);
 	std::string line;
 	int64_t new_pos = -1, tot_pos = 0;
-	std::cerr << "\n";
 	while (getline(ifs, line)) {
 		if (!mapper.isCommentLine(line)) {
 			MapperResultLine res_line(line, mapper.output_type);
@@ -404,38 +372,113 @@ void KmerGraphSet::alignSequences(Mapper &mapper) {
 	ifs.close();
 	remove(input_file.c_str());
 	remove(output_file.c_str());
+	remove(std::string(output_file + ".err").c_str());
+	remove(std::string(output_file + ".out").c_str());
+}
 
+void KmerGraphSet::findRegions(std::string bed_out) {
+	std::string regions_bed = bed_out + ".regions.bed";
+	int r =
+			system(
+					std::string(
+							"sort -k1,1 -k2,2n " + bed_out + " > " + bed_out
+									+ ".sorted && bedtools merge -s -d "
+									+ std::to_string(this->k_len) + " -i "
+									+ bed_out + ".sorted -o distinct -c 4 > "
+									+ regions_bed).c_str());
+	if (r != 0) {
+		exit(r);
+	}
+	std::ifstream ifs(regions_bed);
+	std::string line;
+	std::vector<std::string> line_arr, str_arr;
+	uint64_t idx = 0;
+	regions.clear();
+	while (getline(ifs, line)) {
+		IOTools::split(line_arr, line);
+		IOTools::split(str_arr, line_arr[4], ",");
+		regions.push_back( { });
+		for (auto s : str_arr) {
+			IOTools::split(line_arr, s, "_");
+			regions[idx].insert(mapper_results[std::stoi(line_arr[1])].query_index);
+		}
+		idx++;
+	}
+	ifs.close();
+	remove(regions_bed.c_str());
+	remove(std::string(bed_out+".sorted").c_str());
+	std::vector<uint64_t> intersection;
+	std::vector<uint64_t>::iterator it;
+	for ( uint64_t i = regions.size()-1; i>0; i--){
+		for (uint64_t j = 0; j < i ; j++ ){
+			intersection.resize(regions[i].size()+regions[j].size());
+			it= std::set_intersection(regions[i].begin(), regions[i].end(), regions[j].begin(), regions[j].end(), intersection.begin());
+			intersection.resize(it-intersection.begin());
+			if (intersection.size() > 0 ){
+				intersection.resize(regions[i].size()+regions[j].size());
+				it = std::set_union(regions[i].begin(), regions[i].end(), regions[j].begin(), regions[j].end(), intersection.begin());
+				intersection.resize(it-intersection.begin());
+				regions[j].clear();
+				for ( auto el : intersection) regions[j].insert(el);
+				regions.erase(regions.begin()+i);
+				j=i;
+			}
+		}
+	}
+	double best_value, curr_val;
+	for ( auto r : regions ){
+		best_value=0;
+		for (auto s_id : r){
+			curr_val= *std::max(sequences[s_id].best_kmer->values.begin(), sequences[s_id].best_kmer->values.end());
+			if ( best_value < curr_val ){
+				best_value = curr_val;
+			}
+		}
+		for (auto s_id : r){
+			for ( auto aln : sequences[s_id].alignments ){
+				for (auto & sig : mapper_results[aln].signatures ){
+					if ( sig.generates_event ){
+						curr_val=*std::max(sig.best_kmer->values.begin(),sig.best_kmer->values.end() );
+						if ( curr_val < best_value ){
+							sig.generates_event=false;
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 		double coverage_limit) {
-	std::cerr << "Writing the bed file of " << mapper_results.size()
-			<< " sequences... \n";
 	std::string tmp_bed_file_out = bed_out + ".intersected.bed";
 	std::ofstream tmp_bed(bed_out);
 	for (uint64_t i = 0; i < mapper_results.size(); i++) {
 		tmp_bed << mapper_results[i].to_bed();
 	}
 	tmp_bed.close();
+	findRegions(bed_out);
 	int r =
 			system(
 					std::string(
 							"bedtools intersect -loj -a " + bed_out + " -b "
 									+ annotation_files + " > "
 									+ tmp_bed_file_out).c_str());
+	if (r != 0) {
+		exit(r);
+	}
+
+	bool running = true;
 	std::ifstream ifs(tmp_bed_file_out);
-	std::string line;
 	std::vector<std::string> content, coordinate;
 	uint64_t i, b, start, end, sp_start, sp_end;
-	std::cerr << "generated the intersection " << tmp_bed_file_out
-			<< ", parsing...";
-	std::cerr.flush();
 	std::vector<std::string> buffer;
 	uint64_t max_buffer = 10000 * omp_get_max_threads();
 	std::vector<std::vector<Annotation>> results(omp_get_max_threads());
 	std::map<std::string, std::set<uint64_t>> genes_ids;
 	std::map<std::string, std::string> gene_names;
-	bool running = true;
+	std::string line;
+	running = true;
 	while (running) {
 		running = getline(ifs, line) ? true : false;
 		if (running)
@@ -460,9 +503,7 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 			buffer.clear();
 		}
 	}
-	std::cerr << "Done.\nIdentified " << genes_ids.size() << " genes.\n";
 	remove(tmp_bed_file_out.c_str());
-	std::cerr << "Finding splicing....";
 
 	alignmentDerivedFeatures.clear();
 	uint64_t grp, o;
@@ -495,7 +536,6 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 		r.signatures.clear();
 	}
 
-	std::cerr << "Done.\n Retrieving the genes length...";
 	ifs.close();
 	std::map<std::string, std::map<std::string, std::vector<Segment>>> gene_exons;
 	std::vector<std::string> columns;
@@ -523,14 +563,14 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 	}
 	ifs.close();
 
-	std::cerr << "done, producing the genes annotations...";
 	genes.clear();
 	std::vector<std::string> gene_ids_keys;
 	for (auto &gn : genes_ids) {
 		gene_ids_keys.push_back(gn.first);
 	}
-	std::vector<bool> sequences_done(sequences.size(), false);
-
+	sequences_done.clear();
+	for (uint64_t i = 0; i < sequences.size(); i++)
+		sequences_done.push_back(false);
 	for (uint64_t i = 0; i < gene_ids_keys.size(); i++) {
 		Gene g;
 		g.init(gene_ids_keys[i], gene_names[gene_ids_keys[i]], coverage_limit,
@@ -543,12 +583,12 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 			for (auto idx : genes[g.id].alignments) {
 				mapper_results[idx].genes.insert(g.id);
 			}
-			for (auto s : g.sequences)
+			for (auto s : g.sequences) {
 				sequences_done[s] = true;
+			}
 		}
 	}
-	std::cerr << "reduced to " << genes.size() << " genes.\n";
-	std::cerr << "Producing the alignment derived features...";
+	processUnAnnotated();
 	std::map<uint64_t, uint64_t> sig_to_ev;
 	for (auto &sig : alignmentDerivedFeatures) {
 		if (sig.generates_event) {
@@ -573,8 +613,6 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 			}
 		}
 	}
-	std::cerr << IOTools::format_space_human(IOTools::getCurrentProcessMemory())
-			<< "\n";
 	for (auto &g : genes) {
 		for (int64_t j = g.events.size() - 1; j >= 0; j--) {
 			bool to_add = true;
@@ -595,16 +633,34 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 		}
 	}
 
-	std::cerr << "done.\n";
-	processUnAnnotated(sequences_done);
 
 }
 
-void KmerGraphSet::processUnAnnotated(std::vector<bool> sequences_done) {
-	for (uint64_t s = 0; s < sequences.size(); s++) {
-		if (!sequences_done[s]) {
-			GraphSequence &seq = sequences[s];
-			bool represented = false;
+void KmerGraphSet::processUnAnnotated() {
+	if (sequences_done.size() == 0) {
+		sequences_done.clear();
+		for (uint64_t i = 0; i < sequences.size(); i++) {
+			sequences_done.push_back(false);
+		}
+	}
+
+	bool done, represented;
+	uint64_t idx;
+	for (auto r : regions) {
+		done = false;
+		for (auto s : r) {
+			done |= sequences_done[s];
+		}
+		if (!done) {
+			idx = *r.begin();
+			for (auto s : r) {
+				if (sequences[idx].best_kmer < sequences[s].best_kmer) {
+					idx = s;
+				}
+			}
+			//
+			GraphSequence &seq = sequences[idx];
+			represented = false;
 			for (auto &ev : events) {
 				if (ev.best_kmer == seq.best_kmer) {
 					represented = true;
@@ -617,10 +673,12 @@ void KmerGraphSet::processUnAnnotated(std::vector<bool> sequences_done) {
 					new_ev.type = "unmapped";
 				} else if (seq.alignments.size() > 1) {
 					new_ev.type = "multimap";
-					std::set<std::string> gene_names;
 					for (auto &aln : seq.alignments) {
-						for (auto g : mapper_results[aln].genes)
+					}
+					for (auto &aln : seq.alignments) {
+						for (auto g : mapper_results[aln].genes) {
 							new_ev.gene_name.insert(genes[g].gene_name);
+						}
 					}
 				} else {
 					MapperResultLine &aln = mapper_results[seq.alignments[0]];
@@ -631,38 +689,16 @@ void KmerGraphSet::processUnAnnotated(std::vector<bool> sequences_done) {
 					if (new_ev.gene_name.size() == 0) {
 						new_ev.type = "intergenic";
 					} else {
-						if (perfect_match){
-							represented=true;
+						if (perfect_match) {
+							represented = true;
 						}
 						new_ev.type = "intragenic";
 					}
 				}
-				if (!represented){
+				if (!represented) {
 					new_ev.alignments = seq.alignments;
 					new_ev.id = events.size();
 					events.push_back(new_ev);
-				}
-
-			}
-		} else { /// Add multimap event for k-mers with multiple alignments
-			GraphSequence &seq = sequences[s];
-			if (seq.alignments.size() > 1) {
-				bool to_add = true;
-				for (Event &ev : events) {
-					if (ev.best_kmer == seq.best_kmer
-							&& ev.type == "multimap") {
-						to_add = false;
-					}
-				}
-				if (to_add) {
-					Event new_ev;
-					new_ev.best_kmer = seq.best_kmer;
-					new_ev.type = "multimap";
-					std::set<std::string> gene_names;
-					for (auto &aln : seq.alignments) {
-						for (auto g : mapper_results[aln].genes)
-							new_ev.gene_name.insert(genes[g].gene_name);
-					}
 				}
 			}
 		}
@@ -952,15 +988,9 @@ void KmerGraphSet::recoverWinners(double corr) {
 		addWinningNode(ev);
 	}
 	getNodePositions();
-	std::cerr << "Found " << winning_nodes.size()
-			<< " nodes.\nRetrieving the counts...";
 	getNodeCounts();
-	std::cerr
-			<< "Done.\nAggregating the nodes with high correlation and in the gene or unmapped.\n";
 	int masked = aggregateCorrelated(corr);
 
-	std::cerr << "Masked " << masked << " k-mers.\n";
-	std::cerr.flush();
 	infos["correlation_thr"] = corr;
 }
 
@@ -1176,7 +1206,6 @@ json KmerGraphSet::generate_kmer_json(uint64_t node_idx) {
 }
 
 void KmerGraphSet::write_tsv(std::string out_file) {
-	std::cerr << "Writing " << out_file << "\n";
 	std::ofstream tsv_out(out_file);
 	std::string sep = "\t";
 	tsv_out << "kmer" << sep << "graph_number" << sep << "graph_type" << sep
