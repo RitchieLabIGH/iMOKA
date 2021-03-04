@@ -1,6 +1,6 @@
 FROM ubuntu:bionic
 
-LABEL version=v1.0
+LABEL version=v1.1
 
 COPY ./external /iMOKA/external
 

@@ -7,7 +7,6 @@
 
 #ifndef MATRIX_TEXTMATRIX_H_
 #define MATRIX_TEXTMATRIX_H_
-
 #include "Matrix.h"
 namespace imoka {
 namespace matrix {

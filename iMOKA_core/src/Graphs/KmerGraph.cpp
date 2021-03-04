@@ -139,12 +139,10 @@ std::pair<uint64_t, double> KmerGraph::getNextNode(std::set<uint64_t> nodes_id,
 
 void KmerGraph::extractBestSequence(uint64_t node_i, GraphSequence & gs) {
 	double global_max = 0;
-	double kmer_max = *std::max_element(nodes[node_i].values.begin(),
-			nodes[node_i].values.end());
+	double kmer_max = nodes[node_i].getBestValue();
 	/// Identify the best kmer
 	if (gs.best_kmer != NULL && gs.best_kmer->values.size() > 0) {
-		global_max = *std::max_element(gs.best_kmer->values.begin(),
-				gs.best_kmer->values.end());
+		global_max = gs.best_kmer->getBestValue();
 	}
 	if (global_max < kmer_max) {
 		gs.best_kmer = &(nodes[node_i]);

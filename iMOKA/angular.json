@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "iMOKA": {
+    "imoka": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -70,18 +70,18 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "iMOKA:build"
+            "browserTarget": "imoka:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "iMOKA:build:production"
+              "browserTarget": "imoka:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "iMOKA:build"
+            "browserTarget": "imoka:build"
           }
         },
         "test": {
@@ -119,16 +119,16 @@
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
             "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "iMOKA:serve"
+            "devServerTarget": "imoka:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "iMOKA:serve:production"
+              "devServerTarget": "imoka:serve:production"
             }
           }
         }
       }
     }
   },
-  "defaultProject": "iMOKA"
+  "defaultProject": "imoka"
 }

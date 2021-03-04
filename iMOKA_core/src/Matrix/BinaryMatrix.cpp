@@ -27,7 +27,7 @@ void BinaryMatrix::create(std::string inFile, double rf, int64_t prefix_size) {
 	std::string line;
 	std::vector<std::string> columns;
 	while (getline(istr, line)) {
-		IOTools::split(columns, line);
+		IOTools::split_rgx(columns, line);
 		if (line != "") {
 			if (columns.size() != 3) {
 				std::cerr << "ERROR! input file not well formatted\n";

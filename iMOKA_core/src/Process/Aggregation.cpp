@@ -134,7 +134,7 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 	graphs::KmerGraphSet gg(w, count_matrix);
 	gg.load(in_file, threshold);
 	uint64_t or_nodes = gg.size();
-	std::cout  << "done.\n\tRead " << or_nodes << " kmers."
+	std::cout  << "\tdone. Read " << or_nodes << " kmers."
 			<< "\n\tSpace occupied: "
 			<< IOTools::format_space_human(IOTools::getCurrentProcessMemory())
 	<< "\nStep " << step++ << " : Computing edges... ";std::cout.flush();
@@ -142,7 +142,8 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 	info["mem_after_reading"] = IOTools::format_space_human(IOTools::getCurrentProcessMemory());
 	gg.rescale(); // reascale the values in the node so that for each comparison the scale is 0-100
 	gg.makeEdges();
-	std::cout << "done.\nStep " << step++ << " : Building the groups...";std::cout.flush();
+	std::cout << "done.\n"<< "\tSpace occupied: " << IOTools::format_space_human(IOTools::getCurrentProcessMemory()) <<
+			"\nStep " << step++ << " : Building the groups...";std::cout.flush();
 	gg.makeGraphsFromBestExtension(final_thr);
 	std::cout << "done.\n\tFound " << gg.graph_type.size() << " graphs : \n";
 	info["n_of_graphs"]=gg.graph_type.size();
@@ -162,6 +163,7 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 		return false;
 	}
 	std::cout << "done. \n\tFound  " <<  gg.sequences.size() << " sequences.\n";std::cout.flush();
+	std::cout << "\tSpace occupied: " << IOTools::format_space_human(IOTools::getCurrentProcessMemory()) <<"\n";
 	info["n_of_sequences"]=gg.sequences.size();
 	if ( json_config != "nomap" ){
 		std::string annotation_file;
@@ -180,10 +182,11 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 			std::cout << "Step " << step++ << " : Mapping the sequences... ";std::cout.flush();
 			gg.setPerfectMatch(perfect_match);
 			gg.alignSequences(mapper);
-			std::cout << "done.\nStep " << step++ << " : Annotating...";
+			std::cout << "\tSpace occupied: " << IOTools::format_space_human(IOTools::getCurrentProcessMemory()) <<"\n";
+			std::cout << "Step " << step++ << " : Annotating...";
 			std::cout.flush();
 			gg.annotate(annotation_file, out_file + ".sequences.bed", coverage_limit);
-			std::cout << "done.\n";
+			std::cout << "\tSpace occupied: " << IOTools::format_space_human(IOTools::getCurrentProcessMemory()) <<"\n";
 
 		} else {
 			std::cerr << "Warning: given configuration " << json_config << " is not valid: " << mapper.error_message << "\nThe job will proceed with nomap configurations.\n"  ;
@@ -201,7 +204,7 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 	std::cout << "Step " << step++ << " : Recovering winners and counts...";
 	gg.recoverWinners(corr);
 	info["mem_after_winner"] = IOTools::format_space_human(IOTools::getCurrentProcessMemory());
-	std::cerr << "done.\nStep " << step++ << " : Writing output files...";
+	std::cout << "done.\nStep " << step++ << " : Writing output files...";
 	std::ofstream out_str;
 	out_str.open(out_file+".kmers.matrix");
 	uint64_t n_of_winner=0;
@@ -245,7 +248,7 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 	infoJSON.open(json_info_file);
 	infoJSON << info.dump() << "\n";
 	infoJSON.close();
-	std::cerr << "done.\n\n";
+	std::cout << "done.\n\n";
 	return true;
 }
 }

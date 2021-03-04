@@ -19,7 +19,8 @@ class KmerGraph {
 public:
 	KmerGraph() {};
 	virtual ~KmerGraph();
-	std::vector<BNode> nodes;
+	std::vector<BNode> nodes; // nodes are stored sorted by k-mer alphabetically
+	std::vector<BNode*> nodes_vsorted; // indexes of the nodes sorted by value
 	std::set<uint64_t> visited_nodes;
 	std::vector<double> best_accuracies;
 	std::string graph_type="None";

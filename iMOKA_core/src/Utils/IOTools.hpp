@@ -82,7 +82,7 @@ namespace IOTools {
 
 static const std::string alphabet = "ACGT";
 
-static void split(std::vector<std::string> & cont, const std::string & str, const std::string sep="[\\s\\n\\r]+" ){
+static void split_rgx(std::vector<std::string> & cont, const std::string & str, const std::string sep="[\\s\\n\\r]+" ){
 	std::regex rgx(sep);
 	std::sregex_token_iterator iter(str.begin(), str.end(), rgx, -1);
 	cont.clear();
@@ -91,7 +91,9 @@ static void split(std::vector<std::string> & cont, const std::string & str, cons
 		cont.push_back(iter->str());
 	  }
 }
-
+static void split(std::vector<std::string> & cont, const std::string & str, const char sep='\t' ){
+	boost::split(cont, str , [sep](char c){return c==sep;});
+}
 static std::vector<std::string> GetDirectoryFiles(std::string dir) {
 	std::vector<std::string> files;
 	std::shared_ptr<DIR> directory_ptr(opendir(dir.c_str()),

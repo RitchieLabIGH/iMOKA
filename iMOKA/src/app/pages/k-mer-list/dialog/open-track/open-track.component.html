@@ -28,7 +28,7 @@
 			</mat-select> 
 		</mat-form-field>
 		<div fxFlex>
-		<mat-slide-toggle [(ngModel)]="local" (change)="track.url=undefined; track.index=undefined;">{{local ? 'Local' : 'Remote' }}</mat-slide-toggle>
+		<mat-slide-toggle [(ngModel)]="local" (change)="track.path=undefined; track.index=undefined;">{{local ? 'Local' : 'Remote' }}</mat-slide-toggle>
 		</div>
 		<ng-container *ngIf="!local">
 			<mat-form-field fxFlex>

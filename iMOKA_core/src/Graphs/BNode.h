@@ -24,6 +24,7 @@ public:
 	BNode(Kmer k){
 		kmer =k;
 	}
+	double getBestValue() const {return *std::max_element(this->values.begin(), this->values.end()) ;};
 	Kmer kmer;
 	std::vector<double> values;
 	int64_t graph = -1;
@@ -33,7 +34,7 @@ public:
 	uint64_t id;
 	bool root = true;
 	friend bool operator<(const BNode& l, const BNode& r){
-			return (*std::max(l.values.begin(), l.values.end())) < (*std::max(r.values.begin() , r.values.end()));
+			return l.getBestValue() < r.getBestValue() ? true : false;
 	    }
 };
 }

@@ -18,6 +18,7 @@ bool TextMatrix::getLine(TextMatrixLine & ml) {
 		try {
 			ml.count[i-1]=std::stod(content[i]);
 		} catch (std::exception& e ){
+			std::cerr << e.what() << "\n";
 			ml.count[i-1]=0;
 		}
 	}
@@ -31,13 +32,14 @@ void TextMatrix::open(std::string file) {
 		infos = IOTools::getLineFromFile(file, 0).substr(1);
 	}
 	initGroupMaps();
+	content.resize(col_names.size());
 	matrix_file = file;
 	reset();
 }
 
 bool TextMatrix::next() {
 	if (is_open && getline(stream, line)) {
-		IOTools::split(content, line); // Parse the first line;
+		IOTools::split(content, line ,  '\t');
 		return true;
 	}
 	return false;

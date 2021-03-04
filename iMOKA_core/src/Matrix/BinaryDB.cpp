@@ -132,7 +132,7 @@ std::vector<double> BinaryDB::getKmers(std::vector<Kmer> & requests) {
 bool BinaryDB::create(std::string file, int64_t prefix_size) {
 	std::vector<std::string> content;
 	std::string line = IOTools::getLineFromFile(file, 0);
-	IOTools::split(content, line);
+	IOTools::split_rgx(content, line);
 	int key_len = content[0].size();
 	if (prefix_size >= key_len || prefix_size == -1) {
 		prefix_size = BinaryDB::bestPrefixSize(file);

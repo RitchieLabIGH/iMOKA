@@ -1,13 +1,14 @@
 #!/bin/bash
 
 cd ../iMOKA
-npm run build && \
-rm -fr ./packages/* && \
-npm run p-all || exit 1
-cd ./packages 
-for d in ./iMOKA-* ; do  
-    zip -r ${d}.zip $d
-done
-rm  -f ../../iMOKA_core/images/*.zip
-mv ./*.zip ../../iMOKA_core/images/
+rm -fr ./out
+npm run make && \
+npm run make-win && \
+npm run make-mac && \
+mv ./out/make/deb/x64/*.deb ../../iMOKA_core/images/ && \
+mv ./out/make/*windows/x64/*.exe ../../iMOKA_core/images/ && \
+mv ./out/make/zip/darwin/x64/*.zip ../../iMOKA_core/images/ 
+
+
+
 
