@@ -1,12 +1,12 @@
-<div class="container" fxLayout="column"
-	fxLayoutAlign="space-evenly stretch" fxLayoutGap="25px"
+<div class="container" 
+	 
 	*ngIf="this.session">
-	<div fxFlex class="row" fxLayout.lt-sm="column" fxLayout="row wrap"
-		fxLayoutGap="32px" fxLayoutAlign="flex-start">
-		<h3 fxFlex="40%"
+	<div  class="row"  
+		 >
+		<h3 
 			*ngIf="this.session.profile.process_config.profiles.length == 0">First
 			profile creation</h3>
-		<div fxFlex="40%">
+		<div >
 			<ng-container
 				*ngIf="session.profile.process_config.profiles.length > 0 && !modify">
 			<mat-form-field> <mat-label>Available
@@ -27,7 +27,7 @@
 			</button>
 			</ng-container>
 		</div>
-		<div fxFlex="100%" class="button-list-h">
+		<div  class="button-list-h">
 			<button mat-raised-button color='primary' (click)="modify=true"
 				*ngIf="!modify">Modify</button>
 			<button mat-raised-button color='primary' [disabled]="!isValid()"  (click)="save()"
@@ -41,38 +41,38 @@
 			<p *ngIf="err_message">{{err_message}}</p>
 		</div>
 	</div>
-	<div fxFlex class="row">
+	<div  class="row">
 		<mat-divider [inset]="true"></mat-divider>
 		<form [formGroup]="mainParam">
 			<fieldset [disabled]="!modify" style="border: 0;">
 				<h3>General parameters</h3>
-				<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
-					fxLayoutAlign="flex-start">
-					<div fxFlex="0 1 calc(33.3% - 32px)"
-						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div   
+					>
+					<div 
+						 >
 						<mat-form-field> <input matInput
 							placeholder="Setting name" formControlName="setting_name">
 						</mat-form-field>
 					</div>
-					<div fxFlex="0 1 calc(33.3% - 32px)"
-						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<div 
+						 >
 						<mat-form-field> <mat-label>Location</mat-label>
 						<mat-select [disabled]="!modify" formControlName="connection_type">
 						<mat-option [value]="'local'">Local</mat-option> <mat-option
 							[value]="'cluster'">Cluster</mat-option> </mat-select> </mat-form-field>
 					</div>
-					<div fxFlex="0 1 calc(33.3% - 32px)"
-						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<div 
+						 >
 						<mat-form-field> <input matInput
 							placeholder="Storage folder" formControlName="storage_folder">
 						<button mat-icon-button matSuffix (click)="selectFolder()"><mat-icon 
 							*ngIf="mainParam.value.connection_type == 'local'"
 							>folder</mat-icon></button> </mat-form-field>
 					</div>
-                    <div fxFlex="0 1 calc(33.3% - 32 px)" *ngIf="! isNewSetting">
+                    <div  *ngIf="! isNewSetting">
                         <mat-slide-toggle formControlName="update">Download the image again</mat-slide-toggle>
                     </div>
-					<div fxFlex="100%">
+					<div >
 						<mat-form-field style="width:100%"> <input
 							matInput type="text" placeholder="Singularity image"
 							formControlName="original_image" required> <mat-hint>URL
@@ -90,35 +90,35 @@
 		<form [formGroup]="remoteParam" *ngIf="mainParam.value.connection_type=='cluster'">
 			<fieldset [disabled]="!modify" style="border: 0;">
 				<h3>SSH connection parameters</h3>
-				<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
-					fxLayoutAlign="flex-start">
-					<div fxFlex="0 1 calc(33.3% - 32px)"
-						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div   
+					>
+					<div 
+						 >
 						<mat-form-field> <input matInput
 							placeholder="Server address" formControlName="ssh_address"> </mat-form-field>
 					</div>
-					<div fxFlex="0 1 calc(33.3% - 32px)"
-						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<div 
+						 >
 						<mat-form-field> <mat-label>Authentication
 						method</mat-label> <mat-select [disabled]="!modify"
 							formControlName="ssh_auth"> <mat-option
 							[value]="'UsernamePassword'">Username and Password</mat-option> <mat-option
 							[value]="'SshKey'">SSH key</mat-option> </mat-select> </mat-form-field>
 					</div>
-					<div fxFlex="0 1 calc(33.3% - 32px)"
-						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+					<div 
+						 >
 						<mat-form-field> <input matInput
 							placeholder="Username" formControlName="username"> </mat-form-field>
 					</div>
-					<div fxFlex="0 1 calc(33.3% - 32px)"
-						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%"
+					<div 
+						 
 						*ngIf="remoteParam.value.ssh_auth == 'UsernamePassword'">
 						<mat-form-field> <input matInput
 							placeholder="Password" type="password"
 							formControlName="password"> </mat-form-field>
 					</div>
-					<div fxFlex="0 1 calc(33.3% - 32px)"
-						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%"
+					<div 
+						 
 						*ngIf="remoteParam.value.ssh_auth == 'SshKey'">
 						<mat-form-field> <input matInput
 							placeholder="Private key location"
@@ -126,16 +126,16 @@
 					</div>
 				</div>
 				<h3>Cluster parameters</h3>
-				<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
-					fxLayoutAlign="flex-start">
-					<div fxFlex="0 1 calc(33.3% - 32px)"
-						fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div   
+					>
+					<div 
+						 >
 						<mat-form-field> <mat-label>Cluster
 						type</mat-label> <mat-select [disabled]="!modify"
 							formControlName="cluster_type">
 						<mat-option [value]="'slurm'">SLURM</mat-option> </mat-select> </mat-form-field>
 					</div>
-					<div fxFlex="100%">
+					<div >
 						<mat-form-field style="width:100%"> <mat-label>Cluster
 						modules load</mat-label> <textarea matInput formControlName="module_load" style="height: 150px"></textarea> <mat-hint>Write
 						here the commands to load singularity module, if necessary</mat-hint> </mat-form-field>

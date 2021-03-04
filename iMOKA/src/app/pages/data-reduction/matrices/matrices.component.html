@@ -5,8 +5,8 @@ You don't have any matrix in your data space. You can create a new matrix with s
 </mat-card-content>
 
 <mat-card-content *ngIf=" matrixSource?.all_matrices?.length > 0" >
-<div fxLayout="column">
-  <div fxFlex>
+<div >
+  <div >
     <div class="mat-elevation-z6 table-container">
       <table mat-table matSort (matSortChange)="refreshTable($event)" [dataSource]="matrixSource">
         <ng-container matColumnDef="name">

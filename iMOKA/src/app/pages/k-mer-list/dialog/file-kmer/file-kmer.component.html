@@ -1,6 +1,6 @@
 
-<div fxLayout="row wrap" *ngIf="info.version">
-  <div fxFlex="50%">
+<div  *ngIf="info.version">
+  <div >
     <h3>General informations:</h3>
     <ul>
       <li><strong>iMOKA version: </strong> {{ info.version }}</li>
@@ -16,7 +16,7 @@
       <li><strong>K size: </strong> {{info.k_len}}</li>
     </ul>
   </div>
-  <div fxFlex="50%">
+  <div >
     <h3>Results informations:</h3>
     <ul>
       <li><strong>Events: </strong>
@@ -28,7 +28,7 @@
     </ul>
   </div>
 
-  <div fxFlex="100%">
+  <div >
     <h3>Aggregation information:</h3>
     <ul>
       <li><strong>Accuracy threshold: </strong> {{info.threshold}}</li>

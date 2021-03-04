@@ -1,6 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 @import "~@angular/material/prebuilt-themes/indigo-pink.css";
 @import "~@fortawesome/fontawesome-free/css/all.css";
+@import "./style/bootstrap-grid.min.css";
 
 html, body { height: 100%; }
 body { 
@@ -14,13 +15,6 @@ a {
 	  font-weight: bold;
 }
 
-.container {
-	padding : 15px 30px 15px 30px;
-}
-
-div.row {
-	margin-bottom : 30px; 
-}
 
 .clickable {
 	cursor:pointer

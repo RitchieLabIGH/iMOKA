@@ -1,8 +1,8 @@
 <h1 mat-dialog-title>Add new samples </h1>
 <div mat-dialog-content class="main-dialog">
-	<div *ngIf="session" fxLayout="column">
+	<div *ngIf="session" >
 		<ng-container>
-		<div fxFlex
+		<div 
 			*ngIf="session.profile.process_config.profiles.length == 0">
 			<p>Sorry, you have first to create a valid profile!</p>
 		</div>
@@ -11,9 +11,9 @@
 		<mat-step [stepControl]="tsvControl">
 		<form [formGroup]="tsvControl">
 			<ng-template matStepLabel>Data sources</ng-template>
-			<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
-				fxLayoutAlign="flex-start">
-				<div fxFlex="100%">
+			<div   
+				>
+				<div >
 					<mat-form-field class="tsv-input"> <mat-label>Copy
 					and paste your source file</mat-label> <textarea matInput
 						formControlName="raw_file"
@@ -31,24 +31,24 @@ sample_3&#9;drug_2:responsive;ethnicity:caucasian&#9;/home/user/bam/sample_3.bam
 		</mat-step> <mat-step [stepControl]="detailsControl">
 		<form [formGroup]="detailsControl">
 			<ng-template matStepLabel>Process details</ng-template>
-			<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
-				fxLayoutAlign="flex-start">
+			<div   
+				>
 				
-				<div fxFlex="0 1 calc(33.3% - 32px)"
-					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div 
+					 >
 					<mat-form-field> <mat-label>K-mer
 					length</mat-label> <input matInput required formControlName="k_len"
 						type="number"> <mat-hint>The length of the
 					k-mers</mat-hint> </mat-form-field>
 				</div>
-				<div fxFlex="0 1 calc(33.3% - 32px)"
-					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div 
+					 >
 					<mat-form-field> <mat-label>Noise threshold</mat-label> <input matInput required formControlName="minCount"
 						type="number"> <mat-hint>Minimum count to
 					consider a k-mer in a sample</mat-hint> </mat-form-field>
 				</div>
-				<div fxFlex="0 1 calc(33.3% - 32px)"
-					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div 
+					 >
 					<mat-form-field
 						title="Reverse files will be converted in their reverse-complementary form before the k-mer count">
 					<mat-label>Lybrary type <mat-icon>info</mat-icon></mat-label> <mat-select
@@ -58,13 +58,13 @@ sample_3&#9;drug_2:responsive;ethnicity:caucasian&#9;/home/user/bam/sample_3.bam
 						value="rr">Reverse/Reverse</mat-option> </mat-select> <mat-hint>Used
 					only with paired end</mat-hint> </mat-form-field>
 				</div>
-				<div fxFlex="0 1 calc(33.3% - 32px)"
-					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div 
+					 >
 					<mat-slide-toggle formControlName="fastqc">Run
 					FastQC</mat-slide-toggle>
 				</div>
-				<div fxFlex="0 1 calc(33.3% - 32px)"
-					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div 
+					 >
 					<mat-slide-toggle formControlName="keepRaw">Keep
 					the raw and intermediate files</mat-slide-toggle>
 				</div>
@@ -73,24 +73,24 @@ sample_3&#9;drug_2:responsive;ethnicity:caucasian&#9;/home/user/bam/sample_3.bam
 		</mat-step> <mat-step [stepControl]="procControl">
 		<form [formGroup]="procControl">
 			<ng-template matStepLabel>Process resources</ng-template>
-			<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
-				fxLayoutAlign="flex-start">
-				<div fxFlex="0 1 calc(33.3% - 32px)"
-					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+			<div   
+				>
+				<div 
+					 >
 					<mat-form-field> <mat-label>Threads
 					per process</mat-label> <input matInput required formControlName="cores"
 						type="number"> <mat-hint>Number of cores used
 					per process</mat-hint> </mat-form-field>
 				</div>
-				<div fxFlex="0 1 calc(33.3% - 32px)"
-					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div 
+					 >
 					<mat-form-field> <mat-label>Max memory
 					in Gb per process</mat-label> <input matInput required formControlName="mem"
 						type="number"> <mat-hint>Max ram used per
 					process </mat-hint> </mat-form-field>
 				</div>
-				<div fxFlex="0 1 calc(33.3% - 32px)"
-					fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div 
+					 >
 					<mat-form-field> <mat-label>Divide jobs</mat-label> <input matInput required formControlName="njobs"
 						type="number"> <mat-hint>Divide the task in multiple jobs</mat-hint> </mat-form-field>
 				</div>

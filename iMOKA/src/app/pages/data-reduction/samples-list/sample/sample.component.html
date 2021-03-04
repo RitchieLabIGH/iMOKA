@@ -1,8 +1,8 @@
 <h1 mat-dialog-title>Sample {{sam.name}}</h1>
 <div mat-dialog-content class="main-dialog">
-  <div fxLayout="row wrap" fxLayout.lt-md="column" fxLayoutAlign="start start">
-    <div fxFlex="50%" fxLayout="column" fxLayoutAlign="start start">
-      <div class="tile-container" fxFlex>
+  <div   >
+    <div   >
+      <div class="tile-container" >
         <mat-card>
         <mat-card-title>Details</mat-card-title> <mat-card-content> <mat-list dense> <mat-list-item>
         <strong>Original source</strong>: {{sam.source[0]}}</mat-list-item> <mat-list-item>
@@ -18,7 +18,7 @@
           </button>
         </a> <span *ngIf="!sam.fastqc">Not produced</span> </mat-list-item> </mat-list> </mat-card-content> </mat-card>
       </div>
-      <div fxFlex class="tile-container">
+      <div  class="tile-container">
         <mat-card>
         <mat-card-title>User notes</mat-card-title>
         <mat-card-content>
@@ -31,10 +31,10 @@
       </div>
     </div>
 
-    <div fxFlex="50%" fxLayout="column">
-      <div class="tile-container" fxFlex>
-        <mat-card> <mat-card-title>Predictions</mat-card-title> <mat-card-content fxLayout="column">
-        <div fxFlex *ngFor="let pred of predictions">
+    <div  >
+      <div class="tile-container" >
+        <mat-card> <mat-card-title>Predictions</mat-card-title> <mat-card-content >
+        <div  *ngFor="let pred of predictions">
             <mat-divider *ngIf="pred.index > 0"></mat-divider>
             <h3>Matrix {{pred.matrix.name}}</h3>
             <ng-container *ngFor="let mod of pred.models">

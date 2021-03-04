@@ -2,9 +2,9 @@
   "name": "imoka",
   "version": "1.1.0",
   "main": "electron/main.js",
-  "description" : "iMOKA GUI",
+  "description": "iMOKA GUI",
   "license": "CECILL-2.1",
-  "author" : "Claudio Lorenzi",
+  "author": "Claudio Lorenzi",
   "scripts": {
     "serve": "ng serve",
     "ng": "ng",
@@ -26,7 +26,6 @@
     "@angular/common": "^8.2.14",
     "@angular/compiler": "^8.2.14",
     "@angular/core": "^8.2.14",
-    "@angular/flex-layout": "^8.0.0-beta.27",
     "@angular/forms": "^8.2.14",
     "@angular/material": "^8.2.3",
     "@angular/platform-browser": "^8.2.14",
@@ -80,9 +79,13 @@
   "config": {
     "forge": {
       "packagerConfig": {
-      	"ignore" : ["^/out", "^/node_modules", "/e2e", "^/src" ],
-      	"asar":true
-      	
+        "ignore": [
+          "^/out",
+          "^/node_modules",
+          "/e2e",
+          "^/src"
+        ],
+        "asar": true
       },
       "makers": [
         {
@@ -99,8 +102,7 @@
         },
         {
           "name": "@electron-forge/maker-deb",
-          "config": {
-           }
+          "config": {}
         },
         {
           "name": "@electron-forge/maker-rpm",

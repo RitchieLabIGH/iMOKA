@@ -1,5 +1,5 @@
-<div fxLayout="row wrap" class="main">
-  <mat-card fxFlex="100%" *ngIf="session.profile.process_config.profiles[session.profile.process_config.current_profile]; let curr_profile">
+<div class="main">
+  <mat-card *ngIf="session.profile.process_config.profiles[session.profile.process_config.current_profile]; let curr_profile">
     <mat-card-title>Jobs in the current profile
     {{curr_profile.setting_name}} ( {{curr_profile.connection_type}} )</mat-card-title>
     

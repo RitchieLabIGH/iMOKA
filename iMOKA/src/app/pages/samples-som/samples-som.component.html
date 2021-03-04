@@ -1,22 +1,22 @@
-<div fxLayout="column" class="main" #mainPage>
+<div  class="main" #mainPage>
   <mat-card class="sticky-options"> <mat-card-content [class.no-padding]="hideOptions">
-  <div fxLayout="row wrap" [class.hidden-vertical]="hideOptions" class="hidden-vertical-fade">
-    <h4 fxFlex="100%" style="margin: 0;">Options and filters</h4>
-    <div fxFlex="100%" fxLayout="row wrap" fxLayoutGap="15px">
-      <mat-form-field fxFlex="20%"> <mat-label>Number of samples clusters</mat-label> <mat-select [(ngModel)]="clust" value="{{clust}}" (openedChange)="! $event && update()"> <mat-option *ngFor="let clustopt of clust_select; index as i" value="{{clustopt.id}}">{{clustopt.nclust}}</mat-option> </mat-select> </mat-form-field>
-      <mat-form-field fxFlex="20%"> <mat-label>View style</mat-label> <mat-select [(ngModel)]="normOption" value="{{normOption}}" (openedChange)="! $event && update()"> <mat-option value="normByNode">normalize by node</mat-option> <mat-option value="centerAvrg">center on average samples</mat-option> <mat-option value="raw">raw count</mat-option> </mat-select> </mat-form-field>
+  <div  [class.hidden-vertical]="hideOptions" class="hidden-vertical-fade">
+    <h4  style="margin: 0;">Options and filters</h4>
+    <div   >
+      <mat-form-field > <mat-label>Number of samples clusters</mat-label> <mat-select [(ngModel)]="clust" value="{{clust}}" (openedChange)="! $event && update()"> <mat-option *ngFor="let clustopt of clust_select; index as i" value="{{clustopt.id}}">{{clustopt.nclust}}</mat-option> </mat-select> </mat-form-field>
+      <mat-form-field > <mat-label>View style</mat-label> <mat-select [(ngModel)]="normOption" value="{{normOption}}" (openedChange)="! $event && update()"> <mat-option value="normByNode">normalize by node</mat-option> <mat-option value="centerAvrg">center on average samples</mat-option> <mat-option value="raw">raw count</mat-option> </mat-select> </mat-form-field>
     </div>
-    <div fxFlex="100%" fxLayout="row wrap" fxLayoutGap="15px">
-      <mat-form-field fxFlex="20%"> <mat-label>Cluster filter</mat-label> <mat-select [(ngModel)]="clustFilterl" (openedChange)="! $event && update()" multiple> <mat-option *ngFor="let clu of hexamappes.indices;let i = index" [value]="i">Cluster {{i}}</mat-option> </mat-select> </mat-form-field>
-      <mat-form-field fxFlex="20%"> <mat-label>Categories filter</mat-label> <mat-select [(ngModel)]="catFilterl" (openedChange)="! $event && update()" multiple> <mat-option *ngFor="let catl of catergoryList" [value]="catl">{{catl}}</mat-option> </mat-select> </mat-form-field>
-      <mat-form-field fxFlex="20%"> <mat-label>Samples name filter</mat-label> <mat-select [(ngModel)]="sampleFilterl" (openedChange)="! $event && update()" multiple> <mat-option *ngFor="let sample of this.data.samplesSOM" [value]="sample.labelsamples">{{sample.labelsamples}}</mat-option> </mat-select> </mat-form-field>
+    <div   >
+      <mat-form-field > <mat-label>Cluster filter</mat-label> <mat-select [(ngModel)]="clustFilterl" (openedChange)="! $event && update()" multiple> <mat-option *ngFor="let clu of hexamappes.indices;let i = index" [value]="i">Cluster {{i}}</mat-option> </mat-select> </mat-form-field>
+      <mat-form-field > <mat-label>Categories filter</mat-label> <mat-select [(ngModel)]="catFilterl" (openedChange)="! $event && update()" multiple> <mat-option *ngFor="let catl of catergoryList" [value]="catl">{{catl}}</mat-option> </mat-select> </mat-form-field>
+      <mat-form-field > <mat-label>Samples name filter</mat-label> <mat-select [(ngModel)]="sampleFilterl" (openedChange)="! $event && update()" multiple> <mat-option *ngFor="let sample of this.data.samplesSOM" [value]="sample.labelsamples">{{sample.labelsamples}}</mat-option> </mat-select> </mat-form-field>
     </div>
-    <div fxFlex="100%" fxLayout="row wrap" fxLayoutGap="15px" *ngIf="selectedNodes.length > 0">
-      <div fxFlex="30%" class="button-list-h">
+    <div    *ngIf="selectedNodes.length > 0">
+      <div  class="button-list-h">
         <button mat-raised-button title="ontology on selected node ( to select multiple nodes keep 'Ctrl' key press)" (click)="updateSelNodesgetonto()">View ontology</button>
         <button mat-raised-button *ngIf="selectedNodes.length > 0" title="Distribution cumulated on selected node( to select multiple nodes keep 'Ctrl' key press)" (click)="updateSelNodesgetDistrib()">View distribution</button>
       </div>
-      <mat-chip-list fxFlex="60%" selectable="false"> <mat-chip>Nodes selected:</mat-chip> <mat-chip color="primary" *ngFor="let node of selectedNodes">{{node}}</mat-chip> </mat-chip-list>
+      <mat-chip-list  selectable="false"> <mat-chip>Nodes selected:</mat-chip> <mat-chip color="primary" *ngFor="let node of selectedNodes">{{node}}</mat-chip> </mat-chip-list>
     </div>
   </div>
   <div class="button-hide-container">
@@ -28,45 +28,45 @@
   </mat-card-content>
   
   </mat-card>
-  <div fxFlex>
+  <div >
     <mat-tab-group [(selectedIndex)]="somTabIndex" (selectedTabChange)="tabChange($event)" mat-align-tabs="center"> <mat-tab label="Self organizing maps"> <ng-template matTabContent>
-    <div class="tab-content" fxLayout="row wrap" fxLayoutAlign="center start">
-      <div fxFlex="50%" fxLayout="column" fxLayoutAlign="center start">
-        <div fxFlex>
-          <mat-card> <mat-card-content fxLayout="row wrap">
-          <h3 fxFlex="100%">General</h3>
-          <hexamap-app [fxFlex]="(opt.width+30)+'px'" *ngFor="let opt of this.hexamappes.importances" [options]="opt" class="mapcontainer"></hexamap-app> </mat-card-content> </mat-card>
+    <div class="tab-content"  >
+      <div   >
+        <div >
+          <mat-card> <mat-card-content >
+          <h3 >General</h3>
+          <hexamap-app  *ngFor="let opt of this.hexamappes.importances" [options]="opt" class="mapcontainer"></hexamap-app> </mat-card-content> </mat-card>
         </div>
-        <div fxFlex>
-          <mat-card> <mat-card-content fxLayout="row wrap">
-          <h3 fxFlex="100%">Averages</h3>
-          <hexamap-app [fxFlex]="(opt.width+30)+'px'" *ngFor="let opt of this.hexamappes.averages" [options]="opt" class="mapcontainer"></hexamap-app> </mat-card-content> </mat-card>
+        <div >
+          <mat-card> <mat-card-content >
+          <h3 >Averages</h3>
+          <hexamap-app  *ngFor="let opt of this.hexamappes.averages" [options]="opt" class="mapcontainer"></hexamap-app> </mat-card-content> </mat-card>
         </div>
       </div>
-      <div fxFlex="50%" fxLayout="column">
-        <div fxFlex *ngFor="let grp of hexamappes.indices; index as i">
-          <mat-card> <mat-card-content fxLayout="column">
-          <h3 fxFlex>Cluster {{i}}: {{grp.length}} samples</h3>
-          <div [class.hidden-vertical]="indices[i].hidden" class="hidden-vertical-fade" fxLayout="row wrap">
-            <div fxFlex="15%">
+      <div  >
+        <div  *ngFor="let grp of hexamappes.indices; index as i">
+          <mat-card> <mat-card-content >
+          <h3 >Cluster {{i}}: {{grp.length}} samples</h3>
+          <div [class.hidden-vertical]="indices[i].hidden" class="hidden-vertical-fade" >
+            <div >
               <button [disabled]="indices[i].from_pos < indices[i].to_display" mat-icon-button (click)="indices[i].from_pos=indices[i].from_pos-indices[i].to_display">
                 <mat-icon>skip_previous</mat-icon>
               </button>
             </div>
-            <div fxFlex="30%" style="overflow: visible">
+            <div  style="overflow: visible">
               <mat-slider style="width:90%;margin-top:18px" thumbLabel step="1" [(ngModel)]="indices[i].from_pos" min="0" [max]="grp.length-indices[i].to_display"></mat-slider>
             </div>
-            <div fxFlex="15%">
+            <div >
               <button [disabled]="indices[i].from_pos+indices[i].to_display > grp.length" mat-icon-button (click)="indices[i].from_pos=indices[i].from_pos+indices[i].to_display">
                 <mat-icon>skip_next</mat-icon>
               </button>
             </div>
-            <div fxFlex="30%">
+            <div >
               <mat-form-field> <mat-label>Display</mat-label> <input matInput [(ngModel)]="indices[i].to_display" type='number' min="1" max="100"></mat-form-field>
             </div>
-            <ng-container *ngFor="let opt of grp; index as j"> <hexamap-app *ngIf="j >= indices[i].from_pos && j < indices[i].from_pos+indices[i].to_display " [fxFlex]="(opt.width+30)+'px'" [options]="opt" class="mapcontainer"></hexamap-app> </ng-container>
+            <ng-container *ngFor="let opt of grp; index as j"> <hexamap-app *ngIf="j >= indices[i].from_pos && j < indices[i].from_pos+indices[i].to_display "  [options]="opt" class="mapcontainer"></hexamap-app> </ng-container>
           </div>
-          <div fxFlex class="button-hide-container">
+          <div  class="button-hide-container">
             <button color="primary" mat-mini-fab (click)="indices[i].hidden=!indices[i].hidden">
               <mat-icon *ngIf="indices[i].hidden">expand_more</mat-icon>
               <mat-icon *ngIf="!indices[i].hidden">expand_less</mat-icon>
@@ -78,21 +78,21 @@
     </div>
     </ng-template> </mat-tab> <mat-tab label="Samples clustering"> <ng-template matTabContent> <mat-card class="tab-content"> <mat-card-content > <plotly-plot [data]="this.data.clusterdist.data" [layout]="this.data.clusterdist.layout" (plotly_click)="barclustdistClick($event)"></plotly-plot> </mat-card-content> </mat-card> </ng-template> </mat-tab> <mat-tab label="Features per node"> <ng-template matTabContent> <mat-card class="tab-content"> <mat-card-title>
     <h3>Features per node</h3>
-    </mat-card-title> <mat-card-content fxLayout="row wrap" *ngIf="this.hexamappes.importances[1]">
-    <div fxFlex="300px">
+    </mat-card-title> <mat-card-content  *ngIf="this.hexamappes.importances[1]">
+    <div >
       <hexamap-app [width]="280" [height]="250" [options]="this.hexamappes.importances[1]" class="mapcontainer"></hexamap-app>
     </div>
-    <div fxFlex="calc(100%-300px)" style="max-height:50vh;overflow:auto;" fxLayout="row wrap" >
-      <div fxFlex="30%">
+    <div  style="max-height:50vh;overflow:auto;"  >
+      <div >
         <mat-form-field style="width:100%">
           <mat-label>Filter</mat-label>
             <input matInput (keyup)="applyFilter($event)" placeholder="ex: ACCGTGGGA">
         </mat-form-field>
       </div>
-      <div fxFlex="70%">
+      <div >
         <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
       </div>
-      <div class="mat-elevation-z8" fxFlex="100%">
+      <div class="mat-elevation-z8" >
       <table mat-table [dataSource]="featureSource" matSort >
           <!-- Position Column -->
           <ng-container matColumnDef="bmu">
@@ -112,12 +112,12 @@
       </div>
      
     </div>
-    </mat-card-content> </mat-card> </ng-template> </mat-tab> <mat-tab label="Other graphs"> <ng-template matTabContent> <mat-card class="tab-content"> <mat-card-content fxLayout="row wrap">
-    <div fxFlex="50%">
+    </mat-card-content> </mat-card> </ng-template> </mat-tab> <mat-tab label="Other graphs"> <ng-template matTabContent> <mat-card class="tab-content"> <mat-card-content >
+    <div >
 
       <plotly-plot [data]="this.data.graphImportance.data" [layout]="this.data.graphImportance.layout"></plotly-plot>
     </div>
-    <div fxFlex="50%">
+    <div >
       <plotly-plot [data]="this.data.graphFeatureNumber.data" [layout]="this.data.graphFeatureNumber.layout"></plotly-plot>
     </div>
     </mat-card-content> </mat-card> </ng-template> </mat-tab> </mat-tab-group>

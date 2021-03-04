@@ -12,7 +12,6 @@ import { MAT_DATE_LOCALE } from '@angular/material';
 import { AngularMaterialModule } from '../angular-material/angular-material.module';
 import { NavComponent } from './nav/nav.component';
 import { LayoutModule } from '@angular/cdk/layout';
-import { FlexLayoutModule } from '@angular/flex-layout';
 import {ServicesModule} from '../services/services.module';
 import { InfoComponent, JobInfo } from './info/info.component'
 
@@ -35,7 +34,6 @@ export const NB_CORE_PROVIDERS = [
     HttpClientModule,
     RouterModule,
     LayoutModule,
-    FlexLayoutModule,
   ],
   declarations: [ NavComponent, InfoComponent, TypeofPipe, SafeHtmlPipe, SafeURLPipe,DurationPipe, JobInfo, LongStrPipe],
   providers: [

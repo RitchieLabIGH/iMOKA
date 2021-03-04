@@ -1,48 +1,48 @@
 
 <h2 mat-dialog-title>Gene ontology powered by PantherDB</h2>
 <div mat-dialog-content class="main-dialog" #mainPage>
-	<div fxLayout="column">
-		<div fxFlex fxLayout="row wrap">
-			<mat-form-field fxFlex="25%"> <mat-label>Enrichment
+	<div >
+		<div >
+			<mat-form-field > <mat-label>Enrichment
 			type</mat-label> <mat-select 
 				[(ngModel)]="panther_options.enrichmentType" id="enrichmentType"
 				value={{panther_options.enrichmentType}}
 				>
 				<mat-option *ngFor="let key of PDBEnrichmentTypeKeys" [value]="key">{{key}}</mat-option>
 			</mat-select> </mat-form-field>
-			<mat-form-field fxFlex="25%"> <mat-label>Type</mat-label> <mat-select
+			<mat-form-field > <mat-label>Type</mat-label> <mat-select
 				 [(ngModel)]="panther_options.test_type"
 				id="test_type" value={{panther_options.test_type}}
 				>
 				<mat-option *ngFor="let key of PDBTestTypeKeys" [value]="key">{{key}}</mat-option>
 			</mat-select> </mat-form-field>
-			<mat-form-field fxFlex="25%"> <mat-label>Correction</mat-label> <mat-select
+			<mat-form-field > <mat-label>Correction</mat-label> <mat-select
 				[(ngModel)]="panther_options.correction"
 				id="correction" value={{panther_options.correction}}
 				>
 				<mat-option *ngFor="let key of PDBCorrectionKeys" [value]="key">{{key}}</mat-option>
 			</mat-select> </mat-form-field>
-			<div fxFlex="25%" style="padding-left:40px">
+			<div  style="padding-left:40px">
 				<button color="primary" mat-raised-button *ngIf="!loading" (click)="enrichmentAnalysis()">Search</button>
 				<mat-spinner diameter="25" *ngIf="loading"></mat-spinner>
 			</div>
 		</div>
-		<div fxFlex="405px" fxLayout="row wrap">
-			<div fxFlex="50%" *ngIf="graphs.genes">
+		<div  >
+			<div  *ngIf="graphs.genes">
 					<plotly-plot [data]="graphs.genes.data" [layout]="graphs.genes.layout"></plotly-plot>
 			</div>
-			<div fxFlex="50%" *ngIf="graphs.pvals">
+			<div  *ngIf="graphs.pvals">
 					<plotly-plot [data]="graphs.pvals.data"
 						[layout]="graphs.pvals.layout"></plotly-plot>
 			</div>
 		</div>
-		<div fxFlex>
+		<div >
 			<mat-form-field> <input matInput
 				(keyup)="applyFilter($event.target.value)" placeholder="Filter">
 			</mat-form-field>
 			<a style="margin-left:10px;" mat-raised-button  [href]="table_uri | safeURL" (click)="downloadTsv()" download="pather_go.tsv">Download as tsv</a>
 		</div>
-		<div fxFlex>
+		<div >
 			<table mat-table matSort [dataSource]="dataSource" 
 				class="mat-elevation-z8">
 				<ng-container matColumnDef="genes">

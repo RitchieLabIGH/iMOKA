@@ -1,48 +1,48 @@
 
 <h1 mat-dialog-title>Aggregate the {{matrix.name}} </h1>
 <div mat-dialog-content class="main-dialog">
-	<div fxLayout="column">
+	<div >
 		<mat-vertical-stepper linear="true" #stepper>
 		<mat-step [stepControl]="detailsControl">
 		<form [formGroup]="detailsControl">
 			<ng-template matStepLabel>Aggregation parameters</ng-template>
-			<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px grid" fxLayoutAlign="flex-start">
-				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+			<div    >
+				<div   >
 					<mat-form-field> 
 						<mat-label>Accuracy</mat-label> 
 						<input matInput required formControlName="accuracy" type="number"> 
 						<mat-hint>Minimum accuracy needed to generate a graph</mat-hint> 
 					</mat-form-field>
 				</div>
-				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div   >
 					<mat-form-field> 
 						<mat-label>Global accuracy</mat-label> 
 						<input matInput required formControlName="global_accuracy" type="number"> 
 						<mat-hint>Minimum global accuracy to consider a k-mer</mat-hint> 
 					</mat-form-field>
 				</div>
-				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div   >
 					<mat-form-field>
 						<mat-label>Shift</mat-label> 
 						<input matInput required formControlName="shift" type="number"  >
 						<mat-hint>Connect k-mers that overlap with a shift of {{detailsControl.value.shift}}</mat-hint> 
 					</mat-form-field>
 				</div>
-				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div   >
 					<mat-form-field>
 						<mat-label>DE coverage</mat-label> 
 						<input matInput required formControlName="de_cov" type="number"> 
 						<mat-hint>Consider as DE the transcripts covered by more than this percentage </mat-hint> 
 					</mat-form-field>
 				</div>
-				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div   >
 					<mat-form-field>
 						<mat-label>Correlation </mat-label> 
 						<input matInput required formControlName="corr" type="number" > 
 						<mat-hint>Agglomerate k-mers with a correlation higher than this threshold and in the same gene or unmapped.</mat-hint> 
 					</mat-form-field>
 				</div>
-				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div   >
 					<mat-form-field>
 						<mat-label>Mapper configuration</mat-label> 
 						<mat-select  formControlName="mapper" required >
@@ -52,7 +52,7 @@
 						<mat-hint>You can add new configurations in the settings</mat-hint> 
 					</mat-form-field>
 				</div>
-				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div   >
 					<mat-form-field>
 						<mat-label>Annotations</mat-label> 
 						<mat-select  formControlName="annotation" required >
@@ -67,16 +67,16 @@
 		</mat-step> <mat-step [stepControl]="procControl">
 		<form [formGroup]="procControl">
 			<ng-template matStepLabel>Process resources</ng-template>
-			<div fxLayout.lt-sm="column" fxLayout="row wrap" fxLayoutGap="32px"
-				fxLayoutAlign="flex-start">
-				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+			<div   
+				>
+				<div   >
 					<mat-form-field> 
 						<mat-label>Threads per process</mat-label> 
 						<input matInput required formControlName="cores" type="number"> 
 						<mat-hint>Number of cores used per process</mat-hint> 
 					</mat-form-field>
 				</div>
-				<div fxFlex="0 1 calc(33.3% - 32px)" fxFlex.lt-md="0 1 calc(50% - 32px)" fxFlex.lt-sm="100%">
+				<div   >
 					<mat-form-field> 
 						<mat-label>Memory</mat-label> 
 						<input matInput required formControlName="mem" type="number"> 

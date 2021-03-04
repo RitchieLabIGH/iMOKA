@@ -8,7 +8,6 @@ import { AngularMaterialModule } from '../angular-material/angular-material.modu
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { ServicesModule } from '../services/services.module';
-import { FlexLayoutModule } from '@angular/flex-layout';
 import { RouterModule } from '@angular/router';
 
 import * as $ from 'jquery';
@@ -91,7 +90,6 @@ PlotlyModule.plotlyjs = PlotlyJS;
 		BrowserModule,
 		RouterModule,
 		ServicesModule,
-		FlexLayoutModule,
 		DataTablesModule,
 		ReactiveFormsModule,
 		CoreModule,
