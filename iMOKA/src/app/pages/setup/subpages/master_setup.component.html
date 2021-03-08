@@ -1,147 +1,92 @@
-<div class="container" 
-	 
-	*ngIf="this.session">
-	<div  class="row"  
-		 >
-		<h3 
-			*ngIf="this.session.profile.process_config.profiles.length == 0">First
-			profile creation</h3>
-		<div >
-			<ng-container
-				*ngIf="session.profile.process_config.profiles.length > 0 && !modify">
-			<mat-form-field> <mat-label>Available
-			profiles</mat-label> <mat-select (selectionChange)="setProfile($event.value)"
-				[(ngModel)]="current_profile"> <mat-option
-				*ngFor="let profile of session.profile.process_config.profiles; let i=index"
-				[value]="i"> {{ profile.setting_name }} </mat-option> </mat-select> </mat-form-field>
-			<button matPrefix mat-icon-button
-				*ngIf="session.profile.process_config.current_profile == current_profile"
-				disabled title="This is the current profile">
-				<mat-icon>work</mat-icon>
-			</button>
-			<button matPrefix mat-icon-button
-				*ngIf="session.profile.process_config.current_profile != current_profile"
-				(click)="save($event)"
-				title="Click here to set this as current profile">
-				<mat-icon>work_off</mat-icon>
-			</button>
-			</ng-container>
-		</div>
-		<div  class="button-list-h">
-			<button mat-raised-button color='primary' (click)="modify=true"
-				*ngIf="!modify">Modify</button>
-			<button mat-raised-button color='primary' [disabled]="!isValid()"  (click)="save()"
-				*ngIf="modify">Save</button>
-			<button mat-raised-button (click)="clear(false)" *ngIf="modify">Clear</button>
-			<!-- <button mat-raised-button colot='warn' (click)="remove()" *ngIf="modify">Remove</button> TODO -->
-			<button mat-raised-button (click)="setProfile()" *ngIf="modify && this.session.profile.process_config.profiles.length > 0">Close</button>
-			<button mat-raised-button color='primary' (click)="clear(true)"
-				*ngIf="!modify">New</button>
-			<p *ngIf="loading">{{loading_message}}</p>
-			<p *ngIf="err_message">{{err_message}}</p>
-		</div>
-	</div>
-	<div  class="row">
-		<mat-divider [inset]="true"></mat-divider>
-		<form [formGroup]="mainParam">
-			<fieldset [disabled]="!modify" style="border: 0;">
-				<h3>General parameters</h3>
-				<div   
-					>
-					<div 
-						 >
-						<mat-form-field> <input matInput
-							placeholder="Setting name" formControlName="setting_name">
-						</mat-form-field>
-					</div>
-					<div 
-						 >
-						<mat-form-field> <mat-label>Location</mat-label>
-						<mat-select [disabled]="!modify" formControlName="connection_type">
-						<mat-option [value]="'local'">Local</mat-option> <mat-option
-							[value]="'cluster'">Cluster</mat-option> </mat-select> </mat-form-field>
-					</div>
-					<div 
-						 >
-						<mat-form-field> <input matInput
-							placeholder="Storage folder" formControlName="storage_folder">
-						<button mat-icon-button matSuffix (click)="selectFolder()"><mat-icon 
-							*ngIf="mainParam.value.connection_type == 'local'"
-							>folder</mat-icon></button> </mat-form-field>
-					</div>
-                    <div  *ngIf="! isNewSetting">
-                        <mat-slide-toggle formControlName="update">Download the image again</mat-slide-toggle>
-                    </div>
-					<div >
-						<mat-form-field style="width:100%"> <input
-							matInput type="text" placeholder="Singularity image"
-							formControlName="original_image" required> <mat-hint>URL
-						or local path to the singulatiry <strong class="clickable"
-							(click)="setSingularityImage()">
-							base image </strong> or <strong class="clickable"
-							(click)="setExtSingularityImage()">
-							extended </strong> that will be copied in the workspace. </mat-hint> </mat-form-field>
+<div class="container" *ngIf="this.session" class="row">
+  <div class="col align-self-center">
+    <div class="row">
+      <div class="col-12">
+      <h3 *ngIf="this.session.profile.process_config.profiles.length == 0">First profile creation</h3>
+      </div>
+      <div class="col-12">
+        <ng-container *ngIf="session.profile.process_config.profiles.length > 0 && !modify"> <mat-form-field> <mat-label>Available profiles</mat-label> <mat-select (selectionChange)="setProfile($event.value)" [(ngModel)]="current_profile"> <mat-option *ngFor="let profile of session.profile.process_config.profiles; let i=index" [value]="i"> {{ profile.setting_name }} </mat-option> </mat-select> </mat-form-field>
+        <button matPrefix mat-icon-button *ngIf="session.profile.process_config.current_profile == current_profile" disabled title="This is the current profile">
+          <mat-icon>work</mat-icon>
+        </button>
+        <button matPrefix mat-icon-button *ngIf="session.profile.process_config.current_profile != current_profile" (click)="save($event)" title="Click here to set this as current profile">
+          <mat-icon>work_off</mat-icon>
+        </button>
+        </ng-container>
+      </div>
+      <div class="col-12">
+      <div class="button-list-h">
+        <button mat-raised-button color='primary' (click)="modify=true" *ngIf="!modify">Modify</button>
+        <button mat-raised-button color='primary' [disabled]="!isValid()" (click)="save()" *ngIf="modify">Save</button>
+        <button mat-raised-button (click)="clear(false)" *ngIf="modify">Clear</button>
+        <!-- <button mat-raised-button colot='warn' (click)="remove()" *ngIf="modify">Remove</button> TODO -->
+        <button mat-raised-button (click)="setProfile()" *ngIf="modify && this.session.profile.process_config.profiles.length > 0">Close</button>
+        <button mat-raised-button color='primary' (click)="clear(true)" *ngIf="!modify">New</button>
+        <p *ngIf="loading">{{loading_message}}</p>
+        <p *ngIf="err_message">{{err_message}}</p>
+      </div></div>
+    </div>
+  </div>
+  <div class="col">
+    <mat-divider [inset]="true"></mat-divider>
+    <form [formGroup]="mainParam">
+      <fieldset [disabled]="!modify" style="border: 0;">
+        <h3>General parameters</h3>
+        <div class="row">
+          <div class="col">
+            <mat-form-field> <input matInput placeholder="Setting name" formControlName="setting_name"> </mat-form-field>
+          </div>
+          <div class="col">
+            <mat-form-field> <mat-label>Location</mat-label> <mat-select [disabled]="!modify" formControlName="connection_type"> <mat-option [value]="'local'">Local</mat-option> <mat-option [value]="'cluster'">Cluster</mat-option> </mat-select> </mat-form-field>
+          </div>
+          <div class="col">
+            <mat-form-field> <input matInput placeholder="Storage folder" formControlName="storage_folder">
+            <button mat-icon-button matSuffix (click)="selectFolder()">
+              <mat-icon *ngIf="mainParam.value.connection_type == 'local'">folder</mat-icon>
+            </button>
+            </mat-form-field>
+          </div>
+          <div *ngIf="! isNewSetting" class="col">
+            <mat-slide-toggle formControlName="update">Download the image again</mat-slide-toggle>
+          </div>
+          <div>
+            <mat-form-field class="col-12"> <input matInput type="text" placeholder="Singularity image" formControlName="original_image" required> <mat-hint>URL or local path to the singulatiry <strong class="clickable" (click)="setSingularityImage()"> base image </strong> or <strong class="clickable" (click)="setExtSingularityImage()"> extended </strong> that will be copied in the workspace. </mat-hint> </mat-form-field>
 
-					</div>
-                    
-				</div>
-			</fieldset>
-		</form>
-		<form [formGroup]="remoteParam" *ngIf="mainParam.value.connection_type=='cluster'">
-			<fieldset [disabled]="!modify" style="border: 0;">
-				<h3>SSH connection parameters</h3>
-				<div   
-					>
-					<div 
-						 >
-						<mat-form-field> <input matInput
-							placeholder="Server address" formControlName="ssh_address"> </mat-form-field>
-					</div>
-					<div 
-						 >
-						<mat-form-field> <mat-label>Authentication
-						method</mat-label> <mat-select [disabled]="!modify"
-							formControlName="ssh_auth"> <mat-option
-							[value]="'UsernamePassword'">Username and Password</mat-option> <mat-option
-							[value]="'SshKey'">SSH key</mat-option> </mat-select> </mat-form-field>
-					</div>
-					<div 
-						 >
-						<mat-form-field> <input matInput
-							placeholder="Username" formControlName="username"> </mat-form-field>
-					</div>
-					<div 
-						 
-						*ngIf="remoteParam.value.ssh_auth == 'UsernamePassword'">
-						<mat-form-field> <input matInput
-							placeholder="Password" type="password"
-							formControlName="password"> </mat-form-field>
-					</div>
-					<div 
-						 
-						*ngIf="remoteParam.value.ssh_auth == 'SshKey'">
-						<mat-form-field> <input matInput
-							placeholder="Private key location"
-							formControlName="private_key"> </mat-form-field>
-					</div>
-				</div>
-				<h3>Cluster parameters</h3>
-				<div   
-					>
-					<div 
-						 >
-						<mat-form-field> <mat-label>Cluster
-						type</mat-label> <mat-select [disabled]="!modify"
-							formControlName="cluster_type">
-						<mat-option [value]="'slurm'">SLURM</mat-option> </mat-select> </mat-form-field>
-					</div>
-					<div >
-						<mat-form-field style="width:100%"> <mat-label>Cluster
-						modules load</mat-label> <textarea matInput formControlName="module_load" style="height: 150px"></textarea> <mat-hint>Write
-						here the commands to load singularity module, if necessary</mat-hint> </mat-form-field>
-					</div>
-				</div>
-			</fieldset>
-		</form>
-	</div>
+          </div>
+
+        </div>
+      </fieldset>
+    </form>
+    <form [formGroup]="remoteParam" *ngIf="mainParam.value.connection_type=='cluster'">
+      <fieldset [disabled]="!modify" style="border: 0;">
+        <h3>SSH connection parameters</h3>
+        <div>
+          <div>
+            <mat-form-field> <input matInput placeholder="Server address" formControlName="ssh_address"> </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field> <mat-label>Authentication method</mat-label> <mat-select [disabled]="!modify" formControlName="ssh_auth"> <mat-option [value]="'UsernamePassword'">Username and Password</mat-option> <mat-option [value]="'SshKey'">SSH key</mat-option> </mat-select> </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field> <input matInput placeholder="Username" formControlName="username"> </mat-form-field>
+          </div>
+          <div *ngIf="remoteParam.value.ssh_auth == 'UsernamePassword'">
+            <mat-form-field> <input matInput placeholder="Password" type="password" formControlName="password"> </mat-form-field>
+          </div>
+          <div *ngIf="remoteParam.value.ssh_auth == 'SshKey'">
+            <mat-form-field> <input matInput placeholder="Private key location" formControlName="private_key"> </mat-form-field>
+          </div>
+        </div>
+        <h3>Cluster parameters</h3>
+        <div>
+          <div>
+            <mat-form-field> <mat-label>Cluster type</mat-label> <mat-select [disabled]="!modify" formControlName="cluster_type"> <mat-option [value]="'slurm'">SLURM</mat-option> </mat-select> </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field style="width:100%"> <mat-label>Cluster modules load</mat-label> <textarea matInput formControlName="module_load" style="height: 150px"></textarea> <mat-hint>Write here the commands to load singularity module, if necessary</mat-hint> </mat-form-field>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+  </div>
 </div>

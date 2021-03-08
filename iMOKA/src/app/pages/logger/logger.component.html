@@ -1,4 +1,4 @@
-<div class="main">
+<div class="row">
   <mat-card *ngIf="session.profile.process_config.profiles[session.profile.process_config.current_profile]; let curr_profile">
     <mat-card-title>Jobs in the current profile
     {{curr_profile.setting_name}} ( {{curr_profile.connection_type}} )</mat-card-title>
@@ -12,7 +12,8 @@
     </mat-card-content>
      
     <mat-card-content *ngIf="dataSource?.all_queue?.length > 0 " class="main-content">
-    <div>
+    <div class="row">
+      <div class="col-md-4">
       <button style="margin-right:1em;" mat-raised-button (click)="refreshTable()" >Refresh now</button>
       <mat-form-field>
       <mat-select [(ngModel)]="refreshTime" placeholder="Refresh time" (openedChange)="! $event && updateRefresh() " > 
@@ -23,7 +24,9 @@
         <mat-option [value]="600000">10 minutes</mat-option>
       </mat-select> 
       </mat-form-field>
+      </div>
     </div>
+    <div class="row"><div class="col-12">
     <div class="mat-elevation-z6 table-container" style="margin-top:32px">
     <table mat-table matSort (matSortChange)="refreshTable($event)" [dataSource]="dataSource" >
         <ng-container matColumnDef="name">
@@ -82,7 +85,7 @@
         <tr mat-header-row *matHeaderRowDef="dtOptions.displayedColumns;sticky : true;"></tr>
           <tr mat-row cdk-row *matRowDef="let row; columns: dtOptions.displayedColumns"></tr>
     </table>
-    </div>
+    </div></div></div>
     <mat-paginator [length]="dtOptions.recordsFiltered" [pageSize]="dtOptions.pageSize" [pageIndex]="dtOptions.pageIndex" (page)="refreshTable($event)" [pageSizeOptions]="[10, 15, 20]"></mat-paginator>
     </mat-card-content> 
 </mat-card>

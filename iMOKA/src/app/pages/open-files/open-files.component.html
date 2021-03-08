@@ -1,6 +1,6 @@
-<div  class="main" >
-<div  >
-<mat-card  style="height:27vh;">
+<div  class="row" >
+<div class="col-md-6 p-2">
+<mat-card >
 	<mat-card-content>
       <mat-list class="folder-list">
         <h3 matSubheader style="padding:0;height:15px;">Current files</h3>
@@ -34,8 +34,9 @@
 	</div>
   </mat-card-content>
 </mat-card>
-</div><div >
-<mat-card  style="height:27vh;">
+</div>
+<div class="col-md-6 p-2">
+<mat-card >
   <mat-card-content>
   
   <p *ngIf="! session || ! session.matrices">There are no experiments
@@ -54,10 +55,12 @@
   <h4>{{mat.name}}</h4>
   </mat-list-item> </mat-list> 
 </mat-card-content> 
-</mat-card></div><div > 
+</mat-card></div>
+<div class="col-12 p-2"> 
 <mat-card  style="height:50vh;"> 
   <mat-card-content   *ngIf="current_matrix" >
-		<div >
+    <div class="row">
+		<div class="col-md-4">
 			<h3>{{current_matrix.name}}</h3>
               <div class="button-list-v">
                 <button mat-raised-button color="primary" [disabled]="! current_matrix.aggregated"
@@ -68,7 +71,7 @@
                 <button mat-raised-button (click)="delete(current_matrix.uid)" color="warn">Delete this experiment</button>
               </div>
 		</div>
-        <div  >
+        <div class="col-md-4" >
             <h4>Random forest models</h4>
 			<mat-list *ngIf="current_matrix.models && current_matrix.models.length > 0"  class="file-list" >
 			<mat-list-item *ngFor="let rfm of current_matrix.models">
@@ -82,7 +85,7 @@
 				*ngIf="!current_matrix.models  || current_matrix.models.length == 0 ">None
 				available</span>
           </div>
-          <div >
+          <div class="col-md-4">
 			<h4>Self Organizing maps</h4>
 			<mat-list class="file-list"
 				*ngIf="current_matrix.som && current_matrix.som.length > 0 ">
@@ -100,10 +103,10 @@
              <span *ngIf="!current_matrix.som  || current_matrix.som.length == 0 ">None
 				available</span> 
 		</div>
+    </div>
 	</mat-card-content>
   <mat-card-content *ngIf="!current_matrix">
     <h3>Select an experiment to see here the details</h3>
   </mat-card-content>
 </mat-card>
-</div>
 </div>

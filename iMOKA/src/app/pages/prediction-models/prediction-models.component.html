@@ -2,14 +2,16 @@
 <mat-tab label="Models">
 <div class="tab-container">
 	<mat-card *ngIf="data && data.models "> <mat-card-header>
-	<mat-form-field> 
+    <div class="row">
+	<mat-form-field class="col-md-6"> 
 		<mat-select [(ngModel)]="data.models.current_model" placeholder="Prediction Model">
 		<mat-option *ngFor="let model of data.models.data; let i = index" value="{{i}}">{{i}} ( acc:
-	{{model.models[model.best_model].acc | number}} ) </mat-option> </mat-select></mat-form-field> <mat-form-field>
+	{{model.models[model.best_model].acc | number}} ) </mat-option> </mat-select></mat-form-field> 
+  <mat-form-field class="col-md-6">
 	<mat-select [(ngModel)]="data.models.show_type" placeholder="Data representation"> 
 			<mat-option value="pca">PCA</mat-option><mat-option value="tsne">t-SNE</mat-option> 
 	</mat-select> 
-	</mat-form-field> </mat-card-header> 
+	</mat-form-field></div> </mat-card-header> 
 	<mat-card-content *ngIf="data.models.data[data.models.current_model].models[data.models.data[data.models.current_model].best_model]; let best_model">
 		<app-model-display [graph]="data.models.data[data.models.current_model].graphs[data.models.show_type]" [model]="best_model" [session]="session"></app-model-display>
 	</mat-card-content> 
