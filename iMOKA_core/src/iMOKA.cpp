@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
 		std::cout << help() << "\n";
 		return 0;
 	}
-	std::streambuf * logStreamBuff = std::cerr.rdbuf();
+	std::streambuf * logStreamBuff = std::cout.rdbuf();
 	std::ofstream logfile;
 	if (getenv("IMOKA_LOG_FILE")) {
 		logfile.open(getenv("IMOKA_LOG_FILE"));
@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
 		if (time >= 2) {
 			std::ostream logStream(logStreamBuff);
 			logStream << "Completed in " << IOTools::format_time_human(time)
-					<< ".\nGood luck!\n";
+					<< ".\n\n";
 		}
 	}
 	if (logfile.is_open())

@@ -287,11 +287,15 @@ void KmerGraphSet::makeGraphsFromBestExtension(double threshold) {
 	}
 
 	for (int i = 0; i < graphs.size(); i++) {
-		KmerGraph & kg=graphs[i];
+		KmerGraph &kg = graphs[i];
 		kg.graph_type = graph_type[i];
 		kg.nodes_vsorted.clear();
-		for ( auto & node : kg.nodes)kg.nodes_vsorted.push_back(&node);
-		std::sort(kg.nodes_vsorted.begin(), kg.nodes_vsorted.end(), [](const BNode * a, const BNode * b ){return a->getBestValue() > b->getBestValue() ;});
+		for (auto &node : kg.nodes)
+			kg.nodes_vsorted.push_back(&node);
+		std::sort(kg.nodes_vsorted.begin(), kg.nodes_vsorted.end(),
+				[](const BNode *a, const BNode *b) {
+					return a->getBestValue() > b->getBestValue();
+				});
 	}
 	infos["graphs"] = graph_type_count;
 
@@ -310,7 +314,7 @@ void KmerGraphSet::generateSequencesFromGraphs(double thr) {
 	regions.clear();
 	for (uint64_t gi = 0; gi < graphs.size(); gi++) {
 		KmerGraph &g = graphs[gi];
-		regions.push_back({});
+		regions.push_back( { });
 		for (auto &s : g.sequences) {
 			if (s.sequence.size() > k_len + 3) {
 				s.id = tot++;
@@ -474,7 +478,7 @@ void KmerGraphSet::findRegions(std::string bed_out) {
 	for (auto r : regions) {
 		best_value = 0;
 		for (auto s_id : r) {
-			curr_val = 	sequences[s_id].best_kmer->getBestValue();
+			curr_val = sequences[s_id].best_kmer->getBestValue();
 			if (best_value < curr_val) {
 				best_value = curr_val;
 			}
@@ -628,14 +632,15 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string bed_out,
 				mapper_results[idx].genes.insert(g.id);
 			}
 			for (auto s : g.sequences) {
-				if ((*(sequences[s].best_kmer) < *(g.best_kmer)) && ( sequences[s].best_kmer->getBestValue() > g.best_kmer->getBestValue()-3 ) ) {
+				if ((*(sequences[s].best_kmer) < *(g.best_kmer))) {
 					sequences_done[s] = true;
 				}
 			}
 		}
 	}
-	std::cout << "done.\n\tSpace occupied: " <<
-			IOTools::format_space_human(IOTools::getCurrentProcessMemory()) << "\n\tProcessing unannotated...";
+	std::cout << "done.\n\tSpace occupied: "
+			<< IOTools::format_space_human(IOTools::getCurrentProcessMemory())
+			<< "\n\tProcessing unannotated...";
 	std::cout.flush();
 	processUnAnnotated();
 	std::map<uint64_t, uint64_t> sig_to_ev;
@@ -698,22 +703,17 @@ void KmerGraphSet::processUnAnnotated() {
 	for (auto r : regions) {
 		idx = -1;
 		for (auto s : r) {
-			if (! sequences_done[s]) {
+			if (!sequences_done[s]) {
 				if (idx == -1) {
 					idx = s;
 				} else {
-					if ( *(sequences[idx].best_kmer) < *(sequences[s].best_kmer) ) {
+					if (*(sequences[idx].best_kmer)
+							< *(sequences[s].best_kmer)) {
 						idx = s;
-						max_value=sequences[idx].best_kmer->getBestValue();
+						max_value = sequences[idx].best_kmer->getBestValue();
 					}
 				}
-			}
-		}
-		for (auto s : r) {
-			if ( ! sequences_done[s]){
-				if ( sequences[s].best_kmer->getBestValue() > (max_value - 3) ){
-					sequences_done[s]=true;
-				}
+				sequences_done[s] = true;
 			}
 		}
 
@@ -764,16 +764,16 @@ std::pair<BNode*, bool> KmerGraphSet::getBestKmerAndBorder(GraphSequence &gs,
 	int end = sig.q_position.end + k_len - 1;
 	int border_start = start - (k_len * 2) - 3;
 	int border_end = end + (k_len * 2) + 3;
-	if (start < 0){
+	if (start < 0) {
 		start = 0;
 	}
-	if (border_start < 0){
+	if (border_start < 0) {
 		border_start = 0;
 	}
-	if (end > gs.sequence.size()){
+	if (end > gs.sequence.size()) {
 		end = gs.sequence.size();
 	}
-	if (border_end > gs.sequence.size()){
+	if (border_end > gs.sequence.size()) {
 		border_end = gs.sequence.size();
 	}
 	if (strand == "-") {
@@ -890,26 +890,24 @@ void KmerGraphSet::write_signatures_json(std::ofstream &ofs) {
 void KmerGraphSet::write_sequences_json(std::ofstream &ofs) {
 	bool first = true;
 	for (int64_t i = 0; i < sequences.size(); i++) {
-		if (sequences_done[i]){
-			GraphSequence &s = sequences[i];
-			json data = s.to_json();
-			if (max_values.size() > 0) {
-				data.erase("best_kmer_values");
-				std::vector<double> values = s.best_kmer->values;
-				for (int i = 0; i < values.size(); i++) {
-					values[i] = (values[i] / 100) * max_values[i];
-				}
-				data["best_kmer_values"] = values;
+		GraphSequence &s = sequences[i];
+		json data = s.to_json();
+		if (max_values.size() > 0) {
+			data.erase("best_kmer_values");
+			std::vector<double> values = s.best_kmer->values;
+			for (int i = 0; i < values.size(); i++) {
+				values[i] = (values[i] / 100) * max_values[i];
 			}
-			data.erase("alignments");
-			json alignments;
-			for (auto a : s.alignments) {
-				alignments.push_back(mapper_results[a].to_json());
-			}
-			data["alignments"] = alignments;
-			ofs << (first ? "\"sequences\" : [\n" : ",\n") << data.dump();
-			first = false;
+			data["best_kmer_values"] = values;
 		}
+		data.erase("alignments");
+		json alignments;
+		for (auto a : s.alignments) {
+			alignments.push_back(mapper_results[a].to_json());
+		}
+		data["alignments"] = alignments;
+		ofs << (first ? "\"sequences\" : [\n" : ",\n") << data.dump();
+		first = false;
 	}
 	ofs << (first ? "" : "\n]\n");
 }
@@ -934,9 +932,9 @@ BNode& KmerGraphSet::getMaxKmer(std::string seq, uint64_t graph_idx) {
 	std::set<Kmer> kmers = Kmer::generateKmers(seq, k_len);
 	KmerGraph &gr = graphs[graph_idx];
 	double best = -1;
-	BNode* best_node;
-	for (auto * node  : gr.nodes_vsorted) {
-		if (kmers.count(node->kmer) != 0 ) {
+	BNode *best_node;
+	for (auto *node : gr.nodes_vsorted) {
+		if (kmers.count(node->kmer) != 0) {
 			best_node = node;
 			best = node->getBestValue();
 			break;
@@ -1015,7 +1013,7 @@ int KmerGraphSet::aggregateCorrelated(double corr_thr) {
 					|| intersection.size() > 0) {
 				if (Stats::correlationCoefficient(counts[i].count,
 						counts[j].count) > corr_thr) {
-					double max_a = 	winning_nodes[i]->getBestValue();
+					double max_a = winning_nodes[i]->getBestValue();
 					double max_b = winning_nodes[j]->getBestValue();
 					if (max_a > max_b) {
 						winning_nodes[j]->masked = true;
