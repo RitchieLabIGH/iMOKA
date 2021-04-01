@@ -72,7 +72,10 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
     print("Original data have {} dimensions with {} samples, divided in {} groups:".format(values.shape[1], values.shape[0],len(classnames)))
     for c in range(0, len(classnames)) :
         print("\t{} - {} \t {} samples".format(c, classnames[c] ,groupcount[c])) 
-    
+    if max_features > values.shape[1]:
+        print("WARNING! You asked for {} maximum features but the dataset contains only {}.".format(max_features, values.shape[1] ))
+        max_features=values.shape[1]
+        
     out_file = { "info" : 
                 { "groups_names" : classnames.tolist(), 
                  "sample_groups" : Y.tolist(),
