@@ -1,3 +1,9 @@
+let dirname;
+if ( typeof __dirname === "undefined"){
+	dirname = "./";
+}else {
+	dirname = __dirname;
+}
 export const genomes = {
 	"hg38" : {   "id": "hg38",
     "name": "Human (GRCh38/hg38)",
@@ -9,8 +15,8 @@ export const genomes = {
         "name": "Ensembl release 100",
 		"format": "genepred",
 		"sourceType" : "file",
-        "url": `serve://${__dirname}/assets/data/genPred.sorted.txt.gz`,
-        "indexURL": `serve://${__dirname}/assets/data/genPred.sorted.txt.gz.tbi`,
+        "url": `serve://${dirname}/assets/data/genPred.sorted.txt.gz`,
+        "indexURL": `serve://${dirname}/assets/data/genPred.sorted.txt.gz.tbi`,
         "visibilityWindow": -1,
         "removable": false,
         "order": 1000000

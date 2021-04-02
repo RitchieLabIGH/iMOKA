@@ -39,7 +39,7 @@ export class ElectronSymService implements IpcRenderer {
 			this._session.profile.name = "ElectronSymProfile";
 		}
 	}
-	postMessage(){
+	postMessage() {
 		throw new Error("Method not implemented.");
 	}
 
@@ -81,6 +81,7 @@ export class ElectronSymService implements IpcRenderer {
 	}
 
 	openFile(content: any, file_name: string) {
+
 		if (content.kmers) {
 			content.kmers.forEach((km, idx) => { km.best_rank = idx; })
 			this.data.kmers = content;
@@ -288,37 +289,54 @@ export class ElectronSymService implements IpcRenderer {
 				this._listeners[full_channel].forEach((list) => {
 					list({}, resp)
 				})
-			} else if (args[1].data == "SOMaverageclass"){
-				if (! this.data.som.averageclass)
-		        	this.data.som.averageclass={};
-		    	let  data_to_send = [];
-				for ( let i=0; i < this.data.som.meanbycat.length; i++ ){
-			    	data_to_send.push({"projSOM":this.projSOMnormalize(this.data.som.meanbycat[i].meanmatrix,args[1].norm),"labelsamples":"Mean "+this.data.som.meanbycat[i].classname,"classori":this.data.som.meanbycat[i].classname,"classnumber":this.data.som.meanbycat[i].classid});
+			} else if (args[1].data == "SOMaverageclass") {
+				if (!this.data.som.averageclass)
+					this.data.som.averageclass = {};
+				let data_to_send = [];
+				for (let i = 0; i < this.data.som.meanbycat.length; i++) {
+					data_to_send.push({ "projSOM": this.projSOMnormalize(this.data.som.meanbycat[i].meanmatrix, args[1].norm), "labelsamples": "Mean " + this.data.som.meanbycat[i].classname, "classori": this.data.som.meanbycat[i].classname, "classnumber": this.data.som.meanbycat[i].classid });
 				}
-		    	let resp={ "data" : data_to_send,  "message": "SUCCESS" ,"draw" : 1, code : 0}
-				full_channel = channel + "-" + args[0]; 
+				let resp = { "data": data_to_send, "message": "SUCCESS", "draw": 1, code: 0 }
+				full_channel = channel + "-" + args[0];
 				this._listeners[full_channel].forEach((list) => {
 					list({}, resp)
 				})
-			} else if (args[1].data == "importance_models"){
+			} else if (args[1].data == "importance_models") {
 				full_channel = channel + "-" + args[0];
-				let resp={"data": this.data.importance.best_feature_models,  "message": "SUCCESS" ,"draw" : 1, code : 0}
+				let resp: any = { "message": "Not loaded yet", code: 1 };
+				if (this.data.importance) {
+					resp = { "data": this.data.importance.best_feature_models, "message": "SUCCESS", "draw": 1, code: 0 }
+				}
 				this._listeners[full_channel].forEach((list) => {
 					list({}, resp)
 				})
-			} else if (args[1].data == "importance"){
+			} else if (args[1].data == "importance") {
 				full_channel = channel + "-" + args[0];
-				let resp={"data": this.data.importance.features_importances,  "message": "SUCCESS" ,"draw" : 1, code : 0}
+				let resp: any = { "message": "Not loaded yet", code: 1 };
+				if (this.data.importance) {
+					resp = { "data": this.data.importance.features_importances, "message": "SUCCESS", "draw": 1, code: 0 }
+				}
 				this._listeners[full_channel].forEach((list) => {
 					list({}, resp)
 				})
-			} else if (args[1].data == "importance_samples_probabilities"){
+			} else if (args[1].data == "importance_samples_probabilities") {
 				full_channel = channel + "-" + args[0];
-				let resp={"data": this.data.importance.samples_probabilities,  "message": "SUCCESS" ,"draw" : 1, code : 0}
+				let resp: any = { "message": "Not loaded yet", code: 1 };
+				if (this.data.importance) {
+					resp = { "data": this.data.importance.samples_probabilities, "message": "SUCCESS", "draw": 1, code: 0 }
+				}
 				this._listeners[full_channel].forEach((list) => {
 					list({}, resp)
-				})	
+				})
+			} else if (args[1].data == "genes"){
+				full_channel = channel + "-" + args[0];
+				let to_send=this.data.kmers.info.genes.map((g)=>{return g.name});
+				to_send= [...new Set(to_send)]
+				this._listeners[full_channel].forEach((list)=>{
+					list({},{data : to_send, "message" : "SUCCESS"});
+				})
 			} else {
+				console.log(args)
 				console.log("TODO")
 			}
 

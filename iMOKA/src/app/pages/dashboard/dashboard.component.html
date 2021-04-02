@@ -1,159 +1,115 @@
-<ng-container *ngIf="session"> <ng-container
-	*ngIf="session.profile.process_config.profiles.length == 0">
-<div class="main" fxLayout="row wrap">
-  <div fxFlex="50%" fxFlex.lt-md="100%">
-	<mat-card style="height:250px;"> 
-    <mat-card-title>Welcome to iMOKA</mat-card-title>
-	<mat-card-content>
-	<p>
-		If you want to start new analysis, you have to configure first a <a
-			routerLink="/setup">profile</a>. Otherwise you can load your results
-		in <a routerLink="/files">the file manager page</a>.
-	</p>
-	</mat-card-content>
-   </mat-card>
-  </div> 
-  <div fxFlex="50%" fxFlex.lt-md="100%" >
-      <app-video></app-video>
-    </div>
-</div>
-</ng-container> 
-<ng-container *ngIf="session.profile.process_config.profiles.length != 0">
-<div fxLayout="column" class="main">
-  <ng-container *ngIf="session.profile.process_config.profiles[session.profile.process_config.current_profile]; let profile">
-  <div fxFlex >
-  <h3>Profile details</h3>  
-  <div fxLayout="row wrap"  class="main">
-  <div fxFlex="50%">
-  <mat-card>
-    <mat-card-content>
-    <ul>
-      <li><strong>Name: </strong> {{profile.setting_name}}</li>
-      <li><strong>Type: </strong> {{profile.connection_type}}</li>
-      <li><strong>Storage Folder: </strong> {{profile.storage_folder}}</li>
-      <li><strong>iMOKA version: </strong> {{profile.image_version ? profile.image_version : 'v1.0'}}</li>
-      <li *ngIf="profile.singularity_version"><strong>Singularity version: </strong> {{profile.singularity_version}}</li>
-      <li *ngIf="profile.os"><strong>OS: </strong> {{profile.os}}</li>
-      <li *ngIf="profile.max_cpu"><strong>Max CPU: </strong> {{profile.max_cpu}}</li>
-    </ul>
-    </mat-card-content>
-  </mat-card>
-  </div>
-  <div fxFlex="50%" fxFlex.lt-md="100%" >
-      <app-video></app-video>
-  </div>
-  </div>
-  </div>
-  <div fxFlex>
-    <ng-container *ngIf="session.matrices.length > 0">
-    <h3>Matrices information</h3>
-    <div fxLayout="row wrap"  class="main">
-    
-    <div fxFlex="50%" >
-    <mat-card>
-      <mat-card-content style="height : 250px;">
-          <plotly-plot *ngIf="plots.matrices"  [useResizeHandler]="true"  (plotly_click)="selectFilter($event, 'matrix')" [data]="plots.matrices.data" [layout]="plots.matrices.layout"></plotly-plot>             
-      </mat-card-content>
-    </mat-card>
-    </div>
-    <div fxFlex="50%"  *ngIf="! this.filters.matrix" >
-    <mat-card >
-      <mat-card-content style="height : 250px; overflow:auto;">
-                <mat-action-list >
-  <button *ngFor="let mat of session.matrices" mat-list-item (click)="this.filters.matrix=mat.name;updateCurrentMatrix()"><strong style="text-align: right;width:50%">{{mat.name}} </strong><span style="text-align: left;width:50%"> : {{mat.names.length}} samples</span></button>
-</mat-action-list>
-      </mat-card-content>
-    </mat-card>
-    </div>
-    <div fxFlex="50%"  *ngIf="this.filters.matrix" >
-    <mat-card *ngIf="current_matrix; let mat" >
-      <mat-card-content style="height : 250px;;">
-          <h3 (click)="this.filters.matrix=false;updateCurrentMatrix()"><button mat-icon-button ><mat-icon>navigate_before</mat-icon></button> {{mat.name}}</h3>
-          <ul style="height:200px; overflow:auto;">
-            <li><strong>UID:</strong> {{ mat.uid}} </li>
-            <li> <strong>Groups {{mat.group_tag_key ? 'for the tag '+ mat.group_tag_key  : ''}}</strong> :  
-              <ul><li *ngFor="let grp of mat.groups_names; let i=index">{{grp}} ( {{ countGrp(grp) }} samples )</li></ul>
-            </li>
-            <li><strong>Total samples:</strong> {{ mat.names.length}} </li>
-            <li><strong>Imported:</strong> {{ mat.imported ? "yes" : "no"}} </li>
-            <li><strong>k-mer size:</strong> {{ mat.k_len}} </li>
-            <li><strong>Has reduced:</strong> <span *ngIf="! mat.reduced">no</span>
-              <ul *ngIf="mat.reduced">
-                <li><strong>Min accuracy</strong> : {{mat.reduced.min_acc}}</li>
-                <li><strong>Min count</strong> : {{mat.reduced.minimum_count}}</li>
-                <li><strong>Percentage test</strong> : {{mat.reduced.perc_test * 100 }}%</li>
-                <li><strong>k-mer processed</strong> : {{mat.reduced.processed}}</li>
-                <li><strong>k-mer kept</strong> : {{mat.reduced.kept}} ({{((mat.reduced.kept/mat.reduced.processed)*100) | number }} %)</li>
-              </ul> </li>
-            <li><strong>Has aggregated:</strong> <span *ngIf="! mat.aggregated">no</span>
-              <ul *ngIf="mat.aggregated">
-                <li><a routerLink="/klist" (click)="openFile(mat.uid)" >Open the result k-mer table</a></li>
-                <li><strong>Min accuracy</strong> : {{ mat.aggregated.threshold}}</li>
-                <li><strong>Filtered k-mers</strong> : <span title="Number of final k-mers">{{ mat.aggregated.final_kmers}}</span> / <span title="Number of total k-mers considered">{{ mat.aggregated.initial_kmers ? mat.aggregated.initial_kmers : mat.aggregated.kmers_used}}</span></li>
-                <li><strong>Correlation threshold</strong> : {{mat.aggregated.correlation_thr == 1 ? 'off' :  mat.aggregated.correlation_thr }} </li>
-              </ul>
-            </li>
-            <li><strong>Prediction models: </strong> <span *ngIf="mat.models.length == 0">none</span>
-              <ul *ngFor="let mod of mat.models">
-                <li><strong>Model </strong><a routerLink="/models" (click)="openFile(mat.uid+' RF '+mod.name)"> {{ mod.description }} </a></li>
-              </ul>
-            </li>
-            <li><strong>Self Organize Maps: </strong> <span *ngIf="mat.som.length == 0">none</span>
-              <ul *ngFor="let som of mat.som">
-                <li><strong>Description: </strong> {{som.description}}
-                 <ul>
-                  <li *ngFor="let exp of som.experiments"> 
-                    <a (click)="openFile(mat.uid+' SOM '+som.name+' '+exp.nsize)" routerLink="/som" >Open the {{exp.nsize}} x {{exp.nsize}} SOM</a>
-                  </li>
-                 </ul>
-                </li>
-              </ul>
-             </li>
-            </ul>
-      </mat-card-content>
-    </mat-card>
-    </div>
-    </div>
-    </ng-container>
-  </div>
-  
-  </ng-container>
-  
-  <ng-container *ngIf="samples && samples.length > 0">
-  <div fxFlex >
-  <h3>Samples Information</h3>
-  <div fxLayout="row wrap"  class="main">
-  <div fxFlex="50%" *ngIf="plots.k_lengths; let plot" fxFlex.lt-md="100%"  >
-    <mat-card>
-      <mat-card-content style="height : 250px;" >
-        <plotly-plot  [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'kl')" [data]="plot.data" [layout]="plot.layout"></plotly-plot>
-      </mat-card-content>  
-    </mat-card>
-  </div>
-  <div fxFlex="50%" *ngIf="plots.metadata; let plot" fxFlex.lt-md="100%"  >
-    <mat-card>
-      <mat-card-content style="height : 250px;" >
-        <plotly-plot  [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'metadata')" [data]="plot.data" [layout]="plot.layout"></plotly-plot>
-      </mat-card-content>  
-    </mat-card>
-  </div>
-  <div fxFlex="50%" *ngIf="plots.total_counts; let plot" fxFlex.lt-md="100%"  >
-    <mat-card>
-      <mat-card-content style="height : 250px;" >
-        <plotly-plot  [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'tc')" [data]="plot.data" [layout]="plot.layout"></plotly-plot>
-      </mat-card-content>  
-    </mat-card>
-  </div>
-  <div fxFlex="50%" *ngIf="plots.suffix_counts; let plot" fxFlex.lt-md="100%"  >
-    <mat-card>
-      <mat-card-content style="height : 250px;" >
-        <plotly-plot  [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'sc')" [data]="plot.data" [layout]="plot.layout"></plotly-plot>
-      </mat-card-content>  
-    </mat-card>
-  </div>
-  </div>
-  </div>
-  </ng-container>
-</div>
+  <ng-container *ngIf="session"> <ng-container *ngIf="session.profile.process_config.profiles.length == 0">
 
-</ng-container> </ng-container>
+  <div class="row">
+    <div class="col-md-6 p-2">
+      <mat-card style="height:250px;"> <mat-card-title>Welcome to iMOKA</mat-card-title> <mat-card-content>
+      <p>
+        If you want to start new analysis, you have to configure first a <a routerLink="/setup">profile</a>. Otherwise you can load your results in <a routerLink="/files">the file manager page</a>.
+      </p>
+      </mat-card-content> </mat-card>
+    </div>
+    <div class="col-md-6 p-2">
+      <app-video></app-video>
+    </div>
+  </div>
+  </ng-container> <ng-container *ngIf="session.profile.process_config.profiles.length != 0"> <ng-container *ngIf="session.profile.process_config.profiles[session.profile.process_config.current_profile]; let profile">
+  <div class="row ">
+    <div class="col-md-6 p-2">
+      <h3>Profile details</h3>
+      <mat-card> <mat-card-content>
+      <ul>
+        <li><strong>Name: </strong> {{profile.setting_name}}</li>
+        <li><strong>Type: </strong> {{profile.connection_type}}</li>
+        <li><strong>Storage Folder: </strong> {{profile.storage_folder}}</li>
+        <li><strong>iMOKA version: </strong> {{profile.image_version ? profile.image_version : 'v1.0'}}</li>
+        <li *ngIf="profile.singularity_version"><strong>Singularity version: </strong> {{profile.singularity_version}}</li>
+        <li *ngIf="profile.os"><strong>OS: </strong> {{profile.os}}</li>
+        <li *ngIf="profile.max_cpu"><strong>Max CPU: </strong> {{profile.max_cpu}}</li>
+      </ul>
+      </mat-card-content> </mat-card>
+    </div>
+    <div class="col-md-6 p-2">
+      <app-video></app-video>
+    </div>
+  </div>
+  <ng-container *ngIf="session.matrices.length > 0">
+  <div class="row ">
+    <div class="col-12">
+      <h3>Matrices information</h3>
+    </div>
+    <div class="col-md-6 p-1">
+      <mat-card> <mat-card-content style="height : 250px;"> <plotly-plot *ngIf="plots.matrices" [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'matrix')" [data]="plots.matrices.data" [layout]="plots.matrices.layout"></plotly-plot> </mat-card-content> </mat-card>
+    </div>
+    <div class="col-md-6 p-1" *ngIf="! this.filters.matrix">
+      <mat-card> <mat-card-content style="height : 250px; overflow:auto;"> <mat-action-list>
+      <button *ngFor="let mat of session.matrices" mat-list-item (click)="this.filters.matrix=mat.name;updateCurrentMatrix()">
+        <strong style="text-align: right; width: 50%">{{mat.name}} </strong><span style="text-align: left; width: 50%"> : {{mat.names.length}} samples</span>
+      </button>
+      </mat-action-list> </mat-card-content> </mat-card>
+    </div>
+    <div class="col-md-6 p-1" *ngIf="this.filters.matrix">
+      <mat-card *ngIf="current_matrix; let mat"> <mat-card-content style="height : 250px;;">
+      <h3 (click)="this.filters.matrix=false;updateCurrentMatrix()">
+        <button mat-icon-button>
+          <mat-icon>navigate_before</mat-icon>
+        </button>
+        {{mat.name}}
+      </h3>
+      <ul style="height: 200px; overflow: auto;">
+        <li><strong>UID:</strong> {{ mat.uid}}</li>
+        <li><strong>Groups {{mat.group_tag_key ? 'for the tag '+ mat.group_tag_key : ''}}</strong> :
+          <ul>
+            <li *ngFor="let grp of mat.groups_names; let i=index">{{grp}} ( {{ countGrp(grp) }} samples )</li>
+          </ul></li>
+        <li><strong>Total samples:</strong> {{ mat.names.length}}</li>
+        <li><strong>Imported:</strong> {{ mat.imported ? "yes" : "no"}}</li>
+        <li><strong>k-mer size:</strong> {{ mat.k_len}}</li>
+        <li><strong>Has reduced:</strong> <span *ngIf="! mat.reduced">no</span>
+          <ul *ngIf="mat.reduced">
+            <li><strong>Min accuracy</strong> : {{mat.reduced.min_acc}}</li>
+            <li><strong>Min count</strong> : {{mat.reduced.minimum_count}}</li>
+            <li><strong>Percentage test</strong> : {{mat.reduced.perc_test * 100 }}%</li>
+            <li><strong>k-mer processed</strong> : {{mat.reduced.processed}}</li>
+            <li><strong>k-mer kept</strong> : {{mat.reduced.kept}} ({{((mat.reduced.kept/mat.reduced.processed)*100) | number }} %)</li>
+          </ul></li>
+        <li><strong>Has aggregated:</strong> <span *ngIf="! mat.aggregated">no</span>
+          <ul *ngIf="mat.aggregated">
+            <li><a routerLink="/klist" (click)="openFile(mat.uid)">Open the result k-mer table</a></li>
+            <li><strong>Min accuracy</strong> : {{ mat.aggregated.threshold}}</li>
+            <li><strong>Filtered k-mers</strong> : <span title="Number of final k-mers">{{ mat.aggregated.final_kmers}}</span> / <span title="Number of total k-mers considered">{{ mat.aggregated.initial_kmers ? mat.aggregated.initial_kmers : mat.aggregated.kmers_used}}</span></li>
+            <li><strong>Correlation threshold</strong> : {{mat.aggregated.correlation_thr == 1 ? 'off' : mat.aggregated.correlation_thr }}</li>
+          </ul></li>
+        <li><strong>Prediction models: </strong> <span *ngIf="mat.models.length == 0">none</span>
+          <ul *ngFor="let mod of mat.models">
+            <li><strong>Model </strong><a routerLink="/models" (click)="openFile(mat.uid+' RF '+mod.name)"> {{ mod.description }} </a></li>
+          </ul></li>
+        <li><strong>Self Organize Maps: </strong> <span *ngIf="mat.som.length == 0">none</span>
+          <ul *ngFor="let som of mat.som">
+            <li><strong>Description: </strong> {{som.description}}
+              <ul>
+                <li *ngFor="let exp of som.experiments"><a (click)="openFile(mat.uid+' SOM '+som.name+' '+exp.nsize)" routerLink="/som">Open the {{exp.nsize}} x {{exp.nsize}} SOM</a></li>
+              </ul></li>
+          </ul></li>
+      </ul>
+      </mat-card-content> </mat-card>
+    </div>
+  </div>
+  </ng-container> </ng-container> <ng-container *ngIf="samples && samples.length > 0">
+  <div class="row">
+    <div class="col-12">
+      <h3>Samples Information</h3>
+    </div>
+    <div class="col-md-6 p-1" *ngIf="plots.k_lengths; let plot">
+      <mat-card> <mat-card-content style="height : 250px;"> <plotly-plot [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'kl')" [data]="plot.data" [layout]="plot.layout"></plotly-plot> </mat-card-content> </mat-card>
+    </div>
+    <div class="col-md-6 p-1" *ngIf="plots.metadata; let plot">
+      <mat-card> <mat-card-content style="height : 250px;"> <plotly-plot [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'metadata')" [data]="plot.data" [layout]="plot.layout"></plotly-plot> </mat-card-content> </mat-card>
+    </div>
+    <div class="col-md-6 p-1" *ngIf="plots.total_counts; let plot">
+      <mat-card> <mat-card-content style="height : 250px;"> <plotly-plot [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'tc')" [data]="plot.data" [layout]="plot.layout"></plotly-plot> </mat-card-content> </mat-card>
+    </div>
+    <div class="col-md-6 p-1" *ngIf="plots.suffix_counts; let plot">
+      <mat-card> <mat-card-content style="height : 250px;"> <plotly-plot [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'sc')" [data]="plot.data" [layout]="plot.layout"></plotly-plot> </mat-card-content> </mat-card>
+    </div>
+  </div>
+  </ng-container> </ng-container> </ng-container>

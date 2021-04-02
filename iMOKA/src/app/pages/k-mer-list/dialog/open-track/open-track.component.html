@@ -1,10 +1,10 @@
 <h1 mat-dialog-title>Other track</h1>
-  <mat-dialog-content fxLayout="column">
-		<mat-form-field fxFlex>
+  <mat-dialog-content >
+		<mat-form-field >
 			<mat-label>Name</mat-label>
 			<input matInput [(ngModel)]="track.name"> 
 		</mat-form-field>
-		<mat-form-field fxFlex>
+		<mat-form-field >
 			<mat-label>Automatic type</mat-label>
 			<mat-select [(ngModel)]="track.type">
 				<mat-option [value]="undefined">Auto</mat-option>
@@ -20,32 +20,32 @@
                 <mat-option value="refgene">Refgene</mat-option>
 			</mat-select> 
 		</mat-form-field>
-		<mat-form-field fxFlex>
+		<mat-form-field >
 			<mat-label>Automatic format</mat-label>
 			<mat-select [(ngModel)]="track.format">
 				<mat-option [value]="undefined">Auto</mat-option>
     			<mat-option *ngFor="let fmt of formats" [value]="fmt">{{fmt}}</mat-option>
 			</mat-select> 
 		</mat-form-field>
-		<div fxFlex>
-		<mat-slide-toggle [(ngModel)]="local" (change)="track.url=undefined; track.index=undefined;">{{local ? 'Local' : 'Remote' }}</mat-slide-toggle>
+		<div >
+		<mat-slide-toggle [(ngModel)]="local" (change)="track.path=undefined; track.index=undefined;">{{local ? 'Local' : 'Remote' }}</mat-slide-toggle>
 		</div>
 		<ng-container *ngIf="!local">
-			<mat-form-field fxFlex>
+			<mat-form-field >
 				<mat-label>URL</mat-label>
 				<input matInput [(ngModel)]="track.path"> 
 			</mat-form-field>
-			<mat-form-field fxFlex>
+			<mat-form-field >
 				<mat-label>Index</mat-label>
 				<input matInput [(ngModel)]="track.index"> 
 			</mat-form-field>
 		</ng-container>
 		<ng-container *ngIf="local">
-			<div fxFlex >
+			<div  >
 				<button *ngIf="!track.path" mat-raised-button (click)="addFile('path')">Track file</button>
 				<button *ngIf="track.path" mat-raised-button (click)="track.path=undefined;">{{fileName('path')}}</button>
             </div>
-			<div fxFlex >
+			<div  >
 				<button *ngIf="!track.index" mat-raised-button (click)="addFile('index')">Index file</button>
 				<button *ngIf="track.index" mat-raised-button (click)="track.index=undefined;">{{fileName('index')}}</button>
 			</div>

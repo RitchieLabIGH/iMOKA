@@ -1,95 +1,65 @@
 
 <h2 mat-dialog-title>Gene ontology powered by PantherDB</h2>
 <div mat-dialog-content class="main-dialog" #mainPage>
-	<div fxLayout="column">
-		<div fxFlex fxLayout="row wrap">
-			<mat-form-field fxFlex="25%"> <mat-label>Enrichment
-			type</mat-label> <mat-select 
-				[(ngModel)]="panther_options.enrichmentType" id="enrichmentType"
-				value={{panther_options.enrichmentType}}
-				>
-				<mat-option *ngFor="let key of PDBEnrichmentTypeKeys" [value]="key">{{key}}</mat-option>
-			</mat-select> </mat-form-field>
-			<mat-form-field fxFlex="25%"> <mat-label>Type</mat-label> <mat-select
-				 [(ngModel)]="panther_options.test_type"
-				id="test_type" value={{panther_options.test_type}}
-				>
-				<mat-option *ngFor="let key of PDBTestTypeKeys" [value]="key">{{key}}</mat-option>
-			</mat-select> </mat-form-field>
-			<mat-form-field fxFlex="25%"> <mat-label>Correction</mat-label> <mat-select
-				[(ngModel)]="panther_options.correction"
-				id="correction" value={{panther_options.correction}}
-				>
-				<mat-option *ngFor="let key of PDBCorrectionKeys" [value]="key">{{key}}</mat-option>
-			</mat-select> </mat-form-field>
-			<div fxFlex="25%" style="padding-left:40px">
-				<button color="primary" mat-raised-button *ngIf="!loading" (click)="enrichmentAnalysis()">Search</button>
-				<mat-spinner diameter="25" *ngIf="loading"></mat-spinner>
-			</div>
-		</div>
-		<div fxFlex="405px" fxLayout="row wrap">
-			<div fxFlex="50%" *ngIf="graphs.genes">
-					<plotly-plot [data]="graphs.genes.data" [layout]="graphs.genes.layout"></plotly-plot>
-			</div>
-			<div fxFlex="50%" *ngIf="graphs.pvals">
-					<plotly-plot [data]="graphs.pvals.data"
-						[layout]="graphs.pvals.layout"></plotly-plot>
-			</div>
-		</div>
-		<div fxFlex>
-			<mat-form-field> <input matInput
-				(keyup)="applyFilter($event.target.value)" placeholder="Filter">
-			</mat-form-field>
-			<a style="margin-left:10px;" mat-raised-button  [href]="table_uri | safeURL" (click)="downloadTsv()" download="pather_go.tsv">Download as tsv</a>
-		</div>
-		<div fxFlex>
-			<table mat-table matSort [dataSource]="dataSource" 
-				class="mat-elevation-z8">
-				<ng-container matColumnDef="genes">
-				<th mat-header-cell *matHeaderCellDef >Genes list</th>
-				<td mat-cell *matCellDef="let element" ><mat-expansion-panel>
-					<mat-expansion-panel-header> <mat-panel-description>
-					<span>{{element.genes[0]}}</span> <span
-						*ngIf="element.genes.length > 1">,
-						{{element.genes[1]}}</span> <span
-						*ngIf="element.genes.length > 2">,
-						{{element.genes[2]}}</span> ... </mat-panel-description> </mat-expansion-panel-header> 
-					<mat-grid-list cols="2" rowHeight="30px"> <mat-grid-tile
-						class="justifyleft" *ngFor="let gene of element.genes">
-					<a target='_blank'
-						href='https://www.genecards.org/cgi-bin/carddisp.pl?gene={{gene}}'><mat-icon>link</mat-icon></a>
-					{{gene}}</mat-grid-tile> 
-					</mat-grid-list> </mat-expansion-panel>
-				</ng-container>
-				<ng-container matColumnDef="ngenes">
-				<th mat-header-cell *matHeaderCellDef mat-sort-header>Number of genes</th>
-				<td mat-cell *matCellDef="let element">{{element.genes.length}}</td>
-				</ng-container>
-				<ng-container matColumnDef="goid">
-				<th mat-header-cell *matHeaderCellDef mat-sort-header>GO ID</th>
-				<td mat-cell *matCellDef="let element">{{element.id}}</td>
-				</ng-container>
-				<ng-container matColumnDef="name">
-				<th mat-header-cell *matHeaderCellDef mat-sort-header>Ontology
-					name</th>
-				<td mat-cell *matCellDef="let element">{{element.name}}</td>
-				</ng-container>
-				<ng-container matColumnDef="pval">
-					<th mat-header-cell *matHeaderCellDef mat-sort-header>p-value</th>
-					<td mat-cell *matCellDef="let element">{{element.pval| number}}</td>
-				</ng-container>
-				<ng-container matColumnDef="fdr">
-					<th mat-header-cell *matHeaderCellDef mat-sort-header>FDR</th>
-					<td mat-cell *matCellDef="let element">{{element.fdr | number}}</td>
-				</ng-container>
+  <div class="row">
+    <div class="col-12">
+      <div class="row">
+      <mat-form-field class="col-md-3"> <mat-label>Enrichment type</mat-label> <mat-select [(ngModel)]="panther_options.enrichmentType" id="enrichmentType" value={{panther_options.enrichmentType}}> <mat-option *ngFor="let key of PDBEnrichmentTypeKeys" [value]="key">{{key}}</mat-option> </mat-select> </mat-form-field>
+      <mat-form-field class="col-md-3"> <mat-label>Type</mat-label> <mat-select [(ngModel)]="panther_options.test_type" id="test_type" value={{panther_options.test_type}}> <mat-option *ngFor="let key of PDBTestTypeKeys" [value]="key">{{key}}</mat-option> </mat-select> </mat-form-field>
+      <mat-form-field class="col-md-3"> <mat-label>Correction</mat-label> <mat-select [(ngModel)]="panther_options.correction" id="correction" value={{panther_options.correction}}> <mat-option *ngFor="let key of PDBCorrectionKeys" [value]="key">{{key}}</mat-option> </mat-select> </mat-form-field>
+      <div class="col-md-3">
+        <button color="primary" mat-raised-button *ngIf="!loading" (click)="enrichmentAnalysis()">Search</button>
+        <mat-spinner diameter="25" *ngIf="loading"></mat-spinner>
+      </div>
+      </div>
+    </div>
+    <div class="col-12">
+      <div class="row">
+        <div class="col-md-6" *ngIf="graphs.genes">
+          <plotly-plot [data]="graphs.genes.data" [layout]="graphs.genes.layout"></plotly-plot>
+        </div>
+        <div class="col-md-6" *ngIf="graphs.pvals">
+          <plotly-plot [data]="graphs.pvals.data" [layout]="graphs.pvals.layout"></plotly-plot>
+        </div>
+      </div>
+    </div>
+    <div class="col-12">
+      <mat-form-field> <input matInput (keyup)="applyFilter($event.target.value)" placeholder="Filter"> </mat-form-field>
+      <a style="margin-left: 10px;" mat-raised-button [href]="table_uri | safeURL" (click)="downloadTsv()" download="pather_go.tsv">Download as tsv</a>
+    </div>
+    <div class="col-12">
+      <table mat-table matSort [dataSource]="dataSource" class="mat-elevation-z8">
+        <ng-container matColumnDef="genes">
+        <th mat-header-cell *matHeaderCellDef>Genes list</th>
+        <td mat-cell *matCellDef="let element"><mat-expansion-panel> <mat-expansion-panel-header> <mat-panel-description> <span>{{element.genes[0]}}</span> <span *ngIf="element.genes.length > 1">, {{element.genes[1]}}</span> <span *ngIf="element.genes.length > 2">, {{element.genes[2]}}</span> ... </mat-panel-description> </mat-expansion-panel-header> <mat-grid-list cols="2" rowHeight="30px"> <mat-grid-tile class="justifyleft" *ngFor="let gene of element.genes"> <a target='_blank' href='https://www.genecards.org/cgi-bin/carddisp.pl?gene={{gene}}'><mat-icon>link</mat-icon></a> {{gene}}</mat-grid-tile> </mat-grid-list> </mat-expansion-panel>
+        </ng-container>
+        <ng-container matColumnDef="ngenes">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Number of genes</th>
+        <td mat-cell *matCellDef="let element">{{element.genes.length}}</td>
+        </ng-container>
+        <ng-container matColumnDef="goid">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>GO ID</th>
+        <td mat-cell *matCellDef="let element">{{element.id}}</td>
+        </ng-container>
+        <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Ontology name</th>
+        <td mat-cell *matCellDef="let element">{{element.name}}</td>
+        </ng-container>
+        <ng-container matColumnDef="pval">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>p-value</th>
+        <td mat-cell *matCellDef="let element">{{element.pval| number}}</td>
+        </ng-container>
+        <ng-container matColumnDef="fdr">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>FDR</th>
+        <td mat-cell *matCellDef="let element">{{element.fdr | number}}</td>
+        </ng-container>
 
-				<tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-				<tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-			</table>
-			<mat-paginator [pageSizeOptions]="[5,10,20, 50]"
-				showFirstLastButtons></mat-paginator>
-		</div>
-	</div>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+      <mat-paginator [pageSizeOptions]="[5,10,20, 50]" showFirstLastButtons></mat-paginator>
+    </div>
+  </div>
 </div>
 
 

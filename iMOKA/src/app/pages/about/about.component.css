@@ -1,4 +1,4 @@
-.main > div {
+/* .main > div {
 	padding : 2em 1em;
 }
 
@@ -19,4 +19,64 @@ p {
 	height : 8vh;
 	margin: 0 15px
 	
+} */
+
+/* New rules */
+
+.container{
+	margin: 0;
+	padding: 0;
+	display: flex;
+}
+article{
+	padding: 30px 70px;
+	max-width: 280px;
+}
+p{
+	font-size: 13px;
+	line-height: 1.8;
+	color: var(--color-grey-default);
+
+}
+p span{
+	font-size: 16px;
+	text-transform: uppercase;
+	font-weight: var(--font-medium);
+	color: var(--color-darkblue);
+}
+p:nth-of-type(3){
+	font-style: italic;
+	font-size: 11px;
+	letter-spacing: .8px;
+}
+.logo-container{
+	display: flex;
+	flex-wrap: wrap;
+	margin-top: 50px;
+}
+.logo-container a img{
+	mix-blend-mode: darken;
+}
+.img-container{
+	width: 100vw;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	background-color: #fbfaf7;
+}
+.img-container img{
+	max-width: 100%;
+	max-height: auto;
+	min-width: 400px;
+	min-height: 552px;
+/* 	max-width: 1000px;
+	max-height: 1380px; */
+
+}
+
+@media only screen and (max-width: 1070px) {
+	.container{flex-direction: column;}	
+	.img-container{width: 100%;height: 100%}
+	article{padding: 30px 170px; max-width: 100%;}
+	.logo-container{margin-bottom: 45px;}
 }

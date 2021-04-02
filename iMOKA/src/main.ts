@@ -11,3 +11,5 @@ if (environment.production) {
 
 platformBrowserDynamic().bootstrapModule(AppModule)
   .catch(err => console.error(err));
+
+import 'zone.js/dist/zone';  // Included with Angular CLI.

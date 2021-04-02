@@ -11,7 +11,8 @@
     "random-access-file": "^2.1.5",
     "rimraf": "^3.0.2",
     "rxjs": "^6.6.3",
-    "simple-crypto-js": "^2.5.0"
+    "simple-crypto-js": "^2.5.0",
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {},
   "scripts": {
