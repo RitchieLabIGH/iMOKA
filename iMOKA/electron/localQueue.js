@@ -185,7 +185,6 @@ class LocalQueue {
 			if ( running.match(/yes/)){
 				avail_cores -= job.job.threads;
 			} else {
-				console.log("job completed")
 				if (fs.existsSync(lock)){
 					job.code = 1;
 					job.result="ERROR! Job failed: lock is still there";
@@ -211,9 +210,6 @@ class LocalQueue {
 				}
 				
 				this.current_queue.data.completed.push(job);
-				console.log("----------- JOB completed -----------");
-				console.log(job);
-				console.log("----------- JOB completed -----------");
 				child_process.exec("rm -fr "+job.job.wd);
 				this.current_queue.data.running.splice(i, 1);
 				this.current_queue.save();
@@ -258,7 +254,6 @@ class LocalQueue {
 		}
 		if ( this.current_queue.data.queue.length == 0 && this.current_queue.data.running.length == 0){
 			this.tick_on=false;
-			console.log("nothing to do")
 			return;
 		} 
 		let resources= this.checkRunningQueue();

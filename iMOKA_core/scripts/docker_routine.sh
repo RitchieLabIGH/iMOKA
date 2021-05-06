@@ -1,5 +1,6 @@
 #!/bin/bash
 
-sudo docker build -t cloxd/imoka:1.0 . && sudo docker push cloxd/imoka:1.0 
+imoka_version=1.1
+sudo docker build -t cloxd/imoka:${imoka_version} . && sudo docker push cloxd/imoka:${imoka_version} 
 
 

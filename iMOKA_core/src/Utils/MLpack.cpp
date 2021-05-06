@@ -306,7 +306,6 @@ std::vector<double> MLpack::pairwise_classification(
 	for (auto g : group_counts) {
 		min_group = g.second < min_group ? g.second : min_group;
 	}
-	std::string id=IOTools::timestamp();
 	for (uint64_t g = 0; g < group_counts.size(); g++) {
 		for (uint64_t h = g + 1; h < group_counts.size(); h++) {
 			std::vector<double> accuracies;

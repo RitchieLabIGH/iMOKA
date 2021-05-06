@@ -22,7 +22,7 @@ GraphSequence::~GraphSequence() {
 
 json GraphSequence::to_json(){
 	json out= {{"best_kmer" , best_kmer->kmer.str()}, {"best_kmer_values" , best_kmer->values},
-			{"kmers", nodes},
+			{"kmers", nodes}, {"means", best_kmer->means},
 			{"sequence" , sequence}, {"id" , id}, {"alignments", alignments} , {"graph", graph } };
 	return out;
 }

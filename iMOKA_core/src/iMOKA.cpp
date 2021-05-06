@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
 		std::cout << help() << "\n";
 		return 0;
 	}
-	std::streambuf * logStreamBuff = std::cerr.rdbuf();
+	std::streambuf * logStreamBuff = std::cout.rdbuf();
 	std::ofstream logfile;
 	if (getenv("IMOKA_LOG_FILE")) {
 		logfile.open(getenv("IMOKA_LOG_FILE"));

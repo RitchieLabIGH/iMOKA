@@ -46,7 +46,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 			this.updateSampleGraphs();
 		}))
 		this.subscriptions.push(this.uem.getSession().subscribe(session => {
-			console.log(session)
 			this.session = session;
 			this.updateCurrentMatrix()
 		}, err => {

@@ -16,7 +16,6 @@ export class KmerInfoComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		console.log(this.kmer);
 		this.data.boxplot = this.generateBoxplotData();
 	}
 	ngOnDestroy() {

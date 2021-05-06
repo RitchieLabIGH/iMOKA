@@ -135,7 +135,6 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 	}
 
 	showInfoMatrix() {
-		console.log(this.current_matrix)
 		let data = new InfoData("Information for the matrix " + this.current_matrix.name);
 		let infos = "<p><strong>UID </strong>: " + this.current_matrix.uid + "<br/>";
 		if (this.current_matrix.group_tag_key) {
@@ -154,7 +153,6 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 
 	closeFile(ftype: string) {
 		this.fileService.closeData(ftype).then((message) => {
-			console.log(message)
 		});
 	}
 	toastMessage(message: string, title: string) {
@@ -201,7 +199,6 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 						} else {
 							this.toastMessage(resp.message, "Error!" );
 						}
-						console.log(resp)
 					});
 				}
 		})
@@ -216,7 +213,6 @@ export class OpenFilesComponent implements OnInit, OnDestroy {
 					return;
 				} else {
 					args.that.fileService.exportExperiment(args.uid, data_file.filePaths[0], args.with_samples).then((resp: any) => {
-						console.log(resp)
 					});
 				}
 			});

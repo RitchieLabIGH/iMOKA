@@ -70980,15 +70980,52 @@
 	    _this.init(config);
 
 	    _this.prev_request = "";
+	    _this.render = _this.drawIntronDepth;
+	    _this.height = config.height || 100;
+	    _this.autoHeight = config.autoHeight;
+	    _this.minHeight = config.minHeight || Math.min(25, _this.height);
+	    _this.maxHeight = config.maxHeight || Math.max(1000, _this.height);
+	    _this.visibilityWindow = config.visibilityWindow;
+	    _this.height = config.height || 100; // The preferred height
+
+	    _this.margin = config.margin === undefined ? _this.height < 100 ? Math.round(_this.height / 5) : 20 : config.margin;
 	    return _this;
 	  }
 
 	  _createClass(IRFinderTrack, [{
 	    key: "init",
 	    value: function init(config) {
-	      this.height = config.height || 100; // The preferred height
+	      if (config.displayMode) {
+	        config.displayMode = config.displayMode.toUpperCase();
+	      }
 
-	      this.margin = config.margin === undefined ? this.height < 100 ? Math.round(this.height / 5) : 20 : config.margin;
+	      this.config = config;
+	      this.url = config.url;
+	      this.type = config.type;
+	      this.description = config.description;
+	      this.supportHiDPI = config.supportHiDPI === undefined ? true : config.supportHiDPI;
+
+	      if (config.name || config.label) {
+	        this.name = config.name || config.label;
+	      } else {
+	        if (FileUtils.isFilePath(config.url)) this.name = config.url.name;else this.name = config.url;
+	      }
+
+	      this.id = this.config.id === undefined ? this.name : this.config.id;
+	      this.order = config.order;
+	      this.color = config.color;
+	      this.altColor = config.altColor;
+
+	      if ("civic-ws" === config.sourceType) {
+	        // Ugly proxy for specialized track type
+	        this.defaultColor = "rgb(155,20,20)";
+	      } else {
+	        this.defaultColor = "rgb(0,0,150)";
+	      }
+
+	      this.autoscaleGroup = config.autoscaleGroup;
+	      this.removable = config.removable === undefined ? true : config.removable; // Defaults to true
+
 	      this.autoscale = config.autoscale || config.max === undefined;
 
 	      if (!this.autoscale) {
@@ -71009,7 +71046,6 @@
 	      this.color = config.color === undefined ? "#80D6F8" : config.color;
 	      this.warningColors = config.warningColors === undefined ? ["#f71735", "#feb95f", "#b49a67", "#182825", "#80D6F8"] : config.warningColors;
 	      this.warnings = ["LowCover", "LowSplicing", "MinorIsoform", "NonUniformIntronCover", "-"];
-	      this.render = this.drawIntronDepth;
 	    }
 	    /**
 	    * Called when the track is removed.  Do any needed cleanup here
@@ -71389,7 +71425,7 @@
 	        ctx.moveTo(coord.flankL.end, topY);
 	        var topY2 = yScale(coord.flankR.height);
 	        ctx.bezierCurveTo(coord.flankL.end, topY - 10, coord.flankR.start, topY2 - 10, coord.flankR.start, topY2);
-	        ctx.lineWidth = Math.round((splice + 1) / this.maxSplice) * 2;
+	        ctx.lineWidth = 1;
 	        ctx.strokeStyle = 'blue';
 	        ctx.stroke();
 	        ctx.closePath();
@@ -71419,7 +71455,7 @@
 	        ctx.moveTo(coord.flankL.end, topY);
 	        topY = topY - 10;
 	        ctx.bezierCurveTo(coord.flankL.end, topY, otherPt, topY, otherPt, topY);
-	        ctx.lineWidth = Math.round((splice + 1) / this.maxSplice) * 5;
+	        ctx.lineWidth = 1;
 	        ctx.strokeStyle = 'green';
 	        ctx.stroke();
 	        ctx.closePath();
@@ -71453,7 +71489,7 @@
 	        ctx.moveTo(coord.flankR.start, topY);
 	        topY = topY - 10;
 	        ctx.bezierCurveTo(coord.flankR.start, topY, otherPt, topY, otherPt, topY);
-	        ctx.lineWidth = Math.round((splice + 1) / this.maxSplice) * 2;
+	        ctx.lineWidth = 1;
 	        ctx.strokeStyle = 'red';
 	        ctx.stroke();
 	        ctx.closePath();
@@ -71499,16 +71535,6 @@
 	            self.trackView.repaintViews();
 	          }
 	        });
-	      });
-	      menuItems.push({
-	        object: $('<div class="igv-track-menu-border-top">')
-	      });
-	      menuItems.push({
-	        object: createCheckbox$1("Autoscale", self.autoscale),
-	        click: function click() {
-	          self.autoscale = !self.autoscale;
-	          self.forceUpdate();
-	        }
 	      });
 	      menuItems.push({
 	        object: $('<div class="igv-track-menu-border-top">')
@@ -71700,8 +71726,6 @@
 	    key: "init",
 	    value: function init(config) {
 	      this.featureType = 'object';
-	      this.groups = config.groups;
-	      this.predictors = config.predictors;
 	      this.type = "kmerSequences";
 	      this.onClick = config.onClick;
 	      this.request_type = config.request_type;
@@ -71715,11 +71739,6 @@
 	        deletion: "rgb(240,128,60)",
 	        splice: "rgb(15,180,110)"
 	      };
-	      var self = this;
-	      this.featureSource.getInfo().then(function (response) {
-	        self.infos = response;
-	      });
-	      this.request;
 
 	      if (this.request_type == "kmers") {
 	        this.dimensions = {
@@ -71848,13 +71867,13 @@
 	            h = self.dimensions.barHeight * 0.9,
 	            w,
 	            positions = [],
-	            cy = y(aln.y),
+	            cy = y(aln.y + 1),
 	            drawLetter = self.dimensions.minLetter > options.bpPerPixel ? true : false;
 
 	        if (self.colorBy == "strand") {
 	          color = rev ? self.colors.minus : self.colors.plus;
 	        } else if (self.colorBy == "accuracy") {
-	          var best_val = aln.best_value == undefined ? 0 : (aln.best_value - self.infos.threshold) * 255 / (100 - self.infos.threshold);
+	          var best_val = aln.best_value == undefined ? 0 : (aln.best_value - 65) * 255 / (100 - 65);
 	          color = "rgb(" + best_val + ",0," + (255 - best_val) + ")";
 	        } else {
 	          color = "black";
@@ -71913,9 +71932,9 @@
 	            IGVGraphics.fillRect(ctx, pos.x1, cy, pos.x2 - pos.x1 < 0.5 ? 0.5 : pos.x2 - pos.x1, h, {
 	              fillStyle: self.colors.mismatch
 	            });
-	            if (drawLetter) IGVGraphics.fillText(ctx, sig.info, pos.x1, cy + h * 0.8, {
+	            if (drawLetter) IGVGraphics.fillText(ctx, sig.info, Math.round(pos.x1 + (pos.x2 - pos.x1) / 10), cy + h * 0.8, {
 	              fillStyle: "black",
-	              font: '14px sans-serif'
+	              font: Math.max(h, 10) + 'px sans-serif'
 	            });
 	          } else if (sig.signature_type == "insertion") {
 	            ctx.save();
@@ -71927,17 +71946,17 @@
 	            ctx.fillStyle = self.colors.insertion;
 	            ctx.fill();
 	            ctx.restore();
-	            if (drawLetter) IGVGraphics.fillText(ctx, sig.info, pos.x1, cy + h * 0.8, {
+	            if (drawLetter) IGVGraphics.fillText(ctx, sig.info, Math.round(pos.x1 + (pos.x2 - pos.x1) / 10), cy + h * 0.8, {
 	              fillStyle: "black",
-	              font: h * 0.5 + 'px sans-serif'
+	              font: Math.max(h, 10) + 'px sans-serif'
 	            });
 	          } else if (sig.signature_type == "deletion") {
 	            IGVGraphics.fillRect(ctx, pos.x1, cy, pos.x2 - pos.x1 < 0.5 ? 0.5 : pos.x2 - pos.x1, h, {
 	              fillStyle: self.colors.deletion
 	            });
-	            if (drawLetter) IGVGraphics.fillText(ctx, sig.info, pos.x1, cy + h * 0.8, {
+	            if (drawLetter) IGVGraphics.fillText(ctx, sig.info, Math.round(pos.x1 + (pos.x2 - pos.x1) / 10), cy + h * 0.8, {
 	              fillStyle: "black",
-	              font: h * 0.5 + 'px sans-serif'
+	              font: Math.max(h, 10) + 'px sans-serif'
 	            });
 	          } else if (sig.signature_type == "splice") {
 	            var midPoint = (pos.x2 + pos.x1) / 2;
@@ -71962,35 +71981,87 @@
 	      this.features = features;
 	      if (this.features.length == 0) return 0;
 	      this.features.sort(function (a, b) {
-	        a.start == b.start ? b.end - a.end : a.start - b.start;
+	        return a.start == b.start ? b.end - a.end : a.start - b.start;
 	      });
-	      var max_y = 0,
-	          changed = true;
+	      var bucketStart = this.features[0].start;
+	      var nextStart = bucketStart;
+	      var bucketList = [];
 
 	      for (var i = 0; i < this.features.length; i++) {
-	        var a = this.features[i];
-	        a.y = 1;
-	        changed = true;
+	        var s = this.features[i].start;
+	        var buckListIndex = Math.max(0, s - bucketStart);
 
-	        while (changed) {
-	          changed = false;
-
-	          for (var j = 0; j < this.features.length; j++) {
-	            if (i != j) {
-	              var b = this.features[j];
-
-	              if ((this.contains(a, b) || this.contains(b, a)) && b.y != undefined && b.y == a.y) {
-	                a.y++;
-	                changed = true;
-	              }
-	            }
-	          }
+	        if (bucketList[buckListIndex] === undefined) {
+	          bucketList[buckListIndex] = [];
 	        }
 
-	        if (max_y < a.y) max_y = a.y;
+	        bucketList[buckListIndex].push(i);
 	      }
 
-	      this.max_y = max_y;
+	      var end = Math.max.apply(Math, _toConsumableArray(this.features.map(function (f) {
+	        return f.end;
+	      })));
+	      var allocatedCount = 0;
+	      var lastAllocatedCount = 0;
+	      var packedRows = [];
+
+	      try {
+	        while (allocatedCount < this.features.length) {
+	          var row = [];
+
+	          while (nextStart <= end) {
+	            var bucket = undefined;
+	            var index = void 0;
+
+	            while (!bucket && nextStart <= end) {
+	              index = nextStart - bucketStart;
+
+	              if (bucketList[index] === undefined) {
+	                ++nextStart; // No alignments at this index
+	              } else {
+	                bucket = bucketList[index];
+	              }
+	            } // while (bucket)
+
+
+	            if (!bucket) {
+	              break;
+	            }
+
+	            var idx = bucket.pop();
+
+	            if (0 === bucket.length) {
+	              bucketList[index] = undefined;
+	            }
+
+	            row.push(idx);
+	            nextStart = this.features[idx].end;
+	            ++allocatedCount;
+	          } // while (nextStart)
+
+
+	          if (row.length > 0) {
+	            packedRows.push(row);
+	          }
+
+	          nextStart = bucketStart;
+	          if (allocatedCount === lastAllocatedCount) break; // Protect from infinite loops
+
+	          lastAllocatedCount = allocatedCount;
+	        } // while (allocatedCount)
+
+	      } catch (e) {
+	        console.error(e);
+	        throw e;
+	      }
+
+	      for (var y = 0; y < packedRows.length; y++) {
+	        for (var _i = 0; _i < packedRows[y].length; _i++) {
+	          this.features[packedRows[y][_i]].y = y;
+	        }
+	      }
+
+	      this.max_y = packedRows.length;
 	    }
 	  }, {
 	    key: "computePixelHeight",

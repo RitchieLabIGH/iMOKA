@@ -28,7 +28,6 @@ export class RandomForestComponent implements OnInit {
 		if (this.uem.electron) {
 			this.subscription=this.uem.getSession().subscribe(response => {
 				this.zone.run(() => {
-					console.log(response);
 					this.session = response;
 					let profile: Setting = this.session.profile.process_config.profiles[this.session.profile.process_config.current_profile];
 					if (profile.mappers) {

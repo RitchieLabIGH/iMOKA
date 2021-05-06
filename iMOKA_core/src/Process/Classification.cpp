@@ -17,25 +17,41 @@ bool Classification::run(int argc, char **argv) {
 		if (std::string(argv[1]) == "reduce") {
 			cxxopts::Options options("iMOKA reduce",
 					"Reduce a k-mer matrix in according to the classification power of each k-mer");
-			options.add_options()
-					("i,input", "The input matrix JSON header", cxxopts::value<std::string>())
-					("o,output","Output matrix file", cxxopts::value<std::string>())
-					("h,help", "Show this help")
-					("a,accuracy","Minimum of accuracy",cxxopts::value<double>()->default_value("65"))
-					("t,test-percentage","The percentage of the min class used as test size",cxxopts::value<double>()->default_value("0.25"))
-					("e,entropy-adjustment-one","The a1 adjustment value of the entropy filter",cxxopts::value<double>()->default_value("0.25"))
-					("E,entropy-adjustment-two","The a2 adjustment value of the entropy filter",cxxopts::value<double>()->default_value("0.05"))
-					("c,cross-validation", "Maximum number of cross validation",cxxopts::value<uint64_t>()->default_value("100"))
-					("s,standard-error","Standard error to achieve convergence in cross validation. Suggested between 0.5 and 2",cxxopts::value<double>()->default_value("0.5"))
-					("v,verbose-entropy","Print the given number of k-mers for each thread, the entropy and the entropy threshold that would have been used as additional columns. Useful to evaluate the efficency of the entropy filter. Defualt: 0 ( Disabled )",cxxopts::value<uint64_t>()->default_value("0"))
-					("m,min","Minimum raw count that at least one sample has to have to consider a k-mer",cxxopts::value<int>()->default_value("5"))
-					;
+			options.add_options()("i,input", "The input matrix JSON header",
+					cxxopts::value<std::string>())("o,output",
+					"Output matrix file", cxxopts::value<std::string>())(
+					"h,help", "Show this help")("a,accuracy",
+					"Minimum of accuracy",
+					cxxopts::value<double>()->default_value("65"))(
+					"t,test-percentage",
+					"The percentage of the min class used as test size",
+					cxxopts::value<double>()->default_value("0.25"))(
+					"e,entropy-adjustment-one",
+					"The a1 adjustment value of the entropy filter",
+					cxxopts::value<double>()->default_value("0.25"))(
+					"E,entropy-adjustment-two",
+					"The a2 adjustment value of the entropy filter",
+					cxxopts::value<double>()->default_value("0.05"))(
+					"c,cross-validation", "Maximum number of cross validation",
+					cxxopts::value<uint64_t>()->default_value("100"))(
+					"s,standard-error",
+					"Standard error to achieve convergence in cross validation. Suggested between 0.5 and 2",
+					cxxopts::value<double>()->default_value("0.5"))(
+					"v,verbose-entropy",
+					"Print the given number of k-mers for each thread, the entropy and the entropy threshold that would have been used as additional columns. Useful to evaluate the efficency of the entropy filter. Defualt: 0 ( Disabled )",
+					cxxopts::value<uint64_t>()->default_value("0"))("m,min",
+					"Minimum raw count that at least one sample has to have to consider a k-mer",
+					cxxopts::value<int>()->default_value("5"));
 			auto parsedArgs = options.parse(argc, argv);
 			if (parsedArgs.count("help") != 0
 					|| IOTools::checkArguments(parsedArgs,
 							{ "input", "output" }, log)) {
 				log << "Help for the classification \n" << options.help()
 						<< "\n";
+				return false;
+			}
+			if ( parsedArgs["cross-validation"].as<uint64_t>() < 3 ){
+				log << "Error! Cross validation has to be minimum 3.\n";
 				return false;
 			}
 			std::vector<double> adjustments(2);
@@ -56,13 +72,13 @@ bool Classification::run(int argc, char **argv) {
 		if (std::string(argv[1]) == "cluster") {
 			cxxopts::Options options("iMOKA cluster",
 					"Produce a similarity matrix between the samples based on their k-mers");
-			options.add_options()
-					("i,input", "The input matrix JSON header", cxxopts::value<std::string>())
-					("o,output", "Output matrix file", cxxopts::value<std::string>())
-					("h,help", "Show this help")
-					("s,sigthr","Proportion of non zero values to consider a k-mer [0-1] ",
-					cxxopts::value<double>()->default_value("0.10"))
-					("b,bins", "Number of bins used to discretize the k-mer counts",
+			options.add_options()("i,input", "The input matrix JSON header",
+					cxxopts::value<std::string>())("o,output",
+					"Output matrix file", cxxopts::value<std::string>())(
+					"h,help", "Show this help")("s,sigthr",
+					"Proportion of non zero values to consider a k-mer [0-1] ",
+					cxxopts::value<double>()->default_value("0.10"))("b,bins",
+					"Number of bins used to discretize the k-mer counts",
 					cxxopts::value<uint64_t>()->default_value("100"));
 			auto parsedArgs = options.parse(argc, argv);
 			if (parsedArgs.count("help") != 0
@@ -75,7 +91,7 @@ bool Classification::run(int argc, char **argv) {
 			return clusterizationFilter(parsedArgs["input"].as<std::string>(),
 					parsedArgs["output"].as<std::string>(),
 					parsedArgs["bins"].as<uint64_t>(),
-					parsedArgs["sigthr"].as<double>() );
+					parsedArgs["sigthr"].as<double>());
 		}
 
 	} catch (const cxxopts::OptionException &e) {
@@ -95,7 +111,7 @@ bool Classification::run(int argc, char **argv) {
 /// @param perc_test
 /// @param adjustments
 bool Classification::classificationFilterMulti(std::string file_in,
-		std::string file_out, int min, uint64_t entropy_evaluation ,
+		std::string file_out, int min, uint64_t entropy_evaluation,
 		uint64_t cross_validation, double sd, double min_acc, double perc_test,
 		std::vector<double> adjustments) {
 	std::cerr << "Memory occupied: "
@@ -113,7 +129,10 @@ bool Classification::classificationFilterMulti(std::string file_in,
 					<< bm.unique_groups[h];
 		}
 	}
-	if (entropy_evaluation > 0 ){
+	for (uint64_t g = 0; g < bm.group_map.size(); g++) {
+		header << "\t" << bm.unique_groups[g];
+	}
+	if (entropy_evaluation > 0) {
 		header << "\tEntropy\tEntropy_threshold";
 	}
 	bm.clear();
@@ -124,11 +143,10 @@ bool Classification::classificationFilterMulti(std::string file_in,
 			<< " threads, each analysing a maximum total of " << batch_size
 			<< " k-mers.\n";
 	std::cerr.flush();
-	json info = { { "cross_validation", cross_validation }, {
-			"standard_error", sd }, { "minimum_count", min }, { "min_acc",
-			min_acc }, { "perc_test", perc_test },
-			{ "adjustments", adjustments }, { "file_in", file_in }, {
-					"file_out", file_out } };
+	json info = { { "cross_validation", cross_validation }, { "standard_error",
+			sd }, { "minimum_count", min }, { "min_acc", min_acc }, {
+			"perc_test", perc_test }, { "adjustments", adjustments }, {
+			"file_in", file_in }, { "file_out", file_out } };
 #pragma omp parallel firstprivate(cross_validation, sd, min_acc, perc_test, adjustments, min, entropy_evaluation )
 	{
 		std::function<
@@ -204,15 +222,24 @@ bool Classification::classificationFilterMulti(std::string file_in,
 														+ (localMinEntropy
 																* adj_up);
 								last_update = 0;
-								entropy_update_every = entropy_update_every + 30;
+								entropy_update_every = entropy_update_every
+										+ 30;
 								localMinEntropy = max_entropy;
 							}
 						}
-						if ( keep || verbose_entropy ){
+						if (keep || verbose_entropy) {
 							ofs << line.getKmer();
 							for (double &v : res)
-									ofs << "\t" << v;
-							if ( verbose_entropy ){
+								ofs << "\t" << v;
+							std::vector<double> means(group_counts.size(), 0);
+							for (int i = 0; i < groups.size(); i++) {
+								means[groups[i]]+=line.count[i];
+							}
+							for ( int g=0; g< group_counts.size(); g++){
+								ofs << "\t" << (means[g]/group_counts[g]);
+							}
+
+							if (verbose_entropy) {
 								ofs << "\t" << entropy << "\t" << minEntropy;
 							}
 							ofs << "\n";
@@ -231,9 +258,9 @@ bool Classification::classificationFilterMulti(std::string file_in,
 					tlog.flush();
 				}
 				running = mat.getLine(line);
-				if ( verbose_entropy ){
-					if (tot_lines >= entropy_evaluation  ){
-						running=false;
+				if (verbose_entropy) {
+					if (tot_lines >= entropy_evaluation) {
+						running = false;
 					}
 				}
 			} else {
@@ -281,9 +308,8 @@ bool Classification::classificationFilterMulti(std::string file_in,
 	final_ofs << info.dump() << "\n";
 	final_ofs.close();
 	return true;
-};
-
-
+}
+;
 
 /// @param input
 /// @param output
@@ -343,19 +369,22 @@ bool Classification::clusterizationFilter(std::string file_in,
 		tlog.flush();
 		while (running) {
 			if (line.getKmer() <= to_kmer) {
-				std::pair<std::vector<uint32_t>, double> dcount = Stats::discretize(line.count, nbins, sigthr);
+				std::pair<std::vector<uint32_t>, double> dcount =
+						Stats::discretize(line.count, nbins, sigthr);
 				if (dcount.first.size() > 0) {
 					uint32_t diff;
-					double weight = 1-dcount.second;
+					double weight = 1 - dcount.second;
 					for (i = 0; i < nsam; i++) {
 						if (dcount.first[i] != 0) {
 							for (j = i + 1; j < nsam; j++) {
-								if ( dcount.first[j] != 0 ){
-									diff = std::abs((int) (dcount.first[j] - dcount.first[i]));
-									if (diff==0) {
-										interactions(i, j)+= (2*weight);
-									} else if ( diff == 1 ){
-										interactions(i, j)+= weight ;
+								if (dcount.first[j] != 0) {
+									diff = std::abs(
+											(int) (dcount.first[j]
+													- dcount.first[i]));
+									if (diff == 0) {
+										interactions(i, j) += (2 * weight);
+									} else if (diff == 1) {
+										interactions(i, j) += weight;
 									}
 								}
 
@@ -374,7 +403,7 @@ bool Classification::clusterizationFilter(std::string file_in,
 													- start).count()) << "\n";
 					tlog.flush();
 				}
-				running =  mat.getLine(line);
+				running = mat.getLine(line);
 			} else {
 				running = false;
 			}

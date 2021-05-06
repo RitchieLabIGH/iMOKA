@@ -13,10 +13,11 @@ KmerGraph::~KmerGraph() {
 	// TODO Auto-generated destructor stub
 }
 
-
 uint64_t KmerGraph::getByID(uint64_t id) {
 	std::vector<BNode>::iterator nit = std::find_if(nodes.begin(), nodes.end(),
-			[&id](const BNode & a) {return a.id == id;});
+			[&id](const BNode &a) {
+				return a.id == id;
+			});
 	if (nit == nodes.end()) {
 		std::cerr << "ERROR! " << id << "\n" << "nodes = " << nodes.size()
 				<< "\ntype=" << graph_type << "\n";
@@ -26,9 +27,9 @@ uint64_t KmerGraph::getByID(uint64_t id) {
 	return std::distance(nodes.begin(), nit);
 }
 
-uint64_t KmerGraph::find_overlap(const Kmer & a, const Kmer & b) {
+uint64_t KmerGraph::find_overlap(const Kmer &a, const Kmer &b) {
 	bool right = true;
-	std::string a_s= a.str(), b_s = b.str();
+	std::string a_s = a.str(), b_s = b.str();
 	for (uint64_t ov = 1; ov < a_s.size(); ov++) {
 		right = true;
 		for (uint64_t i = 0; i < a_s.size() - ov; i++) {
@@ -71,16 +72,16 @@ void KmerGraph::generateSequences(double min_value) {
 		has_new_roots = new_roots.size() > 0;
 		for (auto i : new_roots) {
 			GraphSequence gs;
-			if ( nodes[i].edgesIn.size() > 0 ){ // It's generated after a bifurcation, add 3 k-mers before it
+			if (nodes[i].edgesIn.size() > 0) { // It's generated after a bifurcation, add 3 k-mers before it
 				std::vector<uint64_t> path;
 				uint64_t c_node = i;
-				while ( nodes[c_node].edgesIn.size() > 0 && path.size() < 3){
+				while (nodes[c_node].edgesIn.size() > 0 && path.size() < 3) {
 					c_node = getByID(*(nodes[c_node].edgesIn.begin()));
 					path.push_back(c_node);
 				}
-				for (int j=path.size()-1; j > 0; --j ){
+				for (int j = path.size() - 1; j > 0; --j) {
 					uint64_t ov = find_overlap(nodes[path[j]].kmer,
-										nodes[path[j-1]].kmer);
+							nodes[path[j - 1]].kmer);
 					gs.addNode(nodes[path[j]], ov);
 				}
 				uint64_t ov = find_overlap(nodes[path[0]].kmer, nodes[i].kmer);
@@ -88,12 +89,12 @@ void KmerGraph::generateSequences(double min_value) {
 			}
 			extractBestSequence(i, gs);
 		}
-		if ( visited_nodes.size() != nodes.size() && ! has_new_roots ){
+		if (visited_nodes.size() != nodes.size() && !has_new_roots) {
 			for (uint64_t i = 0; i < nodes.size(); i++) {
-				if (visited_nodes.count(i) == 0 ){
-					nodes[i].root=true;
-					i=nodes.size();
-					has_new_roots=true;
+				if (visited_nodes.count(i) == 0) {
+					nodes[i].root = true;
+					i = nodes.size();
+					has_new_roots = true;
 				}
 			}
 		}
@@ -102,34 +103,43 @@ void KmerGraph::generateSequences(double min_value) {
 	return;
 }
 
-/// Retrun the next node with the values closer to the current node. If none, return -1 as value
-/// To be considered close, a node must have an average distance of value lower than 3
-/// from the previous node and the alternative must have a distance higher than 5 from the best one.
-///
+/// Retrun the next node with the means closer to the current node.
+/// If the closest has an average normalized error higher than 0.5 ( 50% different ), drop it.
 /// @param nodes_id
 /// @param ref_id
 /// @return pair<uint64_t,double>{ node_id , error }
 std::pair<uint64_t, double> KmerGraph::getNextNode(std::set<uint64_t> nodes_id,
 		uint64_t ref_id) {
 	int64_t ref_idx = getByID(ref_id);
-	int n_of_val = nodes[ref_idx].values.size();
+	int n_of_means = nodes[ref_idx].means.size();
 	std::vector<std::pair<uint64_t, double>> errors(nodes_id.size());
 	int c = 0;
+	double mean = 0;
 	for (auto id : nodes_id) {
 		uint64_t idx = getByID(id);
 		errors[c].first = id;
 		errors[c].second = 0;
-		for (uint64_t v_i = 0; v_i < n_of_val; v_i++) {
-			errors[c].second += std::abs(
-					nodes[idx].values[v_i] - nodes[ref_idx].values[v_i]);
+		for (uint64_t v_i = 0; v_i < n_of_means; v_i++) {
+			errors[c].second += (std::abs(
+					nodes[idx].means[v_i] - nodes[ref_idx].means[v_i])
+					/ nodes[ref_idx].means[v_i]);
 		}
-		errors[c].second /= n_of_val;
+		errors[c].second /= n_of_means;
 		c++;
 	}
 	std::sort(errors.begin(), errors.end(), [](const auto a, const auto b) {
 		return a.second < b.second;
 	});
-	if ((errors[1].second - errors[0].second) < 5 || errors[0].second > 3 ) { // the two best options are too close each other or too far from the common path
+	if (errors[0].second > 1) {
+		/*std::cerr << "DROPPED " << "\n";
+		for (int k = 0; k < errors.size(); k++) {
+			uint64_t idx = getByID(errors[k].first);
+			for (uint64_t v_i = 0; v_i < n_of_means; v_i++) {
+				std::cerr  << k << "\t"<< nodes[idx].means[v_i] << "\t"
+						<< nodes[ref_idx].means[v_i] << "\n";
+			}
+		}*/
+
 		return {0, -1};
 	} else {
 		return errors[0];
@@ -137,7 +147,7 @@ std::pair<uint64_t, double> KmerGraph::getNextNode(std::set<uint64_t> nodes_id,
 }
 ;
 
-void KmerGraph::extractBestSequence(uint64_t node_i, GraphSequence & gs) {
+void KmerGraph::extractBestSequence(uint64_t node_i, GraphSequence &gs) {
 	double global_max = 0;
 	double kmer_max = *std::max_element(nodes[node_i].values.begin(),
 			nodes[node_i].values.end());
@@ -164,17 +174,11 @@ void KmerGraph::extractBestSequence(uint64_t node_i, GraphSequence & gs) {
 			gs.addNode(nodes[node_i], -1);
 			sequences.push_back(gs);
 		}
-	} else if (nodes[node_i].edgesOut.size() == 1) {
-		uint64_t next_idx = getByID(*(nodes[node_i].edgesOut.begin()));
-		uint64_t ov = find_overlap(nodes[node_i].kmer, nodes[next_idx].kmer);
-		gs.addNode(nodes[node_i], ov);
-		extractBestSequence(next_idx, gs);
-
-	} else { // It's a bifurcation
+	} else { // Check that the next node ( or one of the possible next ) doesn't differ too much from the previous one in terms of means
 		std::pair<uint64_t, double> best_next = getNextNode(
 				nodes[node_i].edgesOut, nodes[node_i].id);
 		for (auto next_node : nodes[node_i].edgesOut) {
-			if (best_next.second < 0 || next_node != best_next.first ) { // Set root the path not seen, so they can generate the suboptimal paths.
+			if (best_next.second < 0 || next_node != best_next.first) { // Set root the path not seen, so they can generate the suboptimal paths.
 				nodes[getByID(next_node)].root = true;
 			}
 		}
@@ -215,7 +219,9 @@ void KmerGraph::assignBestAccuracy() {
 
 bool KmerGraph::containsNode(uint64_t id) {
 	std::vector<BNode>::iterator nit = std::find_if(nodes.begin(), nodes.end(),
-			[&id](const BNode & a) {return a.id == id;});
+			[&id](const BNode &a) {
+				return a.id == id;
+			});
 	return nit != nodes.end();
 }
 }

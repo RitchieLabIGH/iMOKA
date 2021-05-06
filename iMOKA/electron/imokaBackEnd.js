@@ -329,7 +329,6 @@ class iMokaBE extends EventEmitter {
 					}).catch((err)=>{
 						reject(err);
 					}).finally(()=>{
-						console.log("end updating matrix")
 						this.updating_matrices = false;
 					});
 				} else {
@@ -458,10 +457,8 @@ class iMokaBE extends EventEmitter {
 	}
 
 	checkFileMatrix(file_name) {
-		console.log("File_name: "+file_name)
 		return new Promise((resolve, reject)=>{
 			if ( this.processor ){
-				console.log("opening matrices")
 				this.processor.getMatrices(false).then((matrices)=>{
 					let mat_i = matrices.findIndex(mat=>{
 						return file_name.includes(mat.uid);
@@ -488,7 +485,6 @@ class iMokaBE extends EventEmitter {
 							}
 						} else {
 							this.processor.getAggregated(file_name).then((local_mat)=>{
-								console.log("resolving with matrix" )
 								resolve(local_mat);
 							}).catch((err)=>{
 								reject(err);
@@ -632,7 +628,6 @@ class iMokaBE extends EventEmitter {
 	
 	getSOMnodeImportance(request){
 		return new Promise((resolve, reject)=>{
-			console.log("getSOMnodeImportance");
 			if ( ! this.data.som) reject("SOM file not opened");
 		    let  data_to_send = [];
 		    data_to_send.push({"projRAW":this.clone(this.data.som.nodefeatureimpotance), "name" : "nodeFeatureImportance"});
@@ -646,7 +641,6 @@ class iMokaBE extends EventEmitter {
 	getSOMaverageclass( request){
 		return new Promise((resolve, reject)=>{
 			if (! this.data.som) reject("SOM file not opened");
-			console.log("getSOMaverageclass");
 		    if (! this.data.som.averageclass)
 		        this.data.som.averageclass={};
 		    let  data_to_send = [];
@@ -663,7 +657,6 @@ class iMokaBE extends EventEmitter {
 			if ( ! this.data.som){
 				reject("SOM file not opened correctly");
 			}
-			console.log("getSOMclusters");
 		    if (! this.data.som.samplesSOM)
 		        this.data.som.samplesSOM=[];
 		    let  data_to_send = [];
@@ -848,7 +841,6 @@ class iMokaBE extends EventEmitter {
 	    });
 	    // / TODO till here
 	    ["sequences", "kmers"].forEach(request_type=>{
-	            console.log("Creating map for " + request_type)
 	            this.alignment_map[request_type]={}
 	            let aln;
 	            for ( var k = 0 ; k < this.data.kmers[request_type].length ; k++ ){
@@ -1293,7 +1285,6 @@ class iMokaBE extends EventEmitter {
 			           if ( ! fname ){
 			        	   fname = this.user_session.data.files[file_type].file
 			           }
-			           console.log("Opening "+fname )
 			           promises.push(this.openData({file_name: fname}))
 			        });
 			        Promise.all(promises).catch((err)=>{
@@ -1378,7 +1369,6 @@ class iMokaBE extends EventEmitter {
 				this.user_session.data.files= {};
 				this.user_session.data.profile.process_config.current_profile=profile_number;
 			}
-			console.log("Loading profile " + profile_number)
 			this.processor = new Processor(this.user_session.data.profile.process_config.profiles[profile_number], this.mess);
 			this.processor.tmp_dir = this.tmp_dir;
 			let ct=this.user_session.data.profile.process_config.profiles[profile_number].connection_type;
@@ -1452,7 +1442,6 @@ class iMokaBE extends EventEmitter {
 					   }
 				   });
 			   }else {
-				   console.log("Setting profile "+request.profile_number)
 				   if (request.profile_number < this.user_session.data.profile.process_config.profiles.length){
 					   this.setProfile(request.profile_number).then(()=>{
 						   this.user_session.save();

@@ -95,9 +95,9 @@ export class TracksService {
 	async getFeatures(chr, bpStart, bpEnd, type) {
 		var id = this.request;
 		this.request += 1;
-
 		return new Promise<any>((resolve) => {
 			this.ipc.once("getData-" + id, (event, arg) => {
+				console.log(arg.data)
 				resolve(arg.data);
 			});
 			this.ipc.send("getData", id, { data: "features", "id": id, "chr": chr, "start": bpStart, "end": bpEnd, "type": type })

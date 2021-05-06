@@ -239,7 +239,6 @@ export class SamplesSomComponent implements OnInit, OnDestroy {
 	getSamplesClusterDistrib(): Promise<any> {
 		return new Promise<any>((resolve, reject) => {
 			this.trackService.getData({ "data": "SOMsampleDistrib", "nclustid": this.clust }).subscribe((resp) => {
-				console.log(resp)
 				this.data.clusterdist = { data: resp, layout: { barmode: 'stack' } }
 				resolve();
 			}, (err) => {

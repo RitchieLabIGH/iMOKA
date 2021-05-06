@@ -173,7 +173,6 @@ export class MatricesComponent implements OnInit {
   infoReduced(row: Matrix){
       let  data=new InfoData("Reduced matrix informations");
       if (row.reduced){
-          console.log(row)
           if (row.reduced.message){
               data.information_list.push(new InfoListElement(row.reduced.message))
           }else {
@@ -183,7 +182,6 @@ export class MatricesComponent implements OnInit {
               data.information_list.push(new InfoListElement("Filter parameters", "list of parameters used",  "TODO"));
           }
       } 
-      console.log(data);
       this.zone.run(()=>{
           this.bottomSheet.open(InfoComponent, {data : data });
       });

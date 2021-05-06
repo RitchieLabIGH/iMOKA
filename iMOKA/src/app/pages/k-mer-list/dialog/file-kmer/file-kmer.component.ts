@@ -11,7 +11,6 @@ export class FileKmerComponent implements OnInit {
 	constructor() { }
 
 	ngOnInit() {
-		console.log(this.info)
 		if (this.info.groups_names) {
 			this.group_stat = [];
 			this.info.groups_names.forEach(grp => { this.group_stat.push({ "name": grp, "count": 0 }) });

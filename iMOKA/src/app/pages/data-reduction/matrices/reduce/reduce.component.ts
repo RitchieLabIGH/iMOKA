@@ -24,7 +24,6 @@ export class ReduceComponent implements OnInit {
 	ngOnInit() {
 		this.uem.getSession().subscribe((session) => {
 			let profile: Setting = session.profile.process_config.profiles[session.profile.process_config.current_profile];
-			console.log(profile.connection_type)
 			let cpus = profile.max_cpu && profile.connection_type == "local" ? profile.max_cpu : 100;
 			this.procControl = this.fb.group({
 				cores: [cpus < 4 ? cpus : 4, [Validators.min(1), Validators.max(cpus)]],

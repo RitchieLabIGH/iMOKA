@@ -32,6 +32,6 @@ export class InfoComponent {
 })
 export class JobInfo {
   constructor(@Inject(MAT_BOTTOM_SHEET_DATA) public data: any) {
-      console.log(data)
+	
   }
 }

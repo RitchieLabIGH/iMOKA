@@ -20,16 +20,40 @@ bool KmerGraphSet::load(std::string in_file, double threshold) {
 	nodes.clear();
 	TextMatrix mat(in_file);
 	TextMatrixLine row;
-	predictors_groups = mat.col_groups;
+	predictors_groups.clear();
+	if ( sample_groups_names.size() == 0 ) {
+		for ( int i=0; i< mat.col_groups.size(); i++){
+				if (mat.col_groups[i].find("_x_")!=std::string::npos){
+					predictors_groups.push_back(mat.col_groups[i]);
+				} else {
+					sample_groups_names.push_back(mat.col_groups[i]);
+				}
+			}
+	}else {
+		for ( int i=0; i< mat.col_groups.size() - sample_groups_names.size(); i++){
+			predictors_groups.push_back(mat.col_groups[i]);
+		}
+		int j=0;
+		for ( int i=mat.col_groups.size() - sample_groups_names.size(); i < mat.col_groups.size(); i++){
+			if ( sample_groups_names[j] != mat.col_groups[i]){
+				throw "Error! Count matrix and reduced matrix are incompatible! ";
+			}
+			j++;
+		}
+	}
+
+
+
 	bool keep;
+	int v=0;
 	while (mat.getLine(row)) {
 		keep = false;
-		for (auto v : row.count) {
-			if (v >= threshold)
+		for ( v=0;  v< predictors_groups.size() ; v++) {
+			if (row.count[v] >= threshold)
 				keep = true;
 		}
 		if (keep) {
-			nodes.push_back(BNode(row));
+			nodes.push_back(BNode(row,sample_groups_names.size() ));
 		}
 	}
 	nodes.shrink_to_fit();
@@ -55,7 +79,7 @@ void KmerGraphSet::setCountMatrix(std::string file) {
 	if (has_matrix) {
 		BinaryMatrix binm(matrix_file);
 		normalization_factors = binm.normalization_factors;
-		sample_groups_names = binm.unique_groups;
+		sample_groups_names= binm.unique_groups;
 		n_columns = binm.col_names.size();
 		n_groups = sample_groups_names.size();
 		groups = binm.groups;
@@ -1146,6 +1170,7 @@ json KmerGraphSet::generate_kmer_json(uint64_t node_idx) {
 	for (auto e : winner_events[node_idx]) {
 		json_events.push_back(events[e].to_json());
 	}
+
 	json json_alignments;
 	for (auto a : winner_pos[node_idx]) {
 		json_alignments.push_back(winner_mapper_results[a].to_json());
@@ -1159,10 +1184,11 @@ json KmerGraphSet::generate_kmer_json(uint64_t node_idx) {
 	}
 
 	json data = { { "id", node.id }, { "kmer", node.kmer.str() }, { "values",
-			values }, { "graph", graphs[node.graph].graph_type }, { "graph_id",
+			values }, {"means", node.means}, { "graph", graphs[node.graph].graph_type }, { "graph_id",
 			node.graph } };
 	data["alignments"] = json_alignments;
 	data["events"] = json_events;
+
 	if (has_matrix) {
 		data["counts"] = counts[node_idx].count;
 		std::vector<double> mean_by_group(n_groups), sd_by_group(n_groups);

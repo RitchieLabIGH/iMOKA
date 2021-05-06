@@ -89,7 +89,6 @@ export class KMerListComponent implements OnInit, OnDestroy {
 			if ( track.format == "auto") track.format=undefined;
 			if ( track.type == "auto") track.type=undefined;
 			let toadd={ url: track.path, indexURL: track.index, name: track.name , format : track.format, type : track.type };
-			console.log(toadd)
 			this.browser.loadTrack(toadd).catch((error: any) => {
 				if (error) {
 					console.log(error);
@@ -126,7 +125,6 @@ export class KMerListComponent implements OnInit, OnDestroy {
 							}
 						}
 					});
-					console.log(genomes[this.genome])
 					igv.createBrowser(document.getElementById('igv-browser'), { reference: genomes[this.genome] }).then((browser: any) => {
 						this.browser = browser;
 						this.trackService.getExternalTracks(this.genome).subscribe(extTracks => {
@@ -187,8 +185,8 @@ export class KMerListComponent implements OnInit, OnDestroy {
 	}
 
 	loadKmerTracks() {
-		this.browser.loadTrack({ type: "imoka", source: this.trackService, request_type: "sequences", name: "Sequences", visibilityWindow: 1000000, groups: this.groups, predictors: this.predictors, onClick: (el: { query_index: any; }) => { this.showInfo(el.query_index, "sequences"); } });
-		this.browser.loadTrack({ type: "imoka", source: this.trackService, name: "Kmers", request_type: "kmers", visibilityWindow: 1000000, groups: this.groups, predictors: this.predictors, onClick: (el: { query_index: any; }) => { this.showInfo(el.query_index, "kmers"); } }, this.browser);
+		this.browser.loadTrack({ type: "imoka", source: this.trackService, request_type: "sequences", name: "Sequences", visibilityWindow: 1000000, onClick: (el: { query_index: any; }) => { this.showInfo(el.query_index, "sequences"); } });
+		this.browser.loadTrack({ type: "imoka", source: this.trackService, name: "Kmers", request_type: "kmers", visibilityWindow: 1000000,  onClick: (el: { query_index: any; }) => { this.showInfo(el.query_index, "kmers"); } });
 	}
 
 	refreshTable(event?: any) {

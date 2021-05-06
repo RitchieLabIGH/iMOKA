@@ -16,7 +16,6 @@ export class SequenceInfoComponent implements OnInit, OnDestroy {
     }
 
   ngOnInit() {
-      console.log(this.sequence);
   }
   ngOnDestroy(){
       

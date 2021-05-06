@@ -201,7 +201,7 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 	std::cout << "Step " << step++ << " : Recovering winners and counts...";
 	gg.recoverWinners(corr);
 	info["mem_after_winner"] = IOTools::format_space_human(IOTools::getCurrentProcessMemory());
-	std::cerr << "done.\nStep " << step++ << " : Writing output files...";
+	std::cout << "done.\nStep " << step++ << " : Writing output files...";
 	std::ofstream out_str;
 	out_str.open(out_file+".kmers.matrix");
 	uint64_t n_of_winner=0;
@@ -237,7 +237,6 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 		}
 		out_str.close();
 	}
-
 	gg.write_json(out_file + ".json");
 	gg.write_tsv(out_file+".tsv");
 	info["end_time"]= std::time(0);
@@ -245,7 +244,7 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 	infoJSON.open(json_info_file);
 	infoJSON << info.dump() << "\n";
 	infoJSON.close();
-	std::cerr << "done.\n\n";
+	std::cout << "done.\n\n";
 	return true;
 }
 }

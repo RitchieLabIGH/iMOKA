@@ -29,7 +29,6 @@ export class ElectronSymService implements IpcRenderer {
 			}
 			if (environment.debug.files) {
 				environment.debug.files.forEach((f) => {
-					console.log("opening ", f)
 					this.http.get(f).subscribe((data) => {
 						this.openFile(data, f)
 					})

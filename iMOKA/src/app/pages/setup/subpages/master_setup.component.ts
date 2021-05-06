@@ -39,7 +39,6 @@ export class MasterSetupComponent implements OnInit {
 			});
 	}
 	remove() {
-		console.log("TODO")
 	}
 	selectFolder(){
 		this.fs.getFileName({title : "Select an empty folder for your local iMOKA directory", properties : ["createDirectory", 'openDirectory'], buttonLabel :"Select" }).then((res)=>{
@@ -150,8 +149,6 @@ export class MasterSetupComponent implements OnInit {
 		if (typeof n == 'undefined') {
 			n = this.session.profile.process_config.current_profile;
 		}
-		console.log(n);
-		console.log(this.session)
 		this.isNewSetting=false;
 		this.current_profile = n;
 		this.setting = JSON.parse(JSON.stringify(this.session.profile.process_config.profiles[n]));

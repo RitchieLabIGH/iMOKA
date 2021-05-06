@@ -19,13 +19,14 @@ using namespace matrix;
 class BNode {
 public:
 	BNode(){};
-	BNode(KmerMatrixLine);
-	BNode(TextMatrixLine);
+	BNode(KmerMatrixLine, int);
+	BNode(TextMatrixLine, int);
 	BNode(Kmer k){
 		kmer =k;
 	}
 	Kmer kmer;
 	std::vector<double> values;
+	std::vector<double> means;
 	int64_t graph = -1;
 	std::set<uint64_t> edgesOut;
 	std::set<uint64_t> edgesIn;

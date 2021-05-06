@@ -88,7 +88,6 @@ function createWindow() {
 		backend.logout();
 	}
 	backend.setProfile().then(() => {
-		console.log("Profile loaded")
 	}).catch((err) => {
 		console.log(err);
 	}).finally(() => {
@@ -120,8 +119,6 @@ function createWindow() {
 
 }
 app.on("open-file", (event, url) => {
-	console.log(event);
-	console.log(url);
 });
 // Create window on electron intialization
 app.on('ready', createWindow)
@@ -300,7 +297,6 @@ function getFile(arg) {
 function getNewFile(arg) {
 
 	if (typeof arg.defaultPath == "undefined") {
-		console.log("ciao")
 		if (!store.get("lastDir")) {
 			store.set("lastDir", { path: app.getPath('home') })
 		}

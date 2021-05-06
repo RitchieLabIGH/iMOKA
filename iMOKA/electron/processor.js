@@ -214,7 +214,6 @@ class Processor {
 			let matrix_file = this.options.storage_folder+"/experiments/"+matrix_uid+"/aggregated.json";
 			if ( this.options.connection_type == 'local') {
 				if ( fs.existsSync(matrix_file) ){
-					console.log("exists")
 					resolve(matrix_file);
 				} else {
 					reject("File doesn't exists!");
@@ -287,7 +286,6 @@ class Processor {
 			let model_file = this.options.storage_folder+"/experiments/"+matrix_uid+"/RF/"+model_name+".json";
 			if ( this.options.connection_type == 'local') {
 				if ( fs.existsSync(model_file) ){
-					console.log("exists")
 					resolve(model_file);
 				} else {
 					reject("File doesn't exists!");
@@ -490,7 +488,6 @@ class Processor {
 				if (res) { throw res }
 				let folder_names = fs.readdirSync(base_folder), exp_folder=this.options.storage_folder+"/experiments/", sam_folder=this.options.storage_folder+"/samples/";
 				let current_folders= fs.readdirSync(exp_folder);
-				console.log(current_folders)
 				for ( let  exp_n=0;exp_n < folder_names.length ; exp_n++ ){
 					let exp=folder_names[exp_n]
 					this.mess.block("Processing "+exp)
@@ -501,7 +498,6 @@ class Processor {
 						exp_m.description="Already exists."
 					} else {
 						let files= fs.readdirSync(base_folder+"/"+exp )
-						console.log(files)
 						if ( files.includes("samples")){
 							exp_m.description = "Experiment with samples"
 							let new_samples = fs.readdirSync(base_folder+"/"+exp +"/samples/" ),current_samples = fs.readdirSync(sam_folder);
@@ -579,7 +575,6 @@ class Processor {
 						exp_m.description="Already exists."
 					} else {
 						let files= (await ssh.execCommand("ls "+base_folder+"/"+exp+"/" )).stdout.split("\n")
-						console.log(files)
 						if ( files.includes("samples")){
 							exp_m.description = "Experiment with samples"
 							let new_samples = (await ssh.execCommand("ls "+base_folder+"/"+exp+"/samples/ ")).stdout.split("\n").filter((f)=>{return f.length > 1;}),
@@ -666,12 +661,10 @@ class Processor {
 						fs.mkdirSync(this.tmp_dir+"/"+uid)
 						rm_dir_after=true;
 						ncp(in_dir, this.tmp_dir+"/"+uid, (err)=>{
-							console.log(err)
 							if(err){
 								rej(err)
 							} else {
 								let matrix=  this.matrices.find((mat)=>{return mat.uid == uid}), sam;
-								console.log(matrix)
 								fs.mkdirSync(this.tmp_dir+"/"+uid+"/samples/");
 								for ( let idx=0; idx < matrix.names.length; idx++){
 									sam=matrix.names[idx];
@@ -762,7 +755,6 @@ class Processor {
 	
 	compressLocalFolder(dir_to_compress, out_file){
 		return new Promise((resolve, reject)=>{
-			console.log(dir_to_compress)
 			this.mess.block("Compressing the folder...")
 			compressing.zip.compressDir(dir_to_compress, out_file).catch(err=>{
 					console.log(err)
@@ -1233,7 +1225,6 @@ class Processor {
 				if ( !fs.existsSync(this.options.storage_folder+"/.singularity/iMOKA") || this.options.update ){
 				if ( this.options.remote_image){
 					const win = electron.BrowserWindow.getFocusedWindow();
-					console.log("Starting download of "+ this.options.original_image)
 					download(win , this.options.original_image, {directory : this.options.storage_folder +"/.singularity/", filename : "iMOKA", onProgress : (prg)=>{
 						this.mess.sendMessage({type : "action", action : "block", progress : Math.round(prg.percent*100) , message : "Downloading singularity image "+Math.round(prg.transferredBytes/1000000)+" Mb of "+Math.round(prg.totalBytes/1000000)+" Mb.\n Don't close the software!" })  
 					}, onCancel :(it)=>{
@@ -1405,7 +1396,6 @@ class Processor {
 		}
 		this.options=opts
 		return new Observable(observer=>{
-			console.log("check options")
 			if ( ! this.options.storage_folder || this.options.storage_folder.length ==0 ) {
 				this.error_message = "You need to specify a storage folder."
 					observer.error(this.error_message);
@@ -1443,11 +1433,9 @@ class Processor {
 					} else {
 						observer.next(message);  
 					}
-					console.log("COMPLETED")
 					observer.complete();
 				}).catch((err)=>{observer.error(err); console.log(err);observer.complete();});
 			}else {
-				console.log("COMPLETED")
 				observer.complete();
 			}
 		});
