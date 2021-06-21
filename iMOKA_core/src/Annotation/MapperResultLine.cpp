@@ -9,10 +9,10 @@
 namespace imoka { namespace annotation {
 void MapperResultLine::parsePSLX(std::string line) {
 	std::vector<std::string> content, block_sizes ,qblocks, tblocks, qbs, tbs;
-	IOTools::split(content, line);
+	IOTools::split(content, line, '\t');
 	name = content[9];
 	std::vector<std::string> name_components;
-	IOTools::split(name_components, name, "_");
+	IOTools::split(name_components, name, '_');
 	query_index = std::stoll(name_components[1]);
 	query_type= name_components[0];
 	strand = content[8];
@@ -23,13 +23,13 @@ void MapperResultLine::parsePSLX(std::string line) {
 	target = Segment(std::stoll(content[15]), std::stoll(content[16]));
 	uint64_t nblocks=std::stoll(content[17]), blen,qs, ts,j ;
 	std::string ref, mut;
-	IOTools::split(block_sizes, content[18], ",");
-	IOTools::split(qblocks, content[19], ",");
-	IOTools::split(tblocks, content[20], ",");
+	IOTools::split(block_sizes, content[18], ',');
+	IOTools::split(qblocks, content[19], ',');
+	IOTools::split(tblocks, content[20], ',');
 	IOTools::to_upper(content[21]);
 	IOTools::to_upper(content[22]);
-	IOTools::split(qbs, content[21], ",");
-	IOTools::split(tbs, content[22], ",");
+	IOTools::split(qbs, content[21], ',');
+	IOTools::split(tbs, content[22], ',');
 	for ( uint64_t i=0; i < nblocks; i++){
 		blen = std::stoll(block_sizes[i]);
 		qs= std::stoll(qblocks[i]);
@@ -73,10 +73,10 @@ void MapperResultLine::parsePSLX(std::string line) {
 }
 void MapperResultLine::parseSAM(std::string line) {
 	std::vector<std::string> content;
-	IOTools::split(content, line, "[\t]+");
+	IOTools::split(content, line, '\t');
 	name = content[0];
 	std::vector<std::string> name_components;
-	IOTools::split(name_components, name, "_");
+	IOTools::split(name_components, name, '_');
 	query_index = std::stoll(name_components[1]);
 	query_type= name_components[0];
 	flag = std::stoi(content[1]);
@@ -171,10 +171,10 @@ void MapperResultLine::parseCIGAR(std::string cigar, std::string md,
 			} else {
 				query.end = curr_q + 1;
 			}
-			signatures.push_back(
+			/*signatures.push_back(
 					AlignmentDerivedFeature("clipping", Segment(curr_t, curr_t + 1),
 							Segment(curr_q, curr_q + val), chromosome,
-							seq.substr(curr_q, val)));
+							seq.substr(curr_q, val)));*/
 			curr_q += val;
 			break;
 		case 'H':
@@ -206,11 +206,11 @@ json MapperResultLine::to_json() {
 	return out;
 }
 
-std::string MapperResultLine::to_bed() {
+std::string MapperResultLine::to_bed(std::string additional) {
 	std::ostringstream ss;
 	for (uint64_t b = 0; b < t_blocks.size(); b++) {
 		ss << chromosome << "\t" << t_blocks[b].start << "\t" << t_blocks[b].end
-				<< "\t" <<  query_type << "_" << id << "_" << b << "\t" << match << "\t" << strand
+				<< "\t" <<  query_type << "_" << id << "_" << b << "_"<< query_index << "_" << additional << "\t" << match << "\t" << strand
 				<< "\n";
 	}
 	return ss.str();

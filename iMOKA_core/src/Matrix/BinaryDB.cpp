@@ -132,10 +132,14 @@ std::vector<double> BinaryDB::getKmers(std::vector<Kmer> & requests) {
 bool BinaryDB::create(std::string file, int64_t prefix_size) {
 	std::vector<std::string> content;
 	std::string line = IOTools::getLineFromFile(file, 0);
-	IOTools::split(content, line);
+	IOTools::split_rgx(content, line);
 	int key_len = content[0].size();
 	if (prefix_size >= key_len || prefix_size == -1) {
 		prefix_size = BinaryDB::bestPrefixSize(file);
+		if ( prefix_size == -1 ){
+			std::cerr << "Error! File " << file << " empty.\n";
+			return false;
+		}
 		std::cerr << "The prefix size is fix to " << prefix_size << std::endl;
 	}
 	std::ifstream istr(file);
@@ -288,7 +292,18 @@ int64_t BinaryDB::bestPrefixSize(std::string file) {
 	return std::round((0.5 * log2(tot_kmers)) - (0.5 * log2(log2(tot_kmers))));
 }
 
+std::vector<Kmer> BinaryDB::getPartitions(uint64_t n){
+	std::vector<Kmer> out;
 
+	uint64_t batch = std::ceil(this->size()/n);
+	uint64_t cur_suffix=current_suffix;
+	for (uint64_t i=batch; i < this->size() ; i+=batch ){
+		go_to(i);
+		out.push_back(this->kmer);
+	}
+	go_to(cur_suffix);
+	return out;
+}
 
 
 /// Go to the target k-mer or, if absent, to the closest next in alphabetical order
@@ -342,6 +357,18 @@ bool BinaryDB::go_to(Kmer & target){
 		getNext();
 	}
 	return kmer == target;
+}
+
+/// Go to the k-mer number n or, if absent, to the closest next in alphabetical order
+/// @param target
+/// @return true if found exactly the target
+///
+bool BinaryDB::go_to(uint64_t n){
+	current_prefix=0;
+	current_suffix=n;
+	fillBuffer();
+	fillPrefixBuffer();
+	getNext();
 }
 
 

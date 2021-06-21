@@ -74,12 +74,11 @@ export class KMerListComponent implements OnInit, OnDestroy {
 	ideo_config: any = {
 		organism: 'human',
 		container: '#ideo-container',
-		annotations: { keys: ["name", "start", "length", "repetitive", "highest_expression"], annots: [] },
+		annotations: { keys: ["name","start","length",  "class", "expression"], annots: [] },
 		dataDir: 'https://cdn.jsdelivr.net/npm/ideogram@1.21/dist/data/bands/native/',
-		annotationsLayout: 'heatmap',
+		annotationsLayout: 'histogram',
 		chrHeight: 400,
 		legend: [],
-		heatmaps: [],
 		rotatable: false,
 		chromosomes: [],
 	};
@@ -208,26 +207,18 @@ export class KMerListComponent implements OnInit, OnDestroy {
 
 	refreshIdeogram() {
 		if (this.ideogram_possible_types.length == 0) {
-			this.ideogram_possible_types = [{ key: "unique", name: "Unique k-mers" },
-			{ key: "repetitive", name: "Repetitive k-mers" }];
+			this.ideogram_possible_types = [];
 			this.ideo_config.legend = [
-				{ name: 'Repetitive k-mer', rows: [{ color: '#F00', name: 'Unique' }, { color: '#00F', name: 'Repetitive' }] },
 				{ name: 'Highest expression', rows: [] }
 			]
 
-			this.ideo_config.heatmaps = [
-				{ key: 'repetitive', thresholds: [['0', '#F00'], ['1', '#00F']] },
-				{ key: 'highest_expression', thresholds: [] }];
-
-			this.ideo_config.annotationTracks = [
-				{ id: 'repetitive', displayName: 'Repetitive level' },
-				{ id: 'highest_expression', displayName: 'Expression track' },]
+			/*this.ideo_config.annotationTracks = [
+				{ id: 'highest_expression', displayName: 'Expression track' },]*/
 			let colors = ['#F0F', '#0F0', '#F00', '#00F', '#0FF'];
 
 			this.info.kmers.groups_names.forEach((gn, idx) => {
-				this.ideo_config.legend[1].rows.push({ color: colors[idx], name: "Class " + gn })
+				this.ideo_config.legend[0].rows.push({ color: colors[idx], name: "Class " + gn })
 				this.ideogram_possible_types.push({ name: "Class " + gn, key: idx + "" })
-				this.ideo_config.heatmaps[1].thresholds.push([idx + '', colors[idx]])
 			});
 		}
 
@@ -250,6 +241,7 @@ export class KMerListComponent implements OnInit, OnDestroy {
 					setTimeout(correct_size, 100);
 				}
 			}
+			console.log(config)
 			this.ideogram = new Ideogram(config);
 			this.ideoStats(config);
 		}).catch((err) => {
@@ -258,8 +250,8 @@ export class KMerListComponent implements OnInit, OnDestroy {
 	}
 
 	ideoStats(config: any) {
-		this.ideogram_stats = { header: ["Unique", "Repetitive"], row_names: [], data: [], tot_rows: [], tot_columns: [], tot_global: 0 };
-		let base_row = [0, 0]
+		this.ideogram_stats = { header: [], row_names: [], data: [], tot_rows: [], tot_columns: [], tot_global: 0 };
+		let base_row = []
 		this.info.kmers.groups_names.forEach((gn, idx) => {
 			base_row.push(0)
 			this.ideogram_stats.header.push("Class " + gn)
@@ -271,7 +263,6 @@ export class KMerListComponent implements OnInit, OnDestroy {
 				let counts = [...base_row];
 				ann.annots.forEach((el) => {
 					counts[el[3]] += 1;
-					counts[2 + el[4]] += 1;
 				})
 				this.ideogram_stats.data.push(counts);
 				this.ideogram_stats.tot_rows.push(ann.annots.length);
@@ -435,7 +426,8 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		}
 		data.information_list.push(new InfoListElement("Normalized k-mer matrix", "a text file containing the normalized k-mer counts", extract_file, { ftype: "matrix" }));
 		data.information_list.push(new InfoListElement("Raw k-mer matrix", "a text file containing the raw k-mer counts", extract_file, { ftype: "matrix_raw" }));
-		data.information_list.push(new InfoListElement("TSV file", "a text file containing the informations displayed in the k-mer table", extract_file, { ftype: "tsv" }));
+		data.information_list.push(new InfoListElement("TSV gene file", "a text file containing the informations gene-wise of the k-mer table", extract_file, { ftype: "genes" }));
+		data.information_list.push(new InfoListElement("TSV k-mer file", "a text file containing the informations k-mer-wise displayed in the k-mer table", extract_file, { ftype: "tsv" }));
 		this.zone.run(() => {
 			this.bottomSheet.open(InfoComponent, { data: data });
 		});

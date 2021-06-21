@@ -26,7 +26,7 @@ class KmerGraphSet {
 public:
 	KmerGraphSet( uint64_t offset, std::string count_matrix) :  w(offset){ setCountMatrix(count_matrix);};
 	virtual ~KmerGraphSet();
-	void makeEdges();
+	void makeEdges(double);
 	void makeGraphsFromBestExtension(double);
 	void generateSequencesFromGraphs(double);
 	void alignSequences(Mapper &);
@@ -34,7 +34,7 @@ public:
 	void setCountMatrix(std::string file);
 	void filter(double , uint64_t);
 	bool load(std::string in_file, double threshold);
-	void annotate(std::string, std::string, double);
+	void annotate(std::string,std::string, std::string, double);
 	void findRegions(std::string);
 	void rescale();
 	void processUnAnnotated();

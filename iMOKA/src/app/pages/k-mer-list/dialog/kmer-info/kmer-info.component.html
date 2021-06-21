@@ -6,8 +6,11 @@
       <mat-card class="margin-1  mat-elevation-z2"> 
         <mat-card-title> General informations </mat-card-title> <mat-card-content> 
         <div class="row">
-          <div class="col-md-6"> <strong matLine>Sequence</strong>
+          <div class="col-md-6"> 
+          <strong matLine>k-mer sequence</strong>
             <p >{{kmer.kmer}}</p>
+          <strong matLine>Graph sequence</strong>
+            <p >{{kmer.sequence.sequence}}</p>
           </div>
           <div class="col-md-6"> <strong matLine>Comparison values</strong>
             <p  *ngFor="let value of kmer.values; index as i">

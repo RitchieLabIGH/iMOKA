@@ -15,6 +15,8 @@ BinaryMatrix::~BinaryMatrix() {
 	// TODO Auto-generated destructor stub
 }
 
+
+
 void BinaryMatrix::create(std::string inFile, double rf, int64_t prefix_size) {
 	std::cout << "Creating a binary file from " << inFile
 			<< "\nRescale Factor: " << rf << "\n" << "Prefix size: "
@@ -27,15 +29,19 @@ void BinaryMatrix::create(std::string inFile, double rf, int64_t prefix_size) {
 	std::string line;
 	std::vector<std::string> columns;
 	while (getline(istr, line)) {
-		IOTools::split(columns, line);
+		IOTools::split_rgx(columns, line);
 		if (line != "") {
 			if (columns.size() != 3) {
 				std::cerr << "ERROR! input file not well formatted\n";
 				exit(1);
 			}
-			count_files.push_back(columns[0]);
-			col_names.push_back(columns[1]);
-			col_groups.push_back(columns[2]);
+			if ( IOTools::getFileSize(columns[0]) < 5 ){
+				count_files.push_back(columns[0]);
+				col_names.push_back(columns[1]);
+				col_groups.push_back(columns[2]);
+			} else {
+				std::cerr << "Warning! File " << columns[0] << " is empty and will be ignored.\n";
+			}
 		}
 	}
 	if ( count_files.size() == 0){
@@ -103,6 +109,7 @@ void BinaryMatrix::save(std::string file) {
 
 void BinaryMatrix::load(std::string file, bool q_mode) {
 	clear();
+	source_file=file;
 	std::ifstream ifs(file);
 	json header = json::parse(ifs);
 	ifs.close();
@@ -165,6 +172,17 @@ void BinaryMatrix::initDBs() {
 	}
 }
 
+
+std::vector<Kmer> BinaryMatrix::getPartitions(uint64_t n){
+	BinaryDB & biggest=bin_databases[0];
+	for ( auto & db : bin_databases ){
+		if (db.size() > biggest.size() ){
+			biggest=db;
+		}
+	}
+	return biggest.getPartitions(n);
+}
+
 void BinaryMatrix::clear() {
 	col_names.clear();
 	col_groups.clear();
@@ -194,7 +212,6 @@ bool BinaryMatrix::getLine(KmerMatrixLine & line) {
 
 	if (line.count.size() != n_of_bd){
 		line.count.resize(bin_databases.size());
-		line.raw_count.resize(bin_databases.size());
 	}
 	line.setKmer(*(current_kmers.begin()));
 	current_kmers.erase(current_kmers.begin());
@@ -202,27 +219,23 @@ bool BinaryMatrix::getLine(KmerMatrixLine & line) {
 	if ( normalized ){
 		for (uint64_t i = 0; i < n_of_bd; i++) {
 				if (bin_databases[i].getKmer() == line.getKmer()) {
-					line.raw_count[i]=bin_databases[i].getCount();
 					line.count[i] =((bin_databases[i].getCount()) / normalization_factors[i]);
 					if (bin_databases[i].getNext()) {
 						current_kmers.insert((bin_databases[i].getKmer()));
 					}
 				} else {
 					line.count[i] = 0;
-					line.raw_count[i]=0;
 				}
 			}
 	} else {
 		for (uint64_t i = 0; i < n_of_bd; i++) {
 				if (bin_databases[i].getKmer() == line.getKmer()) {
 					line.count[i] =(bin_databases[i].getCount());
-					line.raw_count[i]=bin_databases[i].getCount();
 					if (bin_databases[i].getNext()) {
 						current_kmers.insert((bin_databases[i].getKmer()));
 					}
 				} else {
 					line.count[i] = 0;
-					line.raw_count[i]=0;
 				}
 			}
 	}

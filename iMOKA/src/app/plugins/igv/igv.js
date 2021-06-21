@@ -71215,62 +71215,40 @@
 	        })();
 	      }
 	    }
-	  }, {
-	    key: "paintAxis",
-	    value: function paintAxis(ctx, pixelWidth, pixelHeight) {
-	      if (this.lastPaintAxis && this.lastPaintAxis == this.dataRange.max) {
-	        return;
-	      }
-
-	      this.lastPaintAxis = this.dataRange.max;
-
-	      this._paintAxis(ctx, pixelWidth, pixelHeight);
+	    /*paintAxis(ctx, pixelWidth, pixelHeight) {
+	    	if ( this.lastPaintAxis && this.lastPaintAxis == this.dataRange.max ){
+	    		return;
+	    	}
+	    	this.lastPaintAxis = this.dataRange.max;
+	    	this._paintAxis(ctx, pixelWidth, pixelHeight);
 	    }
-	  }, {
-	    key: "_paintAxis",
-	    value: function _paintAxis(ctx, pixelWidth, pixelHeight) {
-	      var _this3 = this;
+	    _paintAxis(ctx, pixelWidth, pixelHeight){
+	    	IGVGraphics.fillRect(ctx, 0, 0, pixelWidth, pixelHeight, { 'fillStyle': "rgb(255, 255, 255)" });
+	    	var font = {
+	    		'font': 'normal 10px Arial',
+	    		'textAlign': 'right',
+	    		'strokeStyle': "black"
+	    	};
+	    	const n = Math.ceil((this.dataRange.max - this.dataRange.min) * 10 / this.rowHeight);
+	    	pixelHeight = this.rowHeight - this.margin;
+	    	
+	    	for (let row = 0; row < this.maxRow; row++) {
+	    		const yScale = (yValue) => {
+	    				return this.margin + (row * (pixelHeight + this.margin)) + (((this.dataRange.max - yValue) / (this.dataRange.max - this.dataRange.min)) * pixelHeight)
+	    			};
+	    		let p = this.dataRange.min
+	    		while (p < this.dataRange.max + n) {
+	    			const yp = yScale(p)
+	    			IGVGraphics.strokeLine(ctx, 45, yp, 50, yp, font); // Offset dashes up by 2 pixel
+	    			IGVGraphics.fillText(ctx, this.number2Text(p), 44, yp + 4, font); // Offset numbers down by 2 pixels;
+	    			p += n
+	    			}
+	    		font['textAlign'] = 'center';
+	    		IGVGraphics.fillText(ctx, "Coverage" , pixelWidth / 3, yScale(this.dataRange.max / 2), font, { rotate: { angle: -90 } });
+	    		font['textAlign'] = 'right';
+	    	}
+	    }*/
 
-	      IGVGraphics.fillRect(ctx, 0, 0, pixelWidth, pixelHeight, {
-	        'fillStyle': "rgb(255, 255, 255)"
-	      });
-	      var font = {
-	        'font': 'normal 10px Arial',
-	        'textAlign': 'right',
-	        'strokeStyle': "black"
-	      };
-	      var n = Math.ceil((this.dataRange.max - this.dataRange.min) * 10 / this.rowHeight);
-	      pixelHeight = this.rowHeight - this.margin;
-
-	      var _loop2 = function _loop2(row) {
-	        var yScale = function yScale(yValue) {
-	          return _this3.margin + row * (pixelHeight + _this3.margin) + (_this3.dataRange.max - yValue) / (_this3.dataRange.max - _this3.dataRange.min) * pixelHeight;
-	        };
-
-	        var p = _this3.dataRange.min;
-
-	        while (p < _this3.dataRange.max + n) {
-	          var yp = yScale(p);
-	          IGVGraphics.strokeLine(ctx, 45, yp, 50, yp, font); // Offset dashes up by 2 pixel
-
-	          IGVGraphics.fillText(ctx, _this3.number2Text(p), 44, yp + 4, font); // Offset numbers down by 2 pixels;
-
-	          p += n;
-	        }
-
-	        font['textAlign'] = 'center';
-	        IGVGraphics.fillText(ctx, "Coverage", pixelWidth / 3, yScale(_this3.dataRange.max / 2), font, {
-	          rotate: {
-	            angle: -90
-	          }
-	        });
-	        font['textAlign'] = 'right';
-	      };
-
-	      for (var row = 0; row < this.maxRow; row++) {
-	        _loop2(row);
-	      }
-	    }
 	  }, {
 	    key: "popupData",
 	    value: function popupData(clickState) {
@@ -71295,7 +71273,7 @@
 	  }, {
 	    key: "filter",
 	    value: function filter(features) {
-	      var _this4 = this;
+	      var _this3 = this;
 
 	      var rows = [-100],
 	          idx;
@@ -71305,12 +71283,12 @@
 	          _step;
 
 	      try {
-	        var _loop3 = function _loop3() {
+	        var _loop2 = function _loop2() {
 	          var feat = _step.value;
 
-	          if (_this4.filters.warnings.includes(feat.warning) && _this4.filters.intronTypes.includes(feat.intronType)) {
-	            if (feat.splice[2] > _this4.maxSplice) {
-	              _this4.maxSplice = feat.splice[2];
+	          if (_this3.filters.warnings.includes(feat.warning) && _this3.filters.intronTypes.includes(feat.intronType)) {
+	            if (feat.splice[2] > _this3.maxSplice) {
+	              _this3.maxSplice = feat.splice[2];
 	            }
 
 	            idx = rows.findIndex(function (r) {
@@ -71333,7 +71311,7 @@
 	        };
 
 	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	          _loop3();
+	          _loop2();
 	        }
 	      } catch (err) {
 	        _iterator.e(err);
@@ -71828,7 +71806,7 @@
 	      for (var i = 0; i < this.features.length; i++) {
 	        var feat = this.features[i];
 
-	        if (feat.y == r && feat.start <= x && feat.end >= x) {
+	        if (feat.y + 1 == r && feat.start <= x && feat.end >= x) {
 	          this.onClick(feat);
 	          return null;
 	        }

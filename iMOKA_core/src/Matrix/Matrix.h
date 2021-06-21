@@ -19,7 +19,6 @@ public:
 	virtual ~MatrixLine(){};
 	virtual std::string getName(){return "NA";};
 	std::vector<double> count;
-	std::vector<uint32_t> raw_count;
 	uint64_t index;
 };
 

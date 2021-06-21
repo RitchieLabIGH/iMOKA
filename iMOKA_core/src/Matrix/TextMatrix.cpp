@@ -31,13 +31,14 @@ void TextMatrix::open(std::string file) {
 		infos = IOTools::getLineFromFile(file, 0).substr(1);
 	}
 	initGroupMaps();
+	content.resize(col_names.size());
 	matrix_file = file;
 	reset();
 }
 
 bool TextMatrix::next() {
 	if (is_open && getline(stream, line)) {
-		IOTools::split(content, line); // Parse the first line;
+		IOTools::split(content, line ,  '\t');
 		return true;
 	}
 	return false;

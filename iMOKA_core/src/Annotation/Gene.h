@@ -25,6 +25,7 @@ public :
 		init(gene_name,gene_id ,coverage_limit,transcript_exons ,mapper_results_idxs, mapper_results, all_signatures, all_sequences, perfect_match);
 	};
 	void init(std::string gene_name, std::string gene_id, double coverage_limit,std::map<std::string, std::vector<Segment>> transcript_exons,  std::set<uint64_t> seqs,  std::vector<MapperResultLine> & mapper_results,  std::vector<AlignmentDerivedFeature> & signatures, std::vector<GraphSequence> & all_sequences, bool perfect_match);
+	void initRep(std::string rep_name, double coverage_limit,  std::set<uint64_t> seqs,  std::vector<MapperResultLine> & mapper_results,  std::vector<AlignmentDerivedFeature> & signatures, std::vector<GraphSequence> & all_sequences, bool perfect_match);
 	json to_json();
 	std::string gene_id;
 	std::string gene_name;

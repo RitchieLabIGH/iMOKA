@@ -19,12 +19,14 @@ public:
 	virtual ~GraphSequence();
 	std::string sequence="";
 	std::set<uint64_t> nodes;
+	std::vector<BNode*> bnodes;
 	BNode* best_kmer=NULL;
 	std::vector<uint64_t> alignments;
 	uint64_t graph;
 	uint64_t id;
 	json to_json();
 	void addNode(BNode &, int64_t );
+	void addPrevNode(BNode &, int64_t );
 	std::vector<std::string> getKmers() const ;
 };
 }

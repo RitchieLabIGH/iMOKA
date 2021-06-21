@@ -62,7 +62,7 @@ def saveModel(model_file,  clf , model_features,classnames):
             f.write(str(mf)+"\n")
     return
 
-def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v = 10 , max_features = 10, cpus=-1 , perc_test=0.15):
+def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v = 10 , max_features = 10, cpus=1 , perc_test=0.15):
     if cross_v < 5:
         cross_v=5
     samples, groups, dimensions, values = read_kmer_matrix(file_input)
@@ -70,6 +70,10 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
     groupcount = np.bincount(Y)
     print("Starting the creation of {} models.".format(nmodels))
     print("Original data have {} dimensions with {} samples, divided in {} groups:".format(values.shape[1], values.shape[0],len(classnames)))
+    if max_features > values.shape[1]:
+        print("Asked for {} but only {} available! Changing max features accordingly.".format(max_features, values.shape[1]))
+        max_features=values.shape[1]
+        
     for c in range(0, len(classnames)) :
         print("\t{} - {} \t {} samples".format(c, classnames[c] ,groupcount[c])) 
     
@@ -91,7 +95,7 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
     
     models={"RF" : {
                 "clf" : RandomForestClassifier(max_features="auto",class_weight= "balanced_subsample"),
-                "parameters" : {"n_estimators" : [10, 100, 500],  "min_samples_split" : [0.05, 0.10, 0.15]}
+                "parameters" : {"n_estimators" : [ 100, 500, 1000],  "min_samples_split" : [0.05, 0.10, 0.15]}
             } }
     tsne= TSNE(n_components=2, init='pca', random_state=123, perplexity=5, early_exaggeration=12, learning_rate=200, n_iter=1000, n_iter_without_progress=300);
     pca = PCA(n_components=2)
@@ -233,10 +237,10 @@ def feature_importance(file_input, file_output, n_trees=1000, nmodels=1, cross_v
     
 def main():
     parser = argparse.ArgumentParser(description="Find the most important fatures using random forest classifiers.");
-    parser.add_argument("input", help="Input file, containing the k-mer or feature matrix. First line have to contain the samples names, the second line the corresponding groups, or NA if unknown. The first column has to be the feaures names. The matrix is then organized with features on the rows and samples on the columns.")
+    parser.add_argument("input", help="Input file, containing the k-mer or feature matrix. The first line have to contain the samples names, the second line the corresponding groups, or NA if unknown. The first column has to be the feaures names. The matrix is then organized with features on the rows and samples on the columns.")
     parser.add_argument("output", help="Output file in json format")
     parser.add_argument("-r", "--rounds", default=1, type=int, help="The number of random forests to create. Default:1")
-    parser.add_argument("-t", "--threads", default=-1, type=int, help="The number of threads to use. Default: -1 (automatic)")
+    parser.add_argument("-t", "--threads", default=1, type=int, help="The number of threads to use. Default: 1 ( -1 for automatic)")
     parser.add_argument("-m", "--max-features", default=10, type=int, help="The maximum number of features to use. Default: 10 ")
     parser.add_argument("-n", "--n-trees", default=1000, type=int, help="The number of trees used to evaluate the feature importance. Default: 1000 ")
     parser.add_argument("-c", "--cross-validation", default=10, type=int, help="Cross validation used to determine the metrics of the models. Default: 10 ")

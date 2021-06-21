@@ -27,9 +27,9 @@ public:
 	void create(std::string inputFile, double rescale_f = 1, int64_t prefix_size=-1);
 	void clear();
 	bool getBatch(std::vector<KmerMatrixLine> & buffer, uint64_t length);
-
+	std::vector<Kmer> getPartitions(uint64_t n);
 	virtual bool getLine(KmerMatrixLine & jfl);
-
+	std::string source_file;
 	double perc();
 	std::vector<KmerMatrixLine> getLines(std::vector<std::string> & request);
 	void getLines(std::vector<std::string> & request, std::vector<KmerMatrixLine> & response);
@@ -38,6 +38,21 @@ public:
 	bool isNormalized() {
 		return normalized;
 	};
+	uint32_t getMaxRawCount(KmerMatrixLine & line){
+		if ( normalized ){
+
+		uint32_t max= std::round(line.count[0] * normalization_factors[0] );
+		for ( uint32_t i=1; i< line.count.size(); i++){
+			if ( line.count[i] * normalization_factors[i] > max ){
+				max=std::round(line.count[i] * normalization_factors[i] );
+			}
+		}
+		return max;
+		} else {
+			return (uint32_t)(*std::max_element(line.count.begin(), line.count.end()));
+		}
+
+	}
 	bool go_to(Kmer & );
 	void setNormalized(bool n) {
 		normalized = n;

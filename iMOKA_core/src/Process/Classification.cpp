@@ -26,11 +26,11 @@ bool Classification::run(int argc, char **argv) {
 					"t,test-percentage",
 					"The percentage of the min class used as test size",
 					cxxopts::value<double>()->default_value("0.25"))(
-					"e,entropy-adjustment-one",
-					"The a1 adjustment value of the entropy filter",
+					"e,entropy-adjustment-down",
+					"The adjustment value of the entropy filter that reduce the threshold. Need to be between 0 and 1 not included, otherwise disable the entropy assertment.",
 					cxxopts::value<double>()->default_value("0.25"))(
 					"E,entropy-adjustment-two",
-					"The a2 adjustment value of the entropy filter",
+					"The adjustment value of the entropy filter that increase the threshold. Need to be greater than 0, otherwise disable the entropy assertment.",
 					cxxopts::value<double>()->default_value("0.05"))(
 					"c,cross-validation", "Maximum number of cross validation",
 					cxxopts::value<uint64_t>()->default_value("100"))(
@@ -38,7 +38,7 @@ bool Classification::run(int argc, char **argv) {
 					"Standard error to achieve convergence in cross validation. Suggested between 0.5 and 2",
 					cxxopts::value<double>()->default_value("0.5"))(
 					"v,verbose-entropy",
-					"Print the given number of k-mers for each thread, the entropy and the entropy threshold that would have been used as additional columns. Useful to evaluate the efficency of the entropy filter. Defualt: 0 ( Disabled )",
+					"Print the given number of k-mers for each thread, the entropy and the entropy threshold that would have been used as additional columns. Useful to evaluate the efficency of the entropy filter. Ignored if the entropy filter is disabled. Defualt: 0 ( Disabled )",
 					cxxopts::value<uint64_t>()->default_value("0"))("m,min",
 					"Minimum raw count that at least one sample has to have to consider a k-mer",
 					cxxopts::value<int>()->default_value("5"));
@@ -48,10 +48,6 @@ bool Classification::run(int argc, char **argv) {
 							{ "input", "output" }, log)) {
 				log << "Help for the classification \n" << options.help()
 						<< "\n";
-				return false;
-			}
-			if ( parsedArgs["cross-validation"].as<uint64_t>() < 3 ){
-				log << "Error! Cross validation has to be minimum 3.\n";
 				return false;
 			}
 			std::vector<double> adjustments(2);
@@ -66,7 +62,6 @@ bool Classification::run(int argc, char **argv) {
 					parsedArgs["standard-error"].as<double>(),
 					parsedArgs["accuracy"].as<double>(),
 					parsedArgs["test-percentage"].as<double>(), adjustments);
-
 		}
 
 		if (std::string(argv[1]) == "cluster") {
@@ -119,8 +114,8 @@ bool Classification::classificationFilterMulti(std::string file_in,
 			<< ".\n";
 	BinaryMatrix bm(file_in, true);
 	mlpack::Log::Warn.ignoreInput = true;
-	const uint64_t k_len = bm.k_len, batch_size = std::floor(
-			((std::pow(4, bm.k_len)) - 1) / omp_get_max_threads());
+	const std::vector<Kmer> partitions = bm.getPartitions(
+			omp_get_max_threads());
 	std::stringstream header;
 	header << "kmer";
 	for (uint64_t g = 0; g < bm.group_map.size(); g++) {
@@ -139,15 +134,25 @@ bool Classification::classificationFilterMulti(std::string file_in,
 	std::cerr << "Memory occupied: "
 			<< IOTools::format_space_human(IOTools::getCurrentProcessMemory())
 			<< ".\n";
-	std::cerr << "Reducing with " << omp_get_max_threads()
-			<< " threads, each analysing a maximum total of " << batch_size
-			<< " k-mers.\n";
+	std::cerr << "Reducing with " << omp_get_max_threads() << " threads.\n";
 	std::cerr.flush();
+
+	if (adjustments[0] >= 1 || adjustments[1] <= 0 || adjustments[0] <= 0) {
+		std::cerr << "Entropy assertment disabled.\n";
+		adjustments[0] = 0;
+		adjustments[1] = 0;
+
+	}
+	if (cross_validation < 3) {
+		std::cerr << "Cross validation disabled. Accuracy are the training ones.\n";
+		cross_validation = 1;
+	}
 	json info = { { "cross_validation", cross_validation }, { "standard_error",
 			sd }, { "minimum_count", min }, { "min_acc", min_acc }, {
 			"perc_test", perc_test }, { "adjustments", adjustments }, {
 			"file_in", file_in }, { "file_out", file_out } };
-#pragma omp parallel firstprivate(cross_validation, sd, min_acc, perc_test, adjustments, min, entropy_evaluation )
+
+#pragma omp parallel firstprivate(cross_validation, sd, min_acc, perc_test, adjustments, min, entropy_evaluation,partitions )
 	{
 		std::function<
 				std::vector<double>(const std::vector<std::vector<double>>&,
@@ -166,65 +171,81 @@ bool Classification::classificationFilterMulti(std::string file_in,
 		ofs << std::fixed << std::setprecision(3);
 		std::vector<uint64_t> groups = mat.groups;
 		std::map<uint64_t, uint64_t> group_counts = mat.group_counts;
-		double max_entropy = 1000000.00, entropy, perc;
+		double max_entropy = 1000000.00, entropy = 1, perc;
 		double minEntropy = 0, localMinEntropy = max_entropy, adj_down =
 				adjustments[0], adj_up = adjustments[1];
 		uint64_t tot_lines = 0, kept = 0, entropy_update_every = 30,
 				last_update = 0;
-		uint64_t a = thr * batch_size, b = ((thr + 1) * batch_size) - 1;
-		Kmer from_kmer(k_len, a), to_kmer(k_len, b);
-		mat.go_to(from_kmer);
+		Kmer to_kmer(mat.k_len, std::pow(4, mat.k_len) - 1);
+		KmerMatrixLine line;
+		if (thr != omp_get_max_threads() - 1) {
+			to_kmer = partitions[thr];
+		}
+		if (thr != 0) {
+			Kmer from_kmer = partitions[thr - 1];
+			mat.go_to(from_kmer);
+			mat.getLine(line);
+		}
+
 		std::ostringstream os;
+
+		bool running = mat.getLine(line), keep;
+		bool use_entropy = adj_down != 0 && adj_up != 0;
+		bool use_cv = cross_validation >= 3;
+		uint64_t starting_kmer = line.getKmer().to_int();
 		os << "[ " << IOTools::now() << " ] Thread " << thr
-				<< " starting on cpu " << sched_getcpu()
+				<< " starting on cpu " << sched_getcpu() << " with k-mer "
+				<< line.getKmer().str() << " to k-mer " << to_kmer.str()
 				<< ", memory occupied: "
 				<< IOTools::format_space_human(
 						IOTools::getCurrentProcessMemory()) << ".\n";
 		std::cerr << os.str() << std::flush;
-
-		KmerMatrixLine line;
-		bool running = mat.getLine(line), keep;
 		std::vector<double> res;
 		tlog << "Perc\tTotal\tKept\tMinEntropy\tRunningTime\n";
 		tlog.flush();
-		bool verbose_entropy = entropy_evaluation > 0;
+		bool verbose_entropy = use_entropy && entropy_evaluation > 0;
 		while (running) {
 			if (line.getKmer() <= to_kmer) {
 				tot_lines++;
-				if (*std::max_element(line.raw_count.begin(),
-						line.raw_count.end()) >= min) {
-					entropy = Stats::entropy(line.count);
-					if (entropy >= minEntropy || verbose_entropy) {
+				if (bm.getMaxRawCount(line) >= min) {
+					if (use_entropy)
+						entropy = Stats::entropy(line.count);
+					if (!use_entropy || entropy >= minEntropy
+							|| verbose_entropy) {
 						res = fun( { line.count }, groups, group_counts,
 								cross_validation, sd, perc_test);
 						keep = false;
 						for (double &v : res)
 							keep = keep || v >= min_acc;
 						if (keep) {
-							localMinEntropy =
-									localMinEntropy < entropy ?
-											localMinEntropy : entropy;
-							last_update++;
 							kept++;
-							if (last_update >= entropy_update_every) {
-								minEntropy =
-										minEntropy == 0 ?
-												localMinEntropy
-														- (localMinEntropy
-																* adj_down * 2) :
-										localMinEntropy
-												- (localMinEntropy * adj_down)
-												< minEntropy ?
-												minEntropy
-														- (localMinEntropy
-																* adj_down) :
-												minEntropy
-														+ (localMinEntropy
-																* adj_up);
-								last_update = 0;
-								entropy_update_every = entropy_update_every
-										+ 30;
-								localMinEntropy = max_entropy;
+							if (use_entropy) {
+								localMinEntropy =
+										localMinEntropy < entropy ?
+												localMinEntropy : entropy;
+								last_update++;
+								if (last_update >= entropy_update_every) {
+									minEntropy =
+											minEntropy == 0 ?
+													localMinEntropy
+															- (localMinEntropy
+																	* adj_down
+																	* 2) :
+											localMinEntropy
+													- (localMinEntropy
+															* adj_down)
+													< minEntropy ?
+													minEntropy
+															- (localMinEntropy
+																	* adj_down) :
+													minEntropy
+															+ (localMinEntropy
+																	* adj_up);
+									last_update = 0;
+									entropy_update_every = entropy_update_every
+											+ 30;
+									localMinEntropy = max_entropy;
+								}
 							}
 						}
 						if (keep || verbose_entropy) {
@@ -233,10 +254,10 @@ bool Classification::classificationFilterMulti(std::string file_in,
 								ofs << "\t" << v;
 							std::vector<double> means(group_counts.size(), 0);
 							for (int i = 0; i < groups.size(); i++) {
-								means[groups[i]]+=line.count[i];
+								means[groups[i]] += line.count[i];
 							}
-							for ( int g=0; g< group_counts.size(); g++){
-								ofs << "\t" << (means[g]/group_counts[g]);
+							for (int g = 0; g < group_counts.size(); g++) {
+								ofs << "\t" << (means[g] / group_counts[g]);
 							}
 
 							if (verbose_entropy) {
@@ -246,8 +267,10 @@ bool Classification::classificationFilterMulti(std::string file_in,
 						}
 					}
 				}
-				if (tot_lines % 1000000 == 0) {
-					perc = 0; // ((line.getKmer().to_int() - from_kmer.to_int())*100) / (long double)batch_size;  /// TODO: there is something wrong wiht the int conversion
+				if (tot_lines % 100000 == 0) {
+					perc = ((line.getKmer().to_int() - starting_kmer)
+							/ (long double) (to_kmer.to_int() - starting_kmer))
+							* 100;
 					tlog << perc << "\t" << tot_lines << "\t" << kept << "\t"
 							<< minEntropy << "\t"
 							<< IOTools::format_time(

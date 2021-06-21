@@ -82,7 +82,18 @@ namespace IOTools {
 
 static const std::string alphabet = "ACGT";
 
-static void split(std::vector<std::string> & cont, const std::string & str, const std::string sep="[\\s\\n\\r]+" ){
+
+
+static double averageLog2FC( std::vector<double> & a, std::vector<double> & b ){
+	// average absolute log2 fold change of a respect to b
+	double out=0;
+	for ( int i = 0; i < a.size(); i++){
+		out += std::abs(std::log2( (a[i]+0.1 ) /  ( b[i]+0.1 ) )) ; // add 0.1 to avoid infinite values and values too big in case of small numbers
+	}
+	return out / a.size();
+}
+
+static void split_rgx(std::vector<std::string> & cont, const std::string & str, const std::string sep="[\\s\\n\\r]+" ){
 	std::regex rgx(sep);
 	std::sregex_token_iterator iter(str.begin(), str.end(), rgx, -1);
 	cont.clear();
@@ -91,7 +102,9 @@ static void split(std::vector<std::string> & cont, const std::string & str, cons
 		cont.push_back(iter->str());
 	  }
 }
-
+static void split(std::vector<std::string> & cont, const std::string & str, const char sep='\t' ){
+	boost::split(cont, str , [sep](char c){return c==sep;});
+}
 static std::vector<std::string> GetDirectoryFiles(std::string dir) {
 	std::vector<std::string> files;
 	std::shared_ptr<DIR> directory_ptr(opendir(dir.c_str()),

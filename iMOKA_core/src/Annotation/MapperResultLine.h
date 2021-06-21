@@ -34,7 +34,7 @@ public:
 	;
 	void parseSAM(std::string line);
 	void parsePSLX(std::string line);
-	std::string to_bed();
+	std::string to_bed(std::string additional="");
 	std::string name = "NA";
 	uint64_t match = 0;
 

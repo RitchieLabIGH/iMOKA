@@ -68,6 +68,7 @@ std::string help() {
 					"\e[1mcreate\e[0m: create a matrix json file, converting the text formats when needed",
 					"\e[1mextract\e[0m: query a matrix file to extract k-mer counts",
 					"\e[1mdump\e[0m: extract all the k-mer counts in alphabetical order",
+					"\e[1mstable\e[0m: extract the k-mers stable across the samples, useful to normalize independent counts",
 					"\e[1mreduce\e[0m: Reduce a k-mer matrix in according to the clusterization power of each k-mer"
 							"\e[1mcluster\e[0m: filter a k-mer matrix in according to their underlying clusters ",
 					"\e[1maggregate\e[0m: reduce the number of k-mers aggregating the redundant ones",
@@ -105,7 +106,7 @@ int main(int argc, char** argv) {
 		setenv("IMOKA_MAX_MEM_GB", "2", 1);
 	}
 	auto start = std::chrono::high_resolution_clock::now();
-	if (action == "create" || action == "extract" || action == "dump")
+	if (action == "create" || action == "extract" || action == "dump" || action=="stable" )
 		done = imoka::process::BinaryMatrixHandler(logStreamBuff).run(argc,
 				argv);
 	else if (action == "reduce" ||  action == "cluster")

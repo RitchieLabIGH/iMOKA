@@ -301,10 +301,15 @@ std::vector<double> MLpack::pairwise_classification(
 		const uint64_t crossValidation, const double sd, double perc_test) {
 	arma::Mat<double> trainingData, testData;
 	arma::Row<size_t> trainingLabels, testLabels;
+
 	std::vector<double> results;
 	uint64_t min_group = 10000;
 	for (auto g : group_counts) {
 		min_group = g.second < min_group ? g.second : min_group;
+	}
+
+	if ( crossValidation < 2 ){ // Use the training accuracy
+		min_group=0;
 	}
 	for (uint64_t g = 0; g < group_counts.size(); g++) {
 		for (uint64_t h = g + 1; h < group_counts.size(); h++) {
@@ -475,14 +480,37 @@ void MLpack::splitTrainingTest(const std::vector<std::vector<double>> & values,
 		arma::Mat<double> & testData, arma::Row<size_t> & trainingLabels,
 		arma::Row<size_t> & testLabels, double perc_test, uint64_t min_group,
 		std::set<uint64_t> groups_to_use) {
-	const arma::Col<size_t> order = arma::shuffle(
-			arma::linspace<arma::Col<size_t>>(0, groups.size() - 1,
-					groups.size()));
-	std::map<uint64_t, uint64_t> g_count;
+
 	if (groups_to_use.size() == 0)
 		for (auto & el : groups)
 			groups_to_use.insert(el);
 
+	if ( min_group == 0 ){ // retrieve all the training as test ( for training accuracies )
+		uint64_t n_samples=0;
+		for ( auto  & g : groups) {
+			if ( groups_to_use.count(g) != 0 ) n_samples++;
+		}
+		trainingData.resize(values.size(), n_samples);
+		trainingLabels.resize(n_samples);
+		testData.resize(values.size(),n_samples);
+		testLabels.resize(n_samples);
+		for ( uint64_t i=0; i< groups.size(); i++) {
+			if (groups_to_use.count(groups[i]) != 0 ){
+				for (int r = 0; r < values.size(); r++) {
+					trainingData(r, i) = values[r][i];
+					testData(r, i) = values[r][i];
+				}
+				trainingLabels[i]=groups[i];
+				testLabels[i]=groups[i];
+			}
+		}
+		return;
+	}
+	// Otherwise procede with the division of the groups
+	std::map<uint64_t, uint64_t> g_count;
+	const arma::Col<size_t> order = arma::shuffle(
+				arma::linspace<arma::Col<size_t>>(0, groups.size() - 1,
+						groups.size()));
 	uint64_t c_train = 0, c_test = 0, n_rows = values.size(), n_groups =
 			groups_to_use.size();
 	uint64_t n_test = std::floor(min_group * perc_test);
@@ -493,7 +521,6 @@ void MLpack::splitTrainingTest(const std::vector<std::vector<double>> & values,
 	trainingLabels.resize(n_training * n_groups);
 	testData.resize(n_rows, n_test * n_groups);
 	testLabels.resize(n_test * n_groups);
-	std::cerr.flush();
 	for (auto i : order) {
 		if (g_count[groups[i]] < min_group
 				&& (groups_to_use.count(groups[i]) != 0)) {

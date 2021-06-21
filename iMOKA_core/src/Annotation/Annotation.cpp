@@ -17,7 +17,7 @@ const std::string GENCODE_regex::rgx_transcript_type =  "transcript_type \"([^\"
 
 void Annotation::parse(std::string line) {
 	std::vector<std::string> columns;
-	IOTools::split(columns, line, "[\t]+");
+	IOTools::split(columns, line, '\t');
 	std::smatch matches;
 	position.start = std::stoll(columns[9]);
 	position.end = std::stoll(columns[10]);

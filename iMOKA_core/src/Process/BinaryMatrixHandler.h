@@ -9,6 +9,7 @@
 #define PROCESS_BINARYMATRIXHANDLER_H_
 #include "Process.h"
 #include "../Matrix/BinaryMatrix.h"
+#include "../Utils/Stats.h"
 
 namespace imoka {
 namespace process {
@@ -20,6 +21,8 @@ public:
 	bool create(std::string input, std::string output, int64_t prefix, double rescaling );
 	bool dump(std::string input, std::string output,std::string from_k , std::string to_k , bool raw, bool write_header = true);
 	bool extract(std::string input,std::string source, std::string output,  bool normalized);
+	bool stable(std::string source, std::string outfile, uint64_t max_n);
+	std::pair<double, double> estimate_stable_thresholds(std::string source, const std::vector<imoka::matrix::Kmer> & paritions);
 };
 }
 } /* namespace kma */

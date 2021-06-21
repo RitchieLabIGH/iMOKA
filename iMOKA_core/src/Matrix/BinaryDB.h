@@ -60,6 +60,11 @@ public:
 		}
 
 	}
+
+	uint64_t size(){
+		return tot_suffix;
+	}
+
 	uint64_t getTotCount() {
 		return tot_count;
 	}
@@ -91,6 +96,8 @@ public:
 	}
 
 	bool go_to(Kmer & );
+	bool go_to(uint64_t n );
+	std::vector<Kmer> getPartitions(uint64_t n);
 	std::string file_name;
 	static int64_t bestPrefixSize(std::string file);
 	uint32_t query_count;

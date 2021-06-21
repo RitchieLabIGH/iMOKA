@@ -23,7 +23,7 @@ public:
 	bool run(int argc, char** argv);
 	bool redundancyFilter(std::string in_matrix, std::string out_file,
 			std::string count_matrix, std::string blat_config, uint64_t overlap,
-			double threshold, double final_thr, double coverage_limit, double corr, bool perfect_match);
+			double threshold, double final_thr, double coverage_limit, double corr, bool perfect_match, double lfct);
 	void print_conf(std::string where);
 private:
 	const std::string default_config =
@@ -36,13 +36,14 @@ private:
   "flag_multi_thread": "",
   "io_order" : "io" ,
   "flag_out": " ",
-  "options": " -out=pslx -stepSize=5 -repMatch=2253 -minScore=30 -minIdentity=90 /blat_ref/hg38.2bit ",
+  "options": " -out=pslx -q=rna -stepSize=5 -repMatch=2253 -minScore=30 -minIdentity=95 -ooc=/blat_ref/hg38.11.ooc /blat_ref/hg38.2bit ",
   "parallel": -1,
   "output_type": "pslx"
  },
  "annotation": {
 	"name" : "DefaultAnnotation" , 
-  	"file": "/blat_ref/gencode.v29.annotation.noIR.gtf"
+  	"file": "/blat_ref/gencode.v29.annotation.noIR.gtf",
+	"repeats" : "/blat_ref/hg38_repmask.bed"
  }
 }
 

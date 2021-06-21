@@ -80,10 +80,7 @@ void Gene::init(std::string geneId, std::string geneName, double coverage_limit,
 			}
 		}
 		seq_set.insert(mrl.query_index);
-		cmax = *std::max_element(
-				all_sequences[mrl.query_index].best_kmer->values.begin(),
-				all_sequences[mrl.query_index].best_kmer->values.end());
-
+		cmax = all_sequences[mrl.query_index].best_kmer->getBestValue();
 		if (cmax > max_val) {
 			if ( perfect_match ){
 				for (auto i : alignmentDerivedFeatures) {
@@ -143,10 +140,9 @@ void Gene::init(std::string geneId, std::string geneName, double coverage_limit,
 				}
 				if (!found) {
 					Event ev("intron", { gene_name }, bk);
+
 					ev.info = transcript.first + "_intron_" + std::to_string(i)
 							+ "_cov_" + std::to_string(intron_cov);
-					for (auto el : intron_covering_aln[transcript.first][i])
-						ev.alignments.push_back(el);
 					events.push_back(ev);
 				}
 			}
@@ -187,8 +183,6 @@ void Gene::init(std::string geneId, std::string geneName, double coverage_limit,
 			}
 		}
 		Event ev("DE", { gene_name }, bk);
-		ev.alignments.insert(ev.alignments.end(), all_covering_aln.begin(),
-				all_covering_aln.end());
 		ev.info = "";
 		for (auto hct : high_coverage_transcripts ) {
 			ev.info += hct + " [ " + std::to_string(std::round(coverage[hct]))
@@ -198,8 +192,7 @@ void Gene::init(std::string geneId, std::string geneName, double coverage_limit,
 	}
 	for (auto i : alignmentDerivedFeatures) {
 		AlignmentDerivedFeature & sa = all_signatures[i];
-		if (sa.generates_event && *std::max_element(sa.best_kmer->values.begin(),
-				sa.best_kmer->values.end()) < (max_val-3) ){
+		if (sa.generates_event && sa.best_kmer->getBestValue() < max_val ){
 			sa.generates_event=false;
 		}
 	}
@@ -242,7 +235,48 @@ void Gene::init(std::string geneId, std::string geneName, double coverage_limit,
 	if (!represented) {
 		Event ev("gene", { gene_name }, best_kmer);
 		ev.info = "Best k-mer in gene " + gene_name;
-		ev.alignments.push_back(best_kmer_mapper_result);
+		events.push_back(ev);
+	}
+
+}
+
+void Gene::initRep(std::string rep_name, double coverage_limit,  std::set<uint64_t> map_ids,  std::vector<MapperResultLine> & mapper_results,  std::vector<AlignmentDerivedFeature> & signatures, std::vector<GraphSequence> & all_sequences, bool perfect_match){
+	std::smatch matches;
+	if (std::regex_search(rep_name, matches, std::regex("^([^#]+)#([^:]+):([^-]+)-([^-]+)$"))){
+		gene_id=rep_name;
+		gene_name=matches[1];
+		double best_value=0;
+		std::string chr=matches[2];
+		uint64_t start=std::stoll(matches[3]), end =std::stoll(matches[4]);
+		std::vector<Segment> overlaps;
+		Segment target = {start, end};
+		alignments=map_ids;
+		for (uint64_t mid : map_ids){
+			MapperResultLine & mrl=mapper_results[mid];
+			for ( auto & bl : mrl.t_blocks ) {
+				if ( target.isOverlapping(bl) ){
+					Segment seg = { bl.start < start ? start : bl.start, bl.end > end ? end : bl.end };
+					add_segments({seg}, overlaps);
+				}
+
+			}
+			if (best_value < all_sequences[mrl.query_index].best_kmer->getBestValue() ) {
+				best_kmer = all_sequences[mrl.query_index].best_kmer;
+				best_value=all_sequences[mrl.query_index].best_kmer->getBestValue();
+			}
+			alignmentDerivedFeatures.insert(mrl.signatures_id.begin(),
+							mrl.signatures_id.end());
+		}
+		for ( auto & sid : alignmentDerivedFeatures){
+			signatures[sid].generates_event = false;
+		}
+		coverage[gene_id]=0;
+		for ( auto & seg : overlaps){
+			coverage[gene_id]+=(seg.end-seg.start);
+		}
+		coverage[gene_id]= (std::floor((double) coverage[gene_id] * 10000 / (end-start)) / 100);
+		Event ev("RepetitiveElement", { gene_name }, best_kmer);
+		ev.info = "Coverage of "+ std::to_string(coverage[gene_id]);
 		events.push_back(ev);
 	}
 

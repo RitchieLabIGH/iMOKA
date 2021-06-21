@@ -58,58 +58,35 @@ void KmerGraph::generateSequences(double min_value) {
 		return;
 	}
 	threshold = min_value;
-	std::set<uint64_t> roots, new_roots;
-	bool has_new_roots = true;
+
+	uint64_t current_node = 0;
 	visited_nodes.clear();
-	while (has_new_roots) {
-		new_roots.clear();
-		for (uint64_t i = 0; i < nodes.size(); i++) {
-			if (nodes[i].root && roots.count(i) == 0) {
-				roots.insert(i);
-				new_roots.insert(i);
-			}
-		}
-		has_new_roots = new_roots.size() > 0;
-		for (auto i : new_roots) {
-			GraphSequence gs;
-			if (nodes[i].edgesIn.size() > 0) { // It's generated after a bifurcation, add 3 k-mers before it
-				std::vector<uint64_t> path;
-				uint64_t c_node = i;
-				while (nodes[c_node].edgesIn.size() > 0 && path.size() < 3) {
-					c_node = getByID(*(nodes[c_node].edgesIn.begin()));
-					path.push_back(c_node);
-				}
-				for (int j = path.size() - 1; j > 0; --j) {
-					uint64_t ov = find_overlap(nodes[path[j]].kmer,
-							nodes[path[j - 1]].kmer);
-					gs.addNode(nodes[path[j]], ov);
-				}
-				uint64_t ov = find_overlap(nodes[path[0]].kmer, nodes[i].kmer);
-				gs.addNode(nodes[path[0]], ov);
-			}
-			extractBestSequence(i, gs);
-		}
-		if (visited_nodes.size() != nodes.size() && !has_new_roots) {
-			for (uint64_t i = 0; i < nodes.size(); i++) {
-				if (visited_nodes.count(i) == 0) {
-					nodes[i].root = true;
-					i = nodes.size();
-					has_new_roots = true;
-				}
-			}
+
+	while (current_node < nodes.size()
+			&& this->nodes_vsorted[current_node]->getBestValue() >= threshold) {
+		GraphSequence gs;
+		extractSequence(this->nodes_vsorted[current_node], gs);
+		sequences.push_back(gs);
+		current_node++;
+		while (current_node < nodes.size()
+				&& visited_nodes.count(this->nodes_vsorted[current_node]->id)
+						!= 0) {
+			current_node++;
 		}
 	}
 
 	return;
 }
 
-/// Retrun the next node with the means closer to the current node.
-/// If the closest has an average normalized error higher than 0.5 ( 50% different ), drop it.
+/// Return the next node with the means closer to the current node.
+/// If the closest has a percentage of change higher than 0.9 ( 90% different ), drop it.
 /// @param nodes_id
 /// @param ref_id
 /// @return pair<uint64_t,double>{ node_id , error }
 std::pair<uint64_t, double> KmerGraph::getNextNode(std::set<uint64_t> nodes_id,
 		uint64_t ref_id) {
+	if (nodes_id.size() == 0)
+		return {0, -1};
 	int64_t ref_idx = getByID(ref_id);
 	int n_of_means = nodes[ref_idx].means.size();
 	std::vector<std::pair<uint64_t, double>> errors(nodes_id.size());
@@ -118,81 +95,56 @@ std::pair<uint64_t, double> KmerGraph::getNextNode(std::set<uint64_t> nodes_id,
 	for (auto id : nodes_id) {
 		uint64_t idx = getByID(id);
 		errors[c].first = id;
-		errors[c].second = 0;
-		for (uint64_t v_i = 0; v_i < n_of_means; v_i++) {
-			errors[c].second += (std::abs(
-					nodes[idx].means[v_i] - nodes[ref_idx].means[v_i])
-					/ nodes[ref_idx].means[v_i]);
-		}
-		errors[c].second /= n_of_means;
+		errors[c].second = IOTools::averageLog2FC(nodes[idx].means, nodes[ref_idx].means);
 		c++;
 	}
 	std::sort(errors.begin(), errors.end(), [](const auto a, const auto b) {
 		return a.second < b.second;
 	});
-	if (errors[0].second > 1) {
-		/*std::cerr << "DROPPED " << "\n";
-		for (int k = 0; k < errors.size(); k++) {
-			uint64_t idx = getByID(errors[k].first);
-			for (uint64_t v_i = 0; v_i < n_of_means; v_i++) {
-				std::cerr  << k << "\t"<< nodes[idx].means[v_i] << "\t"
-						<< nodes[ref_idx].means[v_i] << "\n";
-			}
-		}*/
-
-		return {0, -1};
-	} else {
-		return errors[0];
-	}
+	return errors[0];
 }
 ;
 
-void KmerGraph::extractBestSequence(uint64_t node_i, GraphSequence &gs) {
-	double global_max = 0;
-	double kmer_max = *std::max_element(nodes[node_i].values.begin(),
-			nodes[node_i].values.end());
-	/// Identify the best kmer
-	if (gs.best_kmer != NULL && gs.best_kmer->values.size() > 0) {
-		global_max = *std::max_element(gs.best_kmer->values.begin(),
-				gs.best_kmer->values.end());
-	}
-	if (global_max < kmer_max) {
-		gs.best_kmer = &(nodes[node_i]);
-		global_max = kmer_max;
-	}
-	if (visited_nodes.count(node_i) > 0) {
-		if (global_max >= threshold) {
-			gs.addNode(nodes[node_i], -1);
-			sequences.push_back(gs);
-		}
-		return;
-	}
-	visited_nodes.insert(node_i);
+void KmerGraph::extractSequence(BNode *node, GraphSequence &gs) {
+	visited_nodes.insert(node->id);
+	// add next nodes
+	gs.addNode(*node, -1);
+	if (node->edgesOut.size() != 0) {
+		BNode *next_node = node;
+		std::pair<uint64_t, double> best_next = getNextNode(node->edgesOut,
+				node->id);
+		uint64_t max_next_idx, ov;
+		while (best_next.second != -1) {
+			max_next_idx = getByID(best_next.first);
+			ov = find_overlap(next_node->kmer, nodes[max_next_idx].kmer);
+			next_node = &(nodes[max_next_idx]);
+			gs.addNode(*next_node, ov);
+			if (visited_nodes.count(next_node->id) == 0) {
+				visited_nodes.insert(next_node->id);
+				best_next = getNextNode(next_node->edgesOut, next_node->id);
+			} else {
+				best_next = { 0, -1 };
+			}
 
-	if (nodes[node_i].edgesOut.size() == 0) { // end of the sequence
-		if (global_max >= threshold) {
-			gs.addNode(nodes[node_i], -1);
-			sequences.push_back(gs);
 		}
-	} else { // Check that the next node ( or one of the possible next ) doesn't differ too much from the previous one in terms of means
-		std::pair<uint64_t, double> best_next = getNextNode(
-				nodes[node_i].edgesOut, nodes[node_i].id);
-		for (auto next_node : nodes[node_i].edgesOut) {
-			if (best_next.second < 0 || next_node != best_next.first) { // Set root the path not seen, so they can generate the suboptimal paths.
-				nodes[getByID(next_node)].root = true;
+	}
+	if (node->edgesIn.size() != 0) {
+		BNode *prev_node = node;
+		std::pair<uint64_t, double> best_prev = getNextNode(node->edgesIn,
+				node->id);
+		uint64_t max_prev_idx, ov;
+		while (best_prev.second != -1) {
+			max_prev_idx = getByID(best_prev.first);
+			ov = find_overlap(nodes[max_prev_idx].kmer, prev_node->kmer);
+			prev_node = &(nodes[max_prev_idx]);
+			gs.addPrevNode(*prev_node, ov);
+			if (visited_nodes.count(prev_node->id) == 0) {
+				visited_nodes.insert(prev_node->id);
+				best_prev = getNextNode(prev_node->edgesIn, prev_node->id);
+			} else {
+				best_prev = { 0, -1 };
 			}
-		}
-		if (best_next.second < 0) {
-			if (global_max >= threshold) {
-				gs.addNode(nodes[node_i], -1);
-				sequences.push_back(gs);
-			}
-		} else {
-			uint64_t max_next_idx = getByID(best_next.first);
-			uint64_t ov = find_overlap(nodes[node_i].kmer,
-					nodes[max_next_idx].kmer);
-			gs.addNode(nodes[node_i], ov);
-			extractBestSequence(max_next_idx, gs);
+
 		}
 	}
 }

@@ -19,7 +19,8 @@ class KmerGraph {
 public:
 	KmerGraph() {};
 	virtual ~KmerGraph();
-	std::vector<BNode> nodes;
+	std::vector<BNode> nodes; // nodes are stored sorted by k-mer alphabetically
+	std::vector<BNode*> nodes_vsorted; // indexes of the nodes sorted by value
 	std::set<uint64_t> visited_nodes;
 	std::vector<double> best_accuracies;
 	std::string graph_type="None";
@@ -33,7 +34,7 @@ public:
 private:
 	std::pair<uint64_t, double> getNextNode(std::set<uint64_t>, uint64_t);
 	void addNodeToJSON(json & data, BNode & node);
-	void extractBestSequence(uint64_t node_idx, GraphSequence & s);
+	void extractSequence(BNode* node, GraphSequence & s);
 	uint64_t find_overlap(const Kmer & a,const Kmer & b);
 	double threshold;
 

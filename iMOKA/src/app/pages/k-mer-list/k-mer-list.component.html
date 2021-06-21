@@ -99,7 +99,7 @@
       </ng-container>
       <ng-container matColumnDef="position">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Alignment position</th>
-      <td mat-cell *matCellDef="let row"><mat-list dense> <mat-list-item *ngFor="let p of row.alignments">
+      <td mat-cell *matCellDef="let row"><mat-list dense style="max-height:100px; overflow-y:auto"> <mat-list-item *ngFor="let p of row.alignments" >
         <button mat-icon-button (click)="searchBrowser(p)" title="Go to this location in the browser">
           <mat-icon>explore</mat-icon>
         </button>
@@ -107,7 +107,7 @@
       </ng-container>
       <ng-container matColumnDef="genes">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Overlapping genes</th>
-      <td mat-cell *matCellDef="let row"><mat-list dense> <mat-list-item *ngFor="let g of row.genes"> <a *ngIf="g && g!='NA' && g.length > 1 " target='_blank' href='https://www.genecards.org/cgi-bin/carddisp.pl?gene={{g}}'> <mat-icon>link</mat-icon></a> {{g}} </mat-list-item> </mat-list></td>
+      <td mat-cell *matCellDef="let row"><mat-list style="max-height:100px; overflow-y:auto" dense> <mat-list-item *ngFor="let g of row.genes"> <a *ngIf="g && g!='NA' && g.length > 1 " target='_blank' href='https://www.genecards.org/cgi-bin/carddisp.pl?gene={{g}}'> <mat-icon>link</mat-icon></a> {{g}} </mat-list-item> </mat-list></td>
       </ng-container>
       <ng-container matColumnDef="events">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Overlapping events</th>
@@ -164,7 +164,7 @@
         <mat-select [(ngModel)]="ideogram_type" placeholder="Heatmap informations" (openedChange)="! $event && refreshIdeogram()" multiple> <mat-option *ngFor="let el of ideogram_possible_types" [value]="el.key">{{el.name}}</mat-option> </mat-select>
       </div>
       <div class="col-12">
-        <mat-checkbox [(ngModel)]="ideo_visible">Show only the ones visible in the table</mat-checkbox>
+        <mat-checkbox [(ngModel)]="ideo_visible" (change)="refreshIdeogram()">Show only the ones visible in the table</mat-checkbox>
       </div>
       <div class="col-12">
         <mat-label>Chromosomes</mat-label>

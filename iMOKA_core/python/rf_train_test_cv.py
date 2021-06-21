@@ -82,6 +82,7 @@ def run(training, test, file_output, n_trees=100, nmodels=1, max_features = 20, 
     for c in range(0, len(classnames)) :
         print("\t{} - {} \t {} samples".format(c, classnames[c] ,groupcount[c])) 
     ofs=open(file_output, "w")
+    ofs.write("Round\tNumberOfFeatures\tAccuracy\tOOB_score\n")
     for i in range(0, nmodels):
         print("\n\nRound {}".format(i), flush=True)
         fsel = SelectFromModel(DecisionTreeClassifier(), max_features=max_features, threshold=-np.inf)
@@ -94,6 +95,7 @@ def run(training, test, file_output, n_trees=100, nmodels=1, max_features = 20, 
             toprint="{}\t{}\t{}\t{}".format(i, j, acc, clf.oob_score_ )
             ofs.write(toprint+"\n")
             print(toprint, flush=True)
+    ofs.close()
     return;
     
     

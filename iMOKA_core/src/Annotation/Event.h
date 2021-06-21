@@ -10,6 +10,7 @@
 
 #include "../Utils/IOTools.hpp"
 #include "../Graphs/BNode.h"
+
 namespace imoka { namespace annotation {
 
 using namespace graphs;
@@ -20,12 +21,19 @@ public:
 	std::string type;
 	std::string info;
 	std::vector<uint64_t> signatures;
-	std::vector<uint64_t> alignments;
 	std::set<std::string> gene_name;
 	BNode * best_kmer;
 	uint64_t id;
 	json to_json(){
-		return json({{"signatures" ,signatures}, {"info" , info}, {"type", type }, {"best_kmer", best_kmer->id},{"id", id}, {"gene" , gene_name}});
+		return json({
+			{"signatures" ,signatures},
+			{"info" , info},
+			{"type", type },
+			{"best_kmer", best_kmer->id},
+			{"id", id},
+			{"gene" , gene_name},
+			{"sequence", best_kmer->sequence}
+			});
 	};
 };
 }

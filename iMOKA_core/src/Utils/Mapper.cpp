@@ -45,7 +45,7 @@ std::string Mapper::align(std::string in_file) {
 	}
 	std::string multithread_opts = (
 			flag_multi_thread != "" ?
-					(flag_multi_thread + " " + std::to_string(threads)) : "");
+					(flag_multi_thread + std::to_string(threads)) : "");
 	std::string cmd;
 	if (flag_out_file == ">") {
 		cmd = command + " " + options + " " + multithread_opts + " "

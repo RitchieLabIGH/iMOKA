@@ -14,7 +14,7 @@ RUN apt-get clean all && \
     apt-get -y upgrade && \
     export DEBIAN_FRONTEND=noninteractive && \ 
     apt-get install -qy make build-essential gcc g++ \
-    	 libopenmpi-dev zlib1g-dev  \
+    	 libopenmpi-dev zlib1g-dev libssl-dev  \
     	libarmadillo-dev libboost-test-dev \
     	libboost-dev libboost-system-dev libboost-math-dev \
     	libboost-program-options-dev libboost-serialization-dev \
@@ -59,6 +59,10 @@ COPY ./src /iMOKA/src
 COPY ./Release /iMOKA/Release
 COPY ./python /iMOKA/python
 COPY ./scripts /iMOKA/scripts
+
+RUN cd /iMOKA/external && \
+	tar -zxvf pblat-2.5.tar.gz && \
+	cd ./pblat-2.5 && make && mv ./pblat ../ && cd .. && rm -fr ./pblat-*
 
 ### Actual iMOKA
 RUN	cd /iMOKA/Release && \

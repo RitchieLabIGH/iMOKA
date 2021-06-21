@@ -134,20 +134,21 @@ class iMokaBE extends EventEmitter {
 		try {
 			let xml=await getContent("https://s3.amazonaws.com/igv.org.genomes/"+name+"/"+name+"_annotations.xml");
 			let ann=await parser.parseStringPromise(xml), out=[];
-			if ( ann["Global"]){
-				if ( ann["Global"]["Resource"] ){
-					for ( let res of ann["Global"]["Resource"])
-						out.push(res["$"])
-				}
-				if ( ann["Global"]["Category"]){
-					for ( let cat of ann["Global"]["Category"] ){
-						let grp ={ name : cat["$"].name , annotations : []} 
-						for ( let res of cat["Resource"])
-							grp.annotations.push(res["$"])
-						out.push(grp)
+			
+			let addToMap = function (x, dat){
+				if ( x ){
+					if ( x["Resource"] ){
+						for ( let res of x["Resource"])
+							dat.push(res["$"])
 					}
+					if ( x["Category"]){
+						for ( let cat of x["Category"] ){
+							addToMap(cat, dat)
+						}
+					}	
 				}
 			}
+			addToMap(ann["Global"], out)
 			return out;
 		} catch (err) {
 			console.log(err)
@@ -187,9 +188,9 @@ class iMokaBE extends EventEmitter {
 			                   this.push(line+"\n");
 			               }
 			           }
-			       } else {
-			           let obj, gene_name, gene_id, aln_pos;
-			           this.push("Gene\tGeneName\tEvent\t"+that.data.kmers.info.predictors.join("\t")+"\tkmer\talignment"+"\n");
+			       } else if (request.file_type == "genes") {
+					   let obj, gene_name, gene_id, aln_pos;
+			           this.push("Gene\tGeneName\tEvent\t"+that.data.kmers.info.predictors.join("\t")+"\tkmer\talignment\t"+that.data.kmers.info.groups_names.join("\t")+"\n");
 			           for ( let order=0; order < that.data.kmers.orders_idxs.kmers.length; order++ ){
 			               let i = that.data.kmers.orders_idxs.kmers[order];
 			               if (! that.data.kmers.masks.kmers || that.data.kmers.masks.kmers[i]){
@@ -215,12 +216,32 @@ class iMokaBE extends EventEmitter {
 			                               gene_name="NA"; 
 			                               gene_id="NA";
 			                           }
-			                           line =gene_id+"\t"+gene_name+"\t"+obj.events[e].type+"\t"+obj.values.join("\t")+"\t"+obj.kmer+"\t"+aln_pos+"\n";
+			                           line =gene_id+"\t"+gene_name+"\t"+obj.events[e].type+"\t"+obj.values.join("\t")+"\t"+obj.kmer+"\t"+aln_pos+"\t"+obj.means.join("\t")+"\n";
 			                           this.push(line);
 			                       }
 			                   }
 			               } 
 			           }
+					} else {
+			           this.push("kmer\tevent\tgene\t"+that.data.kmers.info.predictors.join("\t")+"\t"+that.data.kmers.info.groups_names.join("\t")+"\tsequence\n");
+					   let event, gene;
+			           for ( let order=0; order < that.data.kmers.orders_idxs.kmers.length; order++ ){
+			               let i = that.data.kmers.orders_idxs.kmers[order];
+							if (! that.data.kmers.masks.kmers || that.data.kmers.masks.kmers[i]){
+			            	   that.data.kmers.kmers[i].idx=i;
+			                   obj=that.regenerate(that.data.kmers.kmers[i]);
+								gene="NA";
+								event="NA";
+							   if (obj.events.length > 0){
+									event = obj.events[0].type;
+									if (obj.events[0].gene.length > 0  ){
+										gene=obj.events[0].gene[0]
+									} 
+							   } 
+							   
+  							   this.push(obj.kmer+"\t"+event+"\t"+gene+"\t"+obj.values.join("\t")+"\t"+obj.means.join("\t")+"\t"+obj.sequence.sequence+"\n")
+							}
+						}
 			       }
 			       this.push(null);
 		}});
@@ -826,6 +847,9 @@ class iMokaBE extends EventEmitter {
 				dat.ev_types.push("multimap")
 			}
 	    }
+		if ( typeof dat.sequence == "number" ){
+			dat.sequence= this.clone(this.data.kmers.sequences[dat.sequence]);
+		}
 	    return dat;
 	    
 	}
@@ -919,9 +943,9 @@ class iMokaBE extends EventEmitter {
 				reject("Kmers file not loaded");
 			}
 			
-			let annotations={keys: ["name","start","length", "repetitive", "highest_expression"],
+			let annotations={keys: ["name","start","length",  "class", "expression"],
 			 annots : [] },  aln, hexpr;
-			let tmp_annot={},  keep, chr, unique_n, filt_unique= [request.filter.includes("unique") ,  request.filter.includes("repetitive") ],
+			let tmp_annot={},  keep, chr, 
 			filt_class=[], any_filt_class=false;
 			for ( let c=0; c < 10; c++) {
 				filt_class.push(request.filter.includes(c+""))
@@ -944,11 +968,8 @@ class iMokaBE extends EventEmitter {
 								}
 							})
 							keep=true;
-							unique_n=this.data.kmers.kmers[k].alignments.length == 1 ? 0 : 1;
 							if ( request.filter.length != 0 ){
 								keep=false;
-								if ( filt_unique[0] && unique_n == 0 ) keep=true;
-								if ( filt_unique[1] && unique_n == 1 ) keep=true;
 								if ( filt_class[hexpr[1]] ){
 									keep=true;
 								} else {
@@ -957,7 +978,7 @@ class iMokaBE extends EventEmitter {
 							}
 							if ( keep ){
 								if (! tmp_annot[chr]) tmp_annot[chr]=[]
-								tmp_annot[chr].push(["seq_"+k+"_"+i, aln.start, aln.end-aln.start, unique_n , hexpr[1] ])
+								tmp_annot[chr].push(["seq_"+k+"_"+i, aln.start, aln.end-aln.start, hexpr[1], hexpr[0] ])
 							} 
 						}
 					}
