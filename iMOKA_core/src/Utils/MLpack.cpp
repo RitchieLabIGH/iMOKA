@@ -88,11 +88,13 @@ json MLpack::softmaxClassifierBaggingModel(
 	return { {"model", models_string}, {"algorithm" , "softmax"}, {"format" , "bagging"}};
 }
 
-std::vector<double> MLpack::pairwiseNaiveBayesClassifier(
+
+
+void MLpack::pairwiseNaiveBayesClassifier(
 		const std::vector<std::vector<double>> & values,
 		const std::vector<uint64_t> groups,
 		const std::map<uint64_t, uint64_t> group_counts,
-		const uint64_t crossValidation, double sd,double perc_test) {
+		const uint64_t crossValidation, double sd,double perc_test, std::vector<double> & out) {
 	classifier cl =
 			[](const arma::Mat<double>& trainingData,const arma::Row<size_t>& trainingLabels,const arma::Mat<double>& testData, const arma::Row<size_t>& testLabels) {
 				mlpack::naive_bayes::NaiveBayesClassifier<> naiv (trainingData, trainingLabels , 2, false );
@@ -104,8 +106,10 @@ std::vector<double> MLpack::pairwiseNaiveBayesClassifier(
 				return accuracy(predictedLabels, testLabels);
 			};
 	return pairwise_classification(cl, values, groups, group_counts,
-			crossValidation, sd,  perc_test);
+			crossValidation, sd,  perc_test, out);
 }
+
+
 
 double MLpack::naiveBayesClassifier(
 		const std::vector<std::vector<double>> values,
@@ -293,16 +297,19 @@ json MLpack::predict(json model, std::vector<std::vector<double>> data) {
 
 }
 
-std::vector<double> MLpack::pairwise_classification(
-		const classifier classification_fun,
-		const std::vector<std::vector<double>> & values,
-		const std::vector<uint64_t> groups,
-		const std::map<uint64_t, uint64_t> group_counts,
-		const uint64_t crossValidation, const double sd, double perc_test) {
+std::vector<double> MLpack::pairwise_classification(const classifier & classification_function , const std::vector<std::vector<double>> & values,const std::vector<uint64_t> & groups,const std::map<uint64_t, uint64_t> & group_counts, const uint64_t & crossValidation , double & sd,  double & perc_test) {
+	std::vector<double> out;
+	pairwise_classification(classification_function, values, groups, group_counts, crossValidation, sd, perc_test, out);
+	return out;
+}
+
+
+void MLpack::pairwise_classification(const classifier & classification_fun , const std::vector<std::vector<double>> & values,const std::vector<uint64_t> & groups,const std::map<uint64_t, uint64_t> & group_counts, const uint64_t & crossValidation, double & sd, double & perc_test, std::vector<double> & out) {
+
 	arma::Mat<double> trainingData, testData;
 	arma::Row<size_t> trainingLabels, testLabels;
 
-	std::vector<double> results;
+	out.clear();
 	uint64_t min_group = 10000;
 	for (auto g : group_counts) {
 		min_group = g.second < min_group ? g.second : min_group;
@@ -339,10 +346,10 @@ std::vector<double> MLpack::pairwise_classification(
 					}
 				}
 			}
-			results.push_back(Stats::mean(accuracies));
+			out.push_back(Stats::mean(accuracies));
 		}
 	}
-	return results;
+	return;
 }
 
 double MLpack::multiclass_classification(const classifier cl,

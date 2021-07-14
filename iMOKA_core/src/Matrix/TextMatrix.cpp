@@ -12,7 +12,7 @@ bool TextMatrix::getLine(TextMatrixLine & ml) {
 	if (!next())
 		return false;
 	ml.index = index;
-	ml.setName(content[0]);
+	ml.setKmer(content[0]);
 	ml.count.resize(content.size() - 1);
 	for ( int i=1; i<content.size(); i++){
 		try {

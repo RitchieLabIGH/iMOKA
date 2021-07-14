@@ -342,6 +342,25 @@ private:
 
 };
 
+template <class T>
+class KmerMatrixLine {
+public:
+	Kmer & getKmer() { return kmer; }
+	std::string getName(){return kmer.str();};
+	std::vector<T> count;
+	uint64_t index=0;
+	void setKmer(const Kmer & new_kmer){
+		kmer = new_kmer;
+	}
+	void setKmer(const std::string & new_kmer){
+		Kmer k(new_kmer);
+		kmer = k;
+	}
+private:
+	Kmer kmer;
+};
+
+
 }
 
 }

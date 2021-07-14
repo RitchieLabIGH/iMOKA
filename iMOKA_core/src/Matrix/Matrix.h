@@ -14,32 +14,6 @@ namespace imoka {
 namespace matrix {
 
 
-class MatrixLine {
-public:
-	virtual ~MatrixLine(){};
-	virtual std::string getName(){return "NA";};
-	std::vector<double> count;
-	uint64_t index;
-};
-
-class KmerMatrixLine  : public MatrixLine {
-public:
-
-	Kmer & getKmer() { return kmer; }
-	 std::string getName(){return kmer.str();};
-	void setKmer(const Kmer & new_kmer){
-		kmer = new_kmer;
-	}
-	void setKmer(const std::string & new_kmer){
-			Kmer k(new_kmer);
-			kmer = k;
-		}
-private:
-	Kmer kmer;
-};
-
-
-
 class Matrix {
 public:
 	Matrix(){

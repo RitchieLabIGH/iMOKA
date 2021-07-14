@@ -9,18 +9,14 @@
 namespace imoka {
 namespace graphs {
 using namespace matrix;
-BNode::BNode(KmerMatrixLine ml, int ngroups) {
+BNode::BNode(KmerMatrixLine<uint32_t> ml) {
 	kmer = ml.getKmer();
 	values.clear();
 	means.clear();
-	for (int i = 0; i < ml.count.size() - ngroups; i++) {
+	for (int i = 0; i < ml.count.size(); i++) {
 		values.push_back(ml.count[i]);
 	}
-	for (int i = ml.count.size() - ngroups; i < ml.count.size(); i++) {
-		means.push_back(ml.count[i]);
-	}
 	values.shrink_to_fit();
-	means.shrink_to_fit();
 	id = ml.index;
 }
 

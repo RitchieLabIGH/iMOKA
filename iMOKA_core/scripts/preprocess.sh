@@ -89,7 +89,12 @@ while [ "$1" != "" ]; do
                                 matrix_file=$1
                                 ;;
         -k | --kmer-length )    shift
-                                kmer_len=$1
+                                if [[ "${1}"  =~ ^[0-9]+$ ]] ; then
+                                    kmer_len=$1
+                                else
+                                    echo "Error! -k argument must be an integer number";
+                                    exit 1                                    
+                                fi
                                 ;;
         -t | --threads )        shift
                                 threads=$1

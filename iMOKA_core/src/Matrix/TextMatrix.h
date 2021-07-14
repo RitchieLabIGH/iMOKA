@@ -7,23 +7,13 @@
 
 #ifndef MATRIX_TEXTMATRIX_H_
 #define MATRIX_TEXTMATRIX_H_
-
 #include "Matrix.h"
+
+
 namespace imoka {
 namespace matrix {
 
-
-class TextMatrixLine  : public MatrixLine {
-public:
-	std::string getName(){
-		return name;
-	}
-	void setName(std::string & new_name) {
-		name = new_name;
-	}
-private:
-	std::string name;
-};
+using TextMatrixLine = KmerMatrixLine<double>;
 
 /// Read a matrix in text format
 class TextMatrix  : public Matrix {

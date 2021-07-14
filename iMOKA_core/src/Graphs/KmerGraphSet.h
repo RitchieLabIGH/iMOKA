@@ -60,7 +60,7 @@ public:
 	std::vector<std::string> predictors_groups;
 	std::vector<std::string> sample_groups_names;
 	std::vector<std::string> kmer_sequences;
-	std::vector<KmerMatrixLine> counts;
+	std::vector<KmerMatrixLine<uint32_t>> counts;
 	uint64_t n_columns;
 	uint64_t n_groups;
 	uint64_t k_len;

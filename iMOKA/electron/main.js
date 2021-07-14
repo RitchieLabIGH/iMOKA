@@ -1,5 +1,7 @@
 'use strict';
 const { app, BrowserWindow, ipcMain, dialog, shell, Menu, protocol } = require('electron');
+if (require('electron-squirrel-startup')) return app.quit(); // from https://www.electronforge.io/config/makers/squirrel.windows
+
 const Store = require('./store.js');
 const rimraf = require("rimraf");
 const path = require('path');

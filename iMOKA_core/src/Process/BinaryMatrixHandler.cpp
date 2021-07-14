@@ -64,8 +64,8 @@ bool BinaryMatrixHandler::run(int argc, char **argv) {
 							"./stable_kmers.tsv"))("s,source",
 					"The source from where extract the features (JSON header file)",
 					cxxopts::value<std::string>())("m,max",
-					"Maximum number of k-mers to output",
-					cxxopts::value<std::uint64_t>()->default_value("100"))(
+					"Maximum number of k-mers to output for each category",
+					cxxopts::value<std::uint64_t>()->default_value("9"))(
 					"h,help", "Show this help");
 			auto parsedArgs = options.parse(argc, argv);
 			bool help = IOTools::checkArguments(parsedArgs, { "source" }, log);
@@ -150,77 +150,17 @@ bool BinaryMatrixHandler::run(int argc, char **argv) {
 
 }
 
-std::pair<double, double> BinaryMatrixHandler::estimate_stable_thresholds(
-		std::string source, const std::vector<Kmer> &partitions) {
-	/// test 1M k-mers picked randomly for each thread
-	std::vector<std::vector<double>> means(omp_get_max_threads());
-	uint64_t max_per_thr = 100000;
-	std::cout << "Estimating mean values...";
-	std::cout.flush();
-#pragma omp parallel firstprivate( partitions , source )
-	{
-		uint64_t thr = omp_get_thread_num(), skip = 0;
-		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
-		BinaryMatrix mat(source, true);
-		Kmer to_kmer(mat.k_len, std::pow(4, mat.k_len) - 1);
-		KmerMatrixLine line;
-		if (thr != omp_get_max_threads() - 1) {
-			to_kmer = partitions[thr];
-		}
-		if (thr != 0) {
-			Kmer from_kmer = partitions[thr - 1];
-			mat.go_to(from_kmer);
-			mat.getLine(line);
-		}
-		bool running = mat.getLine(line);
-		while (running) {
-			skip = rand() % 100;
-			while (skip != 0 && running) {
-				running = mat.getLine(line);
-				skip--;
-			}
-			if (running) {
-				if (*std::min_element(line.count.begin(), line.count.end())
-						> 0) {
-					means[thr].push_back(Stats::mean(line.count));
-					if (means[thr].size() == max_per_thr) {
-						running = false;
-					}
-				}
-			}
-		}
-	}
-	std::cout << "done.\n";
-	std::cout.flush();
-	for (int i = 1; i < omp_get_max_threads(); i++) {
-		means[0].insert(means[0].end(), means[i].begin(), means[i].end());
-		means[i].clear();
-	}
-	std::sort(means[0].begin(), means[0].end());
-	uint64_t n = means[0].size();
-	std::pair<double, double> out;
-	out.first = means[0][std::round(n / 4)];
-	out.second = means[0][std::round((n / 2))];
-	std::cout << "Using " << n << " k-mers to estimate the range of means: "
-			<< out.first << " - " << out.second << "\n";
-	std::cout.flush();
-	return out;
-}
 
-struct KmerMeanStdLine {
-	std::string kmer;
-	double mean;
-	double std;
-};
 
 bool BinaryMatrixHandler::stable(std::string source, std::string outfile,
 		uint64_t max_n) {
 	BinaryMatrix bm(source, true);
 	const std::vector<Kmer> partitions = bm.getPartitions(
 			omp_get_max_threads());
-	std::pair<double, double> means_ranges = estimate_stable_thresholds(source,
+	std::pair<double, double> means_ranges = StableProcess::estimate_stable_thresholds(source,
 			partitions);
-	std::vector<std::vector<std::vector<KmerMeanStdLine>>> results(omp_get_max_threads());
+	std::vector<std::vector<std::vector<KmerMeanStdLine>>> results(
+			omp_get_max_threads());
 
 	bm.clear();
 #pragma omp parallel firstprivate(  means_ranges, partitions , source, max_n )
@@ -233,7 +173,7 @@ bool BinaryMatrixHandler::stable(std::string source, std::string outfile,
 		std::string expected_end, reading_time, total_time, process_time;
 		uint64_t tot_lines = 0;
 		Kmer to_kmer(mat.k_len, std::pow(4, mat.k_len) - 1);
-		KmerMatrixLine line;
+		KmerMatrixLine<double> line;
 		if (thr != omp_get_max_threads() - 1) {
 			to_kmer = partitions[thr];
 		}
@@ -252,39 +192,13 @@ bool BinaryMatrixHandler::stable(std::string source, std::string outfile,
 				<< IOTools::format_space_human(
 						IOTools::getCurrentProcessMemory()) << ".\n";
 		std::cout.flush();
-
-		double mean, std, perc;
-		std::vector<KmerMeanStdLine> *vect = NULL;
-		results[thr].resize(3);
+		StableProcess stp(means_ranges, max_n, results[thr]);
 		while (running) {
 			if (line.getKmer() <= to_kmer) {
 				tot_lines++;
-				if (*std::min_element(line.count.begin(), line.count.end())
-						> 0) {
-					mean = Stats::mean(line.count);
-						if (mean < means_ranges.first) {
-							vect = &(results[thr][0]);
-						} else if ( mean > means_ranges.second){
-							vect = &(results[thr][2]);
-						} else {
-							vect = &(results[thr][1]);
-						}
-						std = Stats::stdev(line.count, mean);
-						if (vect->size() < max_n
-								|| std < vect->at(max_n - 1).std) {
-							vect->push_back(
-									{ line.getKmer().str(), mean, std });
-							if (vect->size() > max_n) {
-								std::sort(vect->begin(), vect->end(),
-										[](auto &a, auto &b) {
-											return a.std < b.std;
-										});
-								vect->resize(max_n);
-							}
-					}
-				}
+				stp.run(line);
 				if (tot_lines % 1000000 == 0) {
-					perc = ((line.getKmer().to_int() - starting_kmer)
+					double perc = ((line.getKmer().to_int() - starting_kmer)
 							/ (long double) (to_kmer.to_int() - starting_kmer))
 							* 100;
 					std::cout << "Thread " << thr << " - " << perc << "%\n";
@@ -301,26 +215,41 @@ bool BinaryMatrixHandler::stable(std::string source, std::string outfile,
 	} // parallel end
 	std::ofstream final_ofs(outfile);
 	for (int i = 1; i < omp_get_max_threads(); i++) {
-		for (int j =0 ; j < 3 ; j++ ){
+		for (int j = 0; j < 3; j++) {
 			results[0][j].insert(results[0][j].end(), results[i][j].begin(),
-							results[i][j].end());
-					results[i][j].clear();
+					results[i][j].end());
+			results[i][j].clear();
 		}
 	}
-	for ( int j=0; j< 3 ; j++){
-		std::sort(results[0][j].begin(), results[0][j].end(), [](auto &a, auto &b) {
-					return a.std < b.std;
+
+	std::vector<double> medians = { 0 , 0 , 0 };
+	KmerMeanStdLine & aref=results[0][0][0]; // Due to an annoying Eclipse bug, using reference to the object instad of directly the element in the array
+	for (int j = 0; j < 3; j++) {
+		std::sort(results[0][j].begin(), results[0][j].end(),
+				[](auto &a, auto &b) {
+					return a.stdev < b.stdev;
 				});
+		if ( results[0][j].size() > max_n ){
+						results[0][j].resize(max_n);
+					}
+		aref=results[0][j][results[0][j].size() / 2];
+		if ( results[0][j].size() % 2 == 0 ){
+			medians[j]=aref.mean;
+		} else {
+			KmerMeanStdLine & bref=results[0][j][(results[0][j].size() / 2) + 1];
+			medians[j]=(aref.mean + bref.mean) / 2;
+		}
 	}
 
-	final_ofs << "kmer\ttype\tmean\tstd\n";
-	for (int j = 0 ; j < 3 ; j++){
-		for (uint64_t i = 0; i < max_n; i++) {
-				if (i < results[0][j].size()) {
-					final_ofs << results[0][j][i].kmer << "\t"<< (j == 0 ? "LOW" : j ==1 ? "MEDIUM" : "HIGH") <<"\t"
-							<< results[0][j][i].mean << "\t" << results[0][j][i].std << "\n";
-				}
-			}
+	final_ofs << "#{ 'j' : " << ( medians[1] / medians[0] ) << ", 'k' : " << ( medians[1] / medians[2] ) << " }\nkmer\ttype\tmean\tstd\n";
+	for (int j = 0; j < 3; j++) {
+		for (uint64_t i = 0; i < results[0][j].size(); i++) {
+			aref=results[0][j][i];
+			final_ofs << aref.kmer << "\t"
+					<< (j == 0 ? "LOW" : j == 1 ? "MEDIUM" : "HIGH") << "\t"
+					<< aref.mean << "\t" << aref.stdev
+					<< "\n";
+		}
 	}
 
 	final_ofs.close();
@@ -338,53 +267,12 @@ bool BinaryMatrixHandler::stable(std::string source, std::string outfile,
 bool BinaryMatrixHandler::dump(std::string input, std::string output,
 		std::string from_k, std::string to_k, bool normalized,
 		bool write_header) {
-	BinaryMatrix bm;
-	bm.setNormalized(normalized);
-	bm.load(input);
-	std::ofstream ofs;
-	std::streambuf *buf;
-	std::vector<char> char_buffer(8192);
-	if (output == "stdout") {
-		buf = std::cout.rdbuf();
+	if (normalized) {
+		_dump<double>(input, output, from_k, to_k, write_header);
 	} else {
-		ofs.open(output);
-		buf = ofs.rdbuf()->pubsetbuf(char_buffer.data(), char_buffer.size());
+		_dump<uint32_t>(input, output, from_k, to_k, write_header);
 	}
-	std::ostream os(buf);
-	if (write_header)
-		IOTools::printMatrixHeader(os, bm.col_names, bm.col_groups);
-	KmerMatrixLine line;
-	if (from_k != "none") {
-		Kmer starting_k(from_k);
-		if (starting_k.k_len != bm.k_len) {
-			throw "Error! The given k-mer " + from_k + " has a wrong length.";
-			log << "Error! The given k-mer " + from_k + " has a wrong length.";
-			return false;
-		}
-		bm.go_to(starting_k);
-	}
-	if (to_k != "none") {
-		Kmer ending_k(to_k);
-		while (bm.getLine(line)) {
-			if (ending_k < line.getKmer()) {
-				break;
-			}
-			os << line.getKmer();
-			for (auto v : line.count)
-				os << '\t' << v;
-			os << '\n';
-		}
-	} else {
-		while (bm.getLine(line)) {
-			os << line.getKmer();
-			for (auto v : line.count)
-				os << '\t' << v;
-			os << '\n';
-		}
-	}
-	os.flush();
-	ofs.close();
-	return true;
+
 }
 
 /// Query a k-mer matrix using a directly a nucleotidic sequence or a file containing the query ( plain text format )
@@ -393,72 +281,14 @@ bool BinaryMatrixHandler::dump(std::string input, std::string output,
 /// @param output An output file or "stdout" to output in the standard output
 /// @param normalized true if use the matrix normalization, false if you want to retrieve the original raw count.
 /// @return
+
 bool BinaryMatrixHandler::extract(std::string input, std::string source,
 		std::string output, bool normalized) {
-	BinaryMatrix bm;
-	bm.setNormalized(normalized);
-	bm.load(source, true);
-	std::ofstream ofs;
-	std::streambuf *buf;
-	if (output == "stdout") {
-		buf = std::cout.rdbuf();
+	if ( normalized ){
+		return _extract<double>(input, source, output);
 	} else {
-		ofs.open(output);
-		buf = ofs.rdbuf();
+		return _extract<uint32_t>(input, source, output);
 	}
-	std::ostream os(buf);
-	IOTools::printMatrixHeader(os, bm.col_names, bm.col_groups);
-	if (IOTools::fileExists(input)) {
-		std::ifstream ifs(input);
-		std::string line;
-		uint64_t buffer_pos = 0, buffer_size = 100000;
-		std::vector<Kmer> buffer(buffer_size);
-		std::vector<KmerMatrixLine> lines;
-		bool reading = getline(ifs, line) ? true : false;
-		while (reading) {
-			std::set<Kmer> bline = Kmer::generateKmers(line, bm.k_len);
-			if (buffer_pos + bline.size() > buffer_size) {
-				buffer_size = buffer_pos + bline.size();
-				buffer.resize(buffer_size);
-			}
-
-			for (auto &l : bline) {
-				buffer[buffer_pos] = l;
-				buffer_pos++;
-			}
-
-			reading = getline(ifs, line) ? true : false;
-			if (!reading || buffer_pos >= buffer_size) {
-				buffer.resize(buffer_pos);
-				buffer_pos = 0;
-				bm.getLines(buffer, lines);
-				for (auto &bml : lines) {
-					os << bml.getKmer();
-					for (auto &v : bml.count)
-						os << "\t" << v;
-					os << "\n";
-				}
-				buffer.resize(buffer_size);
-			}
-		}
-	} else {
-		IOTools::to_upper(input);
-		if (std::regex_match(input, std::regex("^[ATCG]+$"))) {
-			std::vector<std::string> request = { input };
-			std::vector<KmerMatrixLine> lines = bm.getLines(request);
-			for (auto &bml : lines) {
-				os << bml.getKmer();
-				for (auto v : bml.count)
-					os << "\t" << v;
-				os << "\n";
-			}
-		} else {
-			log << "Input not recognized\n";
-			return false;
-		}
-	}
-	ofs.close();
-	return true;
 }
 
 /// Create a matrix from a tsv containing the informations about the the positions of the

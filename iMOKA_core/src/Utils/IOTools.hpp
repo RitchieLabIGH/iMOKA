@@ -84,6 +84,7 @@ static const std::string alphabet = "ACGT";
 
 
 
+
 static double averageLog2FC( std::vector<double> & a, std::vector<double> & b ){
 	// average absolute log2 fold change of a respect to b
 	double out=0;

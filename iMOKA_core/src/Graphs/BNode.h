@@ -19,7 +19,7 @@ using namespace matrix;
 class BNode {
 public:
 	BNode(){};
-	BNode(KmerMatrixLine, int);
+	BNode(KmerMatrixLine<uint32_t>);
 	BNode(TextMatrixLine, int);
 	BNode(Kmer k){
 		kmer =k;

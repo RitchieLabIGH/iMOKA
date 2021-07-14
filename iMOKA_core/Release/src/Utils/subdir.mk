@@ -5,18 +5,15 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/Utils/MLpack.cpp \
-../src/Utils/Mapper.cpp \
-../src/Utils/Stats.cpp 
+../src/Utils/Mapper.cpp 
 
 OBJS += \
 ./src/Utils/MLpack.o \
-./src/Utils/Mapper.o \
-./src/Utils/Stats.o 
+./src/Utils/Mapper.o 
 
 CPP_DEPS += \
 ./src/Utils/MLpack.d \
-./src/Utils/Mapper.d \
-./src/Utils/Stats.d 
+./src/Utils/Mapper.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

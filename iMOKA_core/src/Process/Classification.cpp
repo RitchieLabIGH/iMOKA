@@ -41,7 +41,9 @@ bool Classification::run(int argc, char **argv) {
 					"Print the given number of k-mers for each thread, the entropy and the entropy threshold that would have been used as additional columns. Useful to evaluate the efficency of the entropy filter. Ignored if the entropy filter is disabled. Defualt: 0 ( Disabled )",
 					cxxopts::value<uint64_t>()->default_value("0"))("m,min",
 					"Minimum raw count that at least one sample has to have to consider a k-mer",
-					cxxopts::value<int>()->default_value("5"));
+					cxxopts::value<int>()->default_value("5"))("S,stable",
+					"Estimate the stable k-mers to use for independent normalization. 0 = Disable, N = number of stable k-mers",
+					cxxopts::value<uint64_t>()->default_value("10"));
 			auto parsedArgs = options.parse(argc, argv);
 			if (parsedArgs.count("help") != 0
 					|| IOTools::checkArguments(parsedArgs,
@@ -61,7 +63,8 @@ bool Classification::run(int argc, char **argv) {
 					parsedArgs["cross-validation"].as<uint64_t>(),
 					parsedArgs["standard-error"].as<double>(),
 					parsedArgs["accuracy"].as<double>(),
-					parsedArgs["test-percentage"].as<double>(), adjustments);
+					parsedArgs["test-percentage"].as<double>(), adjustments,
+					parsedArgs["S"].as<uint64_t>());
 		}
 
 		if (std::string(argv[1]) == "cluster") {
@@ -108,29 +111,22 @@ bool Classification::run(int argc, char **argv) {
 bool Classification::classificationFilterMulti(std::string file_in,
 		std::string file_out, int min, uint64_t entropy_evaluation,
 		uint64_t cross_validation, double sd, double min_acc, double perc_test,
-		std::vector<double> adjustments) {
+		std::vector<double> adjustments, uint64_t stable) {
 	std::cerr << "Memory occupied: "
 			<< IOTools::format_space_human(IOTools::getCurrentProcessMemory())
 			<< ".\n";
+
 	BinaryMatrix bm(file_in, true);
 	mlpack::Log::Warn.ignoreInput = true;
 	const std::vector<Kmer> partitions = bm.getPartitions(
 			omp_get_max_threads());
-	std::stringstream header;
-	header << "kmer";
-	for (uint64_t g = 0; g < bm.group_map.size(); g++) {
-		for (uint64_t h = g + 1; h < bm.group_map.size(); h++) {
-			header << "\t" << bm.unique_groups[g] << "_x_"
-					<< bm.unique_groups[h];
-		}
+	std::pair<double, double> stable_thr;
+	if (stable != 0) {
+		stable_thr = StableProcess::estimate_stable_thresholds(file_in,
+				partitions);
 	}
-	for (uint64_t g = 0; g < bm.group_map.size(); g++) {
-		header << "\t" << bm.unique_groups[g];
-	}
-	if (entropy_evaluation > 0) {
-		header << "\tEntropy\tEntropy_threshold";
-	}
-	bm.clear();
+	std::vector<std::vector<std::vector<KmerMeanStdLine>>> stable_results(
+			omp_get_max_threads());
 	std::cerr << "Memory occupied: "
 			<< IOTools::format_space_human(IOTools::getCurrentProcessMemory())
 			<< ".\n";
@@ -141,43 +137,26 @@ bool Classification::classificationFilterMulti(std::string file_in,
 		std::cerr << "Entropy assertment disabled.\n";
 		adjustments[0] = 0;
 		adjustments[1] = 0;
-
 	}
 	if (cross_validation < 3) {
-		std::cerr << "Cross validation disabled. Accuracy are the training ones.\n";
+		std::cerr
+				<< "Cross validation disabled. Accuracy are the training ones.\n";
 		cross_validation = 1;
 	}
 	json info = { { "cross_validation", cross_validation }, { "standard_error",
 			sd }, { "minimum_count", min }, { "min_acc", min_acc }, {
 			"perc_test", perc_test }, { "adjustments", adjustments }, {
 			"file_in", file_in }, { "file_out", file_out } };
+	bm.clear();
 
-#pragma omp parallel firstprivate(cross_validation, sd, min_acc, perc_test, adjustments, min, entropy_evaluation,partitions )
+#pragma omp parallel firstprivate(cross_validation, sd, min_acc, perc_test, adjustments, min, entropy_evaluation,partitions, stable_thr, stable )
 	{
-		std::function<
-				std::vector<double>(const std::vector<std::vector<double>>&,
-						const std::vector<uint64_t>,
-						const std::map<uint64_t, uint64_t>, const uint64_t,
-						const double, double)> fun =
-				MLpack::pairwiseNaiveBayesClassifier;
 		uint64_t thr = omp_get_thread_num();
 		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
-		auto start = std::chrono::high_resolution_clock::now();
 		BinaryMatrix mat(file_in, true);
-		std::string file_out_thr = file_out + std::to_string(thr);
-		std::string expected_end, reading_time, total_time, process_time;
-		std::ofstream ofs(file_out_thr), tlog(file_out_thr + ".log");
-
-		ofs << std::fixed << std::setprecision(3);
-		std::vector<uint64_t> groups = mat.groups;
-		std::map<uint64_t, uint64_t> group_counts = mat.group_counts;
-		double max_entropy = 1000000.00, entropy = 1, perc;
-		double minEntropy = 0, localMinEntropy = max_entropy, adj_down =
-				adjustments[0], adj_up = adjustments[1];
-		uint64_t tot_lines = 0, kept = 0, entropy_update_every = 30,
-				last_update = 0;
 		Kmer to_kmer(mat.k_len, std::pow(4, mat.k_len) - 1);
-		KmerMatrixLine line;
+
+		KmerMatrixLine<double> line;
 		if (thr != omp_get_max_threads() - 1) {
 			to_kmer = partitions[thr];
 		}
@@ -187,102 +166,42 @@ bool Classification::classificationFilterMulti(std::string file_in,
 			mat.getLine(line);
 		}
 
-		std::ostringstream os;
-
 		bool running = mat.getLine(line), keep;
-		bool use_entropy = adj_down != 0 && adj_up != 0;
-		bool use_cv = cross_validation >= 3;
-		uint64_t starting_kmer = line.getKmer().to_int();
-		os << "[ " << IOTools::now() << " ] Thread " << thr
+
+		std::cerr << "[ " << IOTools::now() << " ] Thread " << thr
 				<< " starting on cpu " << sched_getcpu() << " with k-mer "
 				<< line.getKmer().str() << " to k-mer " << to_kmer.str()
 				<< ", memory occupied: "
 				<< IOTools::format_space_human(
-						IOTools::getCurrentProcessMemory()) << ".\n";
-		std::cerr << os.str() << std::flush;
-		std::vector<double> res;
-		tlog << "Perc\tTotal\tKept\tMinEntropy\tRunningTime\n";
-		tlog.flush();
-		bool verbose_entropy = use_entropy && entropy_evaluation > 0;
+						IOTools::getCurrentProcessMemory()) << ".\n"
+				<< std::flush;
+
+		std::string file_out_thr = file_out + std::to_string(thr);
+		std::ofstream outfs(file_out_thr), thrlog(file_out_thr + ".log");
+
+		std::vector<KmerLineProcess<double>*> processes;
+
+		ReductionProcess redp(thr, outfs, thrlog, adjustments, mat,
+				cross_validation, entropy_evaluation > 0, sd, min_acc,
+				perc_test, line.getKmer().to_int(), to_kmer.to_int());
+		processes.push_back(&redp);
+
+		if (stable != 0) {
+			StableProcess stp(stable_thr, stable, stable_results[thr]);
+			processes.push_back(&stp);
+		}
+
 		while (running) {
 			if (line.getKmer() <= to_kmer) {
-				tot_lines++;
-				if (bm.getMaxRawCount(line) >= min) {
-					if (use_entropy)
-						entropy = Stats::entropy(line.count);
-					if (!use_entropy || entropy >= minEntropy
-							|| verbose_entropy) {
-						res = fun( { line.count }, groups, group_counts,
-								cross_validation, sd, perc_test);
-						keep = false;
-						for (double &v : res)
-							keep = keep || v >= min_acc;
-						if (keep) {
-							kept++;
-							if (use_entropy) {
-								localMinEntropy =
-										localMinEntropy < entropy ?
-												localMinEntropy : entropy;
-								last_update++;
-								if (last_update >= entropy_update_every) {
-									minEntropy =
-											minEntropy == 0 ?
-													localMinEntropy
-															- (localMinEntropy
-																	* adj_down
-																	* 2) :
-											localMinEntropy
-													- (localMinEntropy
-															* adj_down)
-													< minEntropy ?
-													minEntropy
-															- (localMinEntropy
-																	* adj_down) :
-													minEntropy
-															+ (localMinEntropy
-																	* adj_up);
-									last_update = 0;
-									entropy_update_every = entropy_update_every
-											+ 30;
-									localMinEntropy = max_entropy;
-								}
-							}
-						}
-						if (keep || verbose_entropy) {
-							ofs << line.getKmer();
-							for (double &v : res)
-								ofs << "\t" << v;
-							std::vector<double> means(group_counts.size(), 0);
-							for (int i = 0; i < groups.size(); i++) {
-								means[groups[i]] += line.count[i];
-							}
-							for (int g = 0; g < group_counts.size(); g++) {
-								ofs << "\t" << (means[g] / group_counts[g]);
-							}
-
-							if (verbose_entropy) {
-								ofs << "\t" << entropy << "\t" << minEntropy;
-							}
-							ofs << "\n";
-						}
+				if (mat.getMaxRawCount(line) >= min) {
+					for (auto &proc : processes) {
+						proc->run(line);
 					}
-				}
-				if (tot_lines % 100000 == 0) {
-					perc = ((line.getKmer().to_int() - starting_kmer)
-							/ (long double) (to_kmer.to_int() - starting_kmer))
-							* 100;
-					tlog << perc << "\t" << tot_lines << "\t" << kept << "\t"
-							<< minEntropy << "\t"
-							<< IOTools::format_time(
-									std::chrono::duration_cast<
-											std::chrono::seconds>(
-											std::chrono::high_resolution_clock::now()
-													- start).count()) << "\n";
-					tlog.flush();
+
 				}
 				running = mat.getLine(line);
-				if (verbose_entropy) {
-					if (tot_lines >= entropy_evaluation) {
+				if (redp.verbose_entropy) {
+					if (redp.tot_lines >= entropy_evaluation) {
 						running = false;
 					}
 				}
@@ -290,19 +209,58 @@ bool Classification::classificationFilterMulti(std::string file_in,
 				running = false;
 			}
 		}
-		ofs.close();
+
 		std::cerr << "[ " << IOTools::now() << " ] Thread " << thr
-				<< " completed. " << tot_lines << " k-mers analysed, " << kept
-				<< " kept \n";
-		tlog << "100\t" << tot_lines << "\t" << kept << "\t" << minEntropy
-				<< "\t"
-				<< IOTools::format_time(
-						std::chrono::duration_cast<std::chrono::seconds>(
-								std::chrono::high_resolution_clock::now()
-										- start).count()) << "\n";
-		tlog.flush();
-		tlog.close();
+				<< " completed. " << redp.tot_lines << " k-mers analysed, "
+				<< redp.kept << " kept \n";
+		redp.close();
+
 	} // parallel end
+
+	if (stable != 0) {
+		std::ofstream sofs(file_out + "_stable.tsv");
+		for (int i = 1; i < omp_get_max_threads(); i++) {
+			for (int j = 0; j < 3; j++) {
+				stable_results[0][j].insert(stable_results[0][j].end(),
+						stable_results[i][j].begin(),
+						stable_results[i][j].end());
+				stable_results[i][j].clear();
+			}
+		}
+		KmerMeanStdLine & aref=stable_results[0][0][0]; // Due to an annoying Eclipse bug, using reference to the object instad of directly the element in the array
+		std::vector<double> medians = { 0, 0, 0 };
+		for (int j = 0; j < 3; j++) {
+			std::sort(stable_results[0][j].begin(), stable_results[0][j].end(),
+					[](auto &a, auto &b) {
+						return a.stdev < b.stdev;
+					});
+			if (stable_results[0][j].size() > stable) {
+				stable_results[0][j].resize(stable);
+			}
+			aref=stable_results[0][j][stable_results[0][j].size() / 2];
+			if ( stable_results[0][j].size() % 2 == 0 ){
+				medians[j] = aref.mean;
+			} else {
+				KmerMeanStdLine & bref=stable_results[0][j][(stable_results[0][j].size() / 2) + 1];
+				medians[j] = (aref.mean+ bref.mean ) /2;
+			}
+		}
+
+		sofs << "#{ 'j' : " << (medians[1] / medians[0]) << ", 'k' : "
+				<< (medians[1] / medians[2]) << " }\nkmer\ttype\tmean\tstd\n";
+		for (int j = 0; j < 3; j++) {
+			for (uint64_t i = 0; i < stable_results[0][j].size(); i++) {
+				aref=stable_results[0][j][i];
+				sofs << aref.kmer << "\t"
+						<< (j == 0 ? "LOW" : j == 1 ? "MEDIUM" : "HIGH") << "\t"
+						<< aref.mean << "\t"
+						<< aref.stdev << "\n";
+			}
+		}
+
+		sofs.close();
+	}
+
 	std::ofstream final_ofs(file_out);
 	std::ifstream ifs;
 	uint64_t total_kmers = 0, total_kmers_kept = 0;
@@ -317,7 +275,20 @@ bool Classification::classificationFilterMulti(std::string file_in,
 	info["processed"] = total_kmers;
 	info["kept"] = total_kmers_kept;
 	final_ofs << "#" << info.dump() << "\n";
-	final_ofs << header.str() << "\n";
+	final_ofs << "kmer";
+	for (uint64_t g = 0; g < bm.group_map.size(); g++) {
+		for (uint64_t h = g + 1; h < bm.group_map.size(); h++) {
+			final_ofs << "\t" << bm.unique_groups[g] << "_x_"
+					<< bm.unique_groups[h];
+		}
+	}
+	for (uint64_t g = 0; g < bm.group_map.size(); g++) {
+		final_ofs << "\t" << bm.unique_groups[g];
+	}
+	if (entropy_evaluation > 0) {
+		final_ofs << "\tEntropy\tEntropy_threshold";
+	}
+	final_ofs << "\n";
 	for (int i = 0; i < omp_get_max_threads(); i++) {
 		ifs.open(file_out + std::to_string(i));
 		final_ofs << ifs.rdbuf();
@@ -378,7 +349,7 @@ bool Classification::clusterizationFilter(std::string file_in,
 				<< IOTools::format_space_human(
 						IOTools::getCurrentProcessMemory()) << "\n";
 		std::cerr << os.str() << std::flush;
-		KmerMatrixLine line;
+		KmerMatrixLine<double> line;
 		bool running = mat.getLine(line);
 		std::ofstream tlog(file_out_thr + ".log");
 		tlog << "Total\tProcessed\tRunningTime\n";

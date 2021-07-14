@@ -12,7 +12,6 @@
 #include <vector>
 
 #include "IOTools.hpp"
-#include "Stats.h" // Contains already mlpack/core, necessary for armadillo library inclusion
 #include <mlpack/methods/logistic_regression/logistic_regression.hpp>
 #include <mlpack/methods/softmax_regression/softmax_regression.hpp>
 #include <mlpack/methods/naive_bayes/naive_bayes_classifier.hpp>
@@ -22,6 +21,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <mlpack/methods/dbscan/dbscan.hpp>
 #include <mlpack/methods/kmeans/kmeans.hpp>
+#include "Stats.hpp" // Contains already mlpack/core, necessary for armadillo library inclusion
 
 namespace imoka {
 typedef const std::function<double(const arma::Mat<double>&,const arma::Row<size_t>&, const arma::Mat<double>&,const arma::Row<size_t>& )> classifier;
@@ -43,7 +43,7 @@ public:
 	static std::vector<double> logisticRegressionClassifier(const std::vector<std::vector<double>> & values,const std::vector<uint64_t> groups,const std::map<uint64_t, uint64_t>  group_counts, const uint64_t crossValidation, const double sd,  const double perc_train);
 	static double softmaxClassifier(const std::vector<std::vector<double>> values,const std::vector<uint64_t> groups,const std::map<uint64_t, uint64_t>  group_counts, const uint64_t crossValidation, const double sd,  const double perc_train);
 	static json softmaxClassifierBaggingModel(const std::vector<std::vector<double>> values,const std::vector<uint64_t> groups,const std::map<uint64_t, uint64_t>  group_counts, const uint64_t crossValidation,  const double sd,  const double perc_train);
-	static std::vector<double> pairwiseNaiveBayesClassifier(const std::vector<std::vector<double>> & values,const std::vector<uint64_t> groups,const std::map<uint64_t, uint64_t>  group_counts, const uint64_t crossValidation, const double sd, const double perc_train);
+	static void pairwiseNaiveBayesClassifier(const std::vector<std::vector<double>> & values,const std::vector<uint64_t> groups,const std::map<uint64_t, uint64_t>  group_counts, const uint64_t crossValidation, const double sd, const double perc_train, std::vector<double> & out);
 	static double naiveBayesClassifier(const std::vector<std::vector<double>> values,const std::vector<uint64_t> groups,const std::map<uint64_t, uint64_t>  group_counts, const uint64_t crossValidation, const double sd,  const double perc_train);
 	static json naiveBayesClassifierBaggingModel(const std::vector<std::vector<double>> values,const std::vector<uint64_t> groups,const std::map<uint64_t, uint64_t>  group_counts, const uint64_t crossValidation,  const double sd,  const double perc_train);
 	static double randomForestClassifier(const std::vector<std::vector<double>> values,const std::vector<uint64_t> groups,const std::map<uint64_t, uint64_t>  group_counts, const uint64_t crossValidation, const double sd,  const double perc_train, int numTrees, int minimumLeafSize);
@@ -63,7 +63,8 @@ public:
 	template<typename T>
 	static arma::Mat<double>  predict_probabilities(const std::string & model_str,const arma::Mat<double> & data );
 private:
-	static std::vector<double> pairwise_classification(const classifier classification_function , const std::vector<std::vector<double>> & values,const std::vector<uint64_t> groups,const std::map<uint64_t, uint64_t>  group_counts, const uint64_t crossValidation, double sd, const double perc_train);
+	static std::vector<double> pairwise_classification(const classifier & classification_function , const std::vector<std::vector<double>> & values,const std::vector<uint64_t> & groups,const std::map<uint64_t, uint64_t> & group_counts, const uint64_t & crossValidation , double & sd,  double & perc_test);
+	static void pairwise_classification(const classifier & classification_function , const std::vector<std::vector<double>> & values,const std::vector<uint64_t> & groups,const std::map<uint64_t, uint64_t> & group_counts, const uint64_t & crossValidation, double & sd,  double & perc_train, std::vector<double> & out);
 	static double multiclass_classification(const classifier classification_function, const std::vector<std::vector<double>> values,const std::vector<uint64_t> groups,const std::map<uint64_t, uint64_t>  group_counts, const uint64_t crossValidation,double sd, const double perc_train);
 	static ClusterizationResult clusterize(const std::vector<std::vector<double>> & data,const std::function<int64_t(arma::Mat<double> &, arma::Row<size_t>&)> & fun);
 };

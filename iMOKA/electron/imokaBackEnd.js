@@ -843,9 +843,7 @@ class iMokaBE extends EventEmitter {
 	    		})
 	    		if ( ! dat.ev_types.includes(ev.type) ) dat.ev_types.push(ev.type);
 	    	})
-			if ( dat.alignments && dat.alignments.length > 2 && dat.ev_types.indexOf("multimap") == -1){
-				dat.ev_types.push("multimap")
-			}
+			
 	    }
 		if ( typeof dat.sequence == "number" ){
 			dat.sequence= this.clone(this.data.kmers.sequences[dat.sequence]);

@@ -533,12 +533,20 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 
 	std::ofstream tmp_bed(bed_out);
 	for (uint64_t i = 0; i < mapper_results.size(); i++) {
-		tmp_bed << mapper_results[i].to_bed(std::to_string(std::distance(sequences[mapper_results[i].query_index].best_kmer->means.begin(), std::max_element(sequences[mapper_results[i].query_index].best_kmer->means.begin(), sequences[mapper_results[i].query_index].best_kmer->means.end()))) );
+		tmp_bed
+				<< mapper_results[i].to_bed(
+						std::to_string(
+								std::distance(
+										sequences[mapper_results[i].query_index].best_kmer->means.begin(),
+										std::max_element(
+												sequences[mapper_results[i].query_index].best_kmer->means.begin(),
+												sequences[mapper_results[i].query_index].best_kmer->means.end()))));
 		// Add the information about the most expressed group
 	}
 	tmp_bed.close();
 	if (repeats != "NONE") {
-		std::cout << "using repeat annotation."; std::cout.flush();
+		std::cout << "using repeat annotation.";
+		std::cout.flush();
 		std::string tmp_rep_bed_file_out = bed_out + ".intersected.bed";
 		int r =
 				system(
@@ -563,6 +571,9 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 				is_repeat[seq_id] = true;
 				rep_elements[line_arr[9] + "#" + line_arr[6] + ":" + line_arr[7]
 						+ "-" + line_arr[8]].insert(map_id);
+				for (auto &sig : mapper_results[map_id].signatures) {
+					sig.generates_event = false;
+				}
 
 			}
 		}
@@ -571,7 +582,14 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 		tmp_bed.open(bed_out);
 		for (uint64_t i = 0; i < mapper_results.size(); i++) {
 			if (!is_repeat[mapper_results[i].query_index]) {
-				tmp_bed << mapper_results[i].to_bed(std::to_string(std::distance(sequences[mapper_results[i].query_index].best_kmer->means.begin(), std::max_element(sequences[mapper_results[i].query_index].best_kmer->means.begin(), sequences[mapper_results[i].query_index].best_kmer->means.end()))) );
+				tmp_bed
+						<< mapper_results[i].to_bed(
+								std::to_string(
+										std::distance(
+												sequences[mapper_results[i].query_index].best_kmer->means.begin(),
+												std::max_element(
+														sequences[mapper_results[i].query_index].best_kmer->means.begin(),
+														sequences[mapper_results[i].query_index].best_kmer->means.end()))));
 				// Add the information about the most expressed group
 			}
 		}
@@ -1080,9 +1098,10 @@ void KmerGraphSet::rescale() {
 			n.values[i] = (n.values[i] * 100) / max_values[i];
 		}
 	}
-	std::cout << "\tMax values: \n" ;
-	for ( int i =0; i < nv; i++ ){
-		std::cout << "\t - " << predictors_groups[i] << ":" << max_values[i] << "\n";
+	std::cout << "\tMax values: \n";
+	for (int i = 0; i < nv; i++) {
+		std::cout << "\t - " << predictors_groups[i] << ":" << max_values[i]
+				<< "\n";
 	}
 }
 
@@ -1130,6 +1149,23 @@ void KmerGraphSet::recoverWinners(double corr) {
 	winning_nodes.clear();
 	for (auto &ev : events) {
 		addWinningNode(ev);
+	}
+	std::map<std::string, int> events_priority = { { "DE", 0 }, {
+			"RepetitiveElement", 1 }, { "intron", 2 }, {
+			"multiple_splice_junctions", 3 }, { "splice_borders", 4 }, {
+			"mutation_borders", 5 }, { "insertion_borders", 6 }, {
+			"deletion_borders", 7 }, { "intragenic", 8 }, { "intergenic", 9 }, {
+			"multimap", 10 }, { "misalign", 11 } };
+
+	for (std::vector<uint64_t> &ev_list : winner_events) {
+		if (ev_list.size() > 1) {
+			std::sort(ev_list.begin(), ev_list.end(),
+					[&](uint64_t &a, uint64_t &b) {
+						return events_priority[events[a].type]
+								- events_priority[events[b].type];
+					});
+			ev_list.resize(1);
+		}
 	}
 
 	getNodePositions();
@@ -1281,15 +1317,16 @@ int64_t KmerGraphSet::addWinningNode(Event &ev) {
 		winner_events.resize(winner_idx + 1);
 	}
 	bool represented = false;
-	for (auto & idx : winner_events[winner_idx]){
-		if ( events[idx].type == ev.type ){
+	for (auto &idx : winner_events[winner_idx]) {
+		if (events[idx].type == ev.type) {
 			represented = true;
-			for ( auto gn : ev.gene_name) {
+			for (auto gn : ev.gene_name) {
 				events[idx].gene_name.insert(gn);
 			}
 		}
 	}
-	if ( ! represented ) winner_events[winner_idx].push_back(ev.id);
+	if (!represented)
+		winner_events[winner_idx].push_back(ev.id);
 	return winner_idx;
 }
 
@@ -1312,9 +1349,12 @@ json KmerGraphSet::generate_kmer_json(uint64_t node_idx) {
 		}
 	}
 
-	json data = { { "id", node.id }, { "kmer", node.kmer.str() }, { "values",
-			values }, { "means", node.means }, {"sequence" , node.sequence }, { "graph",
-			graphs[node.graph].graph_type }, { "graph_id", node.graph } };
+	json data =
+			{ { "id", node.id }, { "kmer", node.kmer.str() },
+					{ "values", values }, { "means", node.means }, { "sequence",
+							node.sequence }, { "graph",
+							graphs[node.graph].graph_type }, { "graph_id",
+							node.graph } };
 	data["alignments"] = json_alignments;
 	data["events"] = json_events;
 
@@ -1338,8 +1378,8 @@ json KmerGraphSet::generate_kmer_json(uint64_t node_idx) {
 			for (int j = i + 1; j < n_groups; j++) {
 				double fc;
 				fc = (mean_by_group[i] > mean_by_group[j] ?
-							(mean_by_group[i]+0.1) / (mean_by_group[j]+0.1 ):
-							-((mean_by_group[j]+0.1 )/ (mean_by_group[i] +0.1 ) ));
+						(mean_by_group[i] + 0.1) / (mean_by_group[j] + 0.1) :
+						-((mean_by_group[j] + 0.1) / (mean_by_group[i] + 0.1)));
 				fold_change.push_back(fc);
 				pvalues.push_back(
 						Stats::t_test_unequalVar(group_counts[i],
@@ -1402,30 +1442,14 @@ void KmerGraphSet::write_tsv(std::string out_file) {
 
 void KmerGraphSet::getNodeCounts() {
 	if (has_matrix) {
-		uint64_t mc = omp_get_max_threads();
-		std::vector<std::vector<Kmer>> requests(mc);
-		uint64_t t = 0, kmer_per_core = std::floor(winning_nodes.size() / mc);
+		std::vector<Kmer> requests;
 		for (auto &node : winning_nodes) {
-			requests[t].push_back(node->kmer);
-			if (t < mc - 1 && requests[t].size() == kmer_per_core) {
-				t++;
-			}
+			requests.push_back(node->kmer);
 		}
 		counts.resize(winning_nodes.size());
-#pragma omp parallel
-		{
-			BinaryMatrix bm(matrix_file);
-			bm.setNormalized(false);
-			auto res = bm.getLines(requests[omp_get_thread_num()]);
-#pragma omp critical
-			{
-				uint64_t from = omp_get_thread_num() * kmer_per_core;
-				for (auto l : res) {
-					counts[from++] = l;
-				}
-			}
-			bm.clear();
-		}
+		BinaryMatrix bm(matrix_file);
+		bm.getLines(requests, counts);
+		bm.clear();
 	}
 }
 }
