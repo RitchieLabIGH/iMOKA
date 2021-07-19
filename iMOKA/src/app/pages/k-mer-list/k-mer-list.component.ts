@@ -168,7 +168,7 @@ export class KMerListComponent implements OnInit, OnDestroy {
 			if (max_len > 0 && fname.length > max_len) {
 				fname = "..." + fname.substr(-max_len)
 			}
-			if (this.session.files.kmers.original_request) {
+			if (this.session.files.kmers.original_request && this.session.matrices && this.session.matrices.hasOwnProperty("find") ) {
 				let mat = this.session.matrices.find((mt) => { return mt.uid == this.session.files.kmers.original_request })
 				if (mat) {
 					return " matrix " + mat.name

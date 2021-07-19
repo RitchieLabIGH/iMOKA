@@ -32,7 +32,12 @@ export class SamplesService {
                 dataTablesParameters.recordsTotal= arg.recordsTotal;
                 dataTablesParameters.recordsFiltered=arg.recordsFiltered;
                 dataTablesParameters.stats = arg.stats;
-                observer.next(arg.data);
+				if ( arg.data.hasOwnProperty('sort') ){
+					observer.next(arg.data);	
+				} else {
+					observer.next([]);
+				}
+					
             });
 			this.ipc.send( "getData" , id, dataTablesParameters);
 		})

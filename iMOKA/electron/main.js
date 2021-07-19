@@ -123,8 +123,15 @@ function createWindow() {
 app.on("open-file", (event, url) => {
 });
 // Create window on electron intialization
-app.on('ready', createWindow)
+app.whenReady().then(() => {
+  createWindow()
 
+  app.on('activate', function () {
+    // On macOS it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function() {
@@ -137,11 +144,6 @@ app.on('window-all-closed', function() {
 	}
 })
 
-app.on('activate', function() {
-	if (win === null) {
-		createWindow()
-	}
-})
 
 String.prototype.hashCode = function() {
 	var hash = 0, i, chr;

@@ -23,7 +23,7 @@ class iMokaBE extends EventEmitter {
 	mess;
 	alignment_map={};
 	processor;
-	user_session=new Store({configName : "public-data" , defaults : { profile : { name : "public", picture : "" }} });
+	user_session =new Store({configName : "public-data" , defaults : { profile : { name : "public", picture : "" } , files : {}, matrices : [] } });
 	local_queue;
 	tmp_dir;
 	
@@ -261,7 +261,8 @@ class iMokaBE extends EventEmitter {
 				})
 				
 			} else {
-				resolve("Processor not loaded" );
+				resolve({ "message": "Processor not loaded", code: 1, data : [] ,  
+						recordsTotal : 0, recordsFiltered : 0, stats : {}});
 			}
 		})
 		
@@ -272,7 +273,7 @@ class iMokaBE extends EventEmitter {
 		if (! this.processor ){
 			return new Promise((resolve, reject)=>{
 				this.sendSession();
-				resolve("Processor not loaded")
+				resolve()
 			});
 		}
 		if (this.updating_session ){
@@ -1327,7 +1328,7 @@ class iMokaBE extends EventEmitter {
 	    let request_user = this.users.data["users"].find((u)=>{return u.name == user_name || u.mail == user_name});
 	    if ( request_user  ){
 	        if (  password == request_user.password || force){
-	            this.user_session = new Store({configName : user_name+"-data" , defaults : {profile : {name : user_name,  picture : "" , process_config : { profiles : []} }, files : {}}});
+	            this.user_session = new Store({configName : user_name+"-data" , defaults : {profile : {name : user_name,  picture : "" , process_config : { profiles : []} }, files : {}, matrices : [] }});
 	            if ( ! this.user_session.data.profile.process_config ){
 	                this.user_session.data.profile.process_config = {profiles : [], current_profile : 0}
 	                this.user_session.save();

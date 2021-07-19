@@ -9,6 +9,7 @@
     "serve": "ng serve",
     "ng": "ng",
     "build": "ng build --prod",
+    "build-dev": "ng build",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",

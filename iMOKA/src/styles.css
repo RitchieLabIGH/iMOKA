@@ -1,7 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
-@import "~@angular/material/prebuilt-themes/indigo-pink.css"; 
+@import "~@angular/material/prebuilt-themes/indigo-pink.css";
 @import "~@fortawesome/fontawesome-free/css/all.css";
 @import "./style/bootstrap-grid.min.css";
+@import "./style/bootstrap-utilities.min.css";
 
 html, body { height: 100%; }
 body { 
@@ -168,41 +169,4 @@ a {
 .push-right{
 	position: absolute !important;
 	right:0;
-}
-/*New rules === All the Angular material default components css style goes here */
-:root{
-	/*color kaki*/
-	--color-kaki-default:rgba(140, 124, 96, 1);
-	--color-kaki-light50:rgba(140, 124, 96, 0.5);
-	--color-kaki-light60:rgba(140, 124, 96, 0.6);
-	--color-kaki-ultralight20: rgba(140, 124, 96, 0.2);
-	--color-kaki-ultralight10: rgba(140, 124, 96, 0.1);
-	/*color darkblue*/
-	--color-darkblue: rgba(33, 49, 59, 1);
-	--color-darkblue-light:rgba(55, 69, 78, 1);
-	/*color white*/
-	--color-white: rgba(255, 255, 255, 1);
-	--color-white-offwhite: rgba(255, 255, 255, 0.88); /* text color */
-	/*above to correct*/
-	--color-grey-default: rgba(102, 102, 102, 1);
-	--color-grey-light50: rgba(102, 102, 102, 0.5);
-	--color-grey-bluegrey: rgba(33, 49, 59, 0.08);
-	--color-grey-ultralight:rgba(196, 196, 196, 1);
-	--color-grey-superultralight:rgba(250, 250, 250, 1);
-	/*other colors*/
-	--color-yellow-light:rgba(245, 244, 235, 1);
-	--color-green: rgba(26, 163, 48, 1);
-	/*font-weight*/
-	--font-light:300;
-	--font-regular: 400;
-	--font-medium: 500; 
-}
-
-
-/*main section*/
-.mat-drawer-content{
-	background-color: var(--color-yellow-light);
-}
-.mat-toolbar-row, .mat-toolbar-single-row{
-	min-height: 85px;
 }

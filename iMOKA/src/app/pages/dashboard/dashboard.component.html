@@ -1,4 +1,5 @@
-  <ng-container *ngIf="session"> <ng-container *ngIf="session.profile.process_config.profiles.length == 0">
+<div class="container">
+<ng-container *ngIf="session"> <ng-container *ngIf="session.profile.process_config.profiles.length == 0">
 
   <div class="row">
     <div class="col-md-6 p-2">
@@ -12,8 +13,9 @@
       <app-video></app-video>
     </div>
   </div>
-  </ng-container> <ng-container *ngIf="session.profile.process_config.profiles.length != 0"> <ng-container *ngIf="session.profile.process_config.profiles[session.profile.process_config.current_profile]; let profile">
-  <div class="row ">
+  </ng-container> 
+  <ng-container *ngIf="session.profile.process_config.profiles.length != 0"> <ng-container *ngIf="session.profile.process_config.profiles[session.profile.process_config.current_profile]; let profile">
+  <div class="row">
     <div class="col-md-6 p-2">
       <h3>Profile details</h3>
       <mat-card> <mat-card-content>
@@ -113,3 +115,4 @@
     </div>
   </div>
   </ng-container> </ng-container> </ng-container>
+</div>

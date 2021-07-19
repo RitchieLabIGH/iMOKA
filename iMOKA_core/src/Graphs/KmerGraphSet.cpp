@@ -532,7 +532,9 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 	std::map<std::string, std::set<uint64_t>> rep_elements;
 
 	std::ofstream tmp_bed(bed_out);
+	uint64_t n_of_seq=0;
 	for (uint64_t i = 0; i < mapper_results.size(); i++) {
+		n_of_seq+=1;
 		tmp_bed
 				<< mapper_results[i].to_bed(
 						std::to_string(
@@ -544,6 +546,9 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 		// Add the information about the most expressed group
 	}
 	tmp_bed.close();
+	if ( n_of_seq == 0 ){
+		throw "Error! No sequences given!\n ";
+	}
 	if (repeats != "NONE") {
 		std::cout << "using repeat annotation.";
 		std::cout.flush();
@@ -580,8 +585,10 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 		repeat_res.close();
 		bed_out += ".norep.bed";
 		tmp_bed.open(bed_out);
+		n_of_seq=0;
 		for (uint64_t i = 0; i < mapper_results.size(); i++) {
-			if (!is_repeat[mapper_results[i].query_index]) {
+			if ( ! is_repeat[mapper_results[i].query_index] ) {
+				n_of_seq+=1;
 				tmp_bed
 						<< mapper_results[i].to_bed(
 								std::to_string(
@@ -596,57 +603,63 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 		tmp_bed.close();
 
 	}
+	std::map<std::string, std::set<uint64_t>> genes_ids;
+	std::map<std::string, std::string> gene_names;
+	std::string line;
 
-	std::cout << "\n\tFinding the regions...";
-	std::cout.flush();
-	findRegions(bed_out);
-	std::string tmp_bed_file_out = bed_out + ".intersected.bed";
-	int r =
+	if ( n_of_seq == 0 ){
+		std::cout << "\n\tAll the sequences mapped to repetitive elements";
+		std::cout.flush();
+	} else {
+		std::cout << "\n\tFinding the regions...";
+		std::cout.flush();
+		findRegions(bed_out);
+		std::string tmp_bed_file_out = bed_out + ".intersected.bed";
+		int r =
 			system(
 					std::string(
 							"bedtools intersect -loj -a " + bed_out + " -b "
 									+ annotation_files + " > "
 									+ tmp_bed_file_out).c_str());
-	if (r != 0) {
-		exit(r);
-	}
-	std::cout << "done.\n\tAnnotating the sequences...";
-	std::cout.flush();
-	std::ifstream ifs(tmp_bed_file_out);
-	std::vector<std::string> buffer;
-	uint64_t max_buffer = 10000 * omp_get_max_threads();
-	std::vector<std::vector<Annotation>> results(omp_get_max_threads());
-	std::map<std::string, std::set<uint64_t>> genes_ids;
-	std::map<std::string, std::string> gene_names;
-	std::string line;
-	bool running = true;
-	while (running) {
-		running = getline(ifs, line) ? true : false;
-		if (running)
-			buffer.push_back(line);
-		if (buffer.size() >= max_buffer || !running) {
-#pragma omp parallel for
-			for (uint64_t l = 0; l < buffer.size(); l++) {
-				Annotation ann(buffer[l]);
-				results[omp_get_thread_num()].push_back(ann);
-			}
-			for (int n = 0; n < results.size(); n++) {
-				for (auto &ann : results[n]) {
-					if (ann.gene_id != "") {
-						genes_ids[ann.gene_id].insert(ann.map_result_id);
-						gene_names[ann.gene_id] = ann.gene_name;
-						mapper_results[ann.map_result_id].annotations.push_back(
-								ann);
-					}
-				}
-				results[n].clear();
-			}
-			buffer.clear();
+		if (r != 0) {
+			exit(r);
 		}
+		std::cout << "done.\n\tAnnotating the sequences...";
+		std::cout.flush();
+		std::ifstream ifs(tmp_bed_file_out);
+		std::vector<std::string> buffer;
+		uint64_t max_buffer = 10000 * omp_get_max_threads();
+		std::vector<std::vector<Annotation>> results(omp_get_max_threads());
+		bool running = true;
+		while (running) {
+			running = getline(ifs, line) ? true : false;
+			if (running)
+				buffer.push_back(line);
+			if (buffer.size() >= max_buffer || !running) {
+	#pragma omp parallel for
+				for (uint64_t l = 0; l < buffer.size(); l++) {
+					Annotation ann(buffer[l]);
+					results[omp_get_thread_num()].push_back(ann);
+				}
+				for (int n = 0; n < results.size(); n++) {
+					for (auto &ann : results[n]) {
+						if (ann.gene_id != "") {
+							genes_ids[ann.gene_id].insert(ann.map_result_id);
+							gene_names[ann.gene_id] = ann.gene_name;
+							mapper_results[ann.map_result_id].annotations.push_back(
+									ann);
+						}
+					}
+					results[n].clear();
+				}
+				buffer.clear();
+			}
+		}
+		remove(tmp_bed_file_out.c_str());
+		std::cout << "done.\n\tGrouping by gene...";
+		std::cout.flush();
+		ifs.close();
 	}
-	remove(tmp_bed_file_out.c_str());
-	std::cout << "done.\n\tGrouping by gene...";
-	std::cout.flush();
 	alignmentDerivedFeatures.clear();
 	uint64_t grp, o;
 	for (auto &r : mapper_results) {
@@ -675,10 +688,9 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 		r.signatures.clear();
 	}
 
-	ifs.close();
 	std::map<std::string, std::map<std::string, std::vector<Segment>>> gene_exons;
 	std::vector<std::string> columns;
-	ifs.open(annotation_files);
+	std::ifstream ifs(annotation_files);
 	std::smatch matches;
 	std::string gname, gid;
 	std::regex rgx_trID = std::regex(GENCODE_regex::rgx_transcript_id);

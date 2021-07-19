@@ -3,9 +3,18 @@
 }
 
 .sidenav {
-  min-width: 210px;/*original:180px*/
-  overflow: hidden;
-  background-color: var(--color-darkblue);
+  width: 210px;/*original:180px*/
+  overflow-x: hidden;
+}
+
+.main-open {
+	width : calc( 100vw - 250px );
+	height: calc( 100vh - 64px );
+	
+}
+.main-closed {
+	width: calc(100vw - 15px);
+	height: calc( 100vh - 80px );
 }
 
 a {
@@ -20,15 +29,8 @@ a {
   position: sticky;
   top: 0;
   z-index: 1;
-  background-color: var(--color-white);
-box-shadow: -1px 3px 4px -3px rgba(0,0,0,0.38);
--webkit-box-shadow: -1px 3px 4px -3px rgba(0,0,0,0.38);
--moz-box-shadow: -1px 3px 4px -3px rgba(0,0,0,0.38);
 }
-.main-frame{
-	width: 100%;
-	overflow: auto;
-}
+
 
 .blocked-message {
 	color : white;
@@ -68,7 +70,7 @@ box-shadow: -1px 3px 4px -3px rgba(0,0,0,0.38);
 }
 
 .message-card {
-	max-height:100%; /* height: 100%; */
+	height:100%;
 	overflow:auto;
 }
 
@@ -155,62 +157,4 @@ box-shadow: -1px 3px 4px -3px rgba(0,0,0,0.38);
     -webkit-transform: scale3D(0, 0, 1);
             transform: scale3D(0, 0, 1);
   } 
-}
-
-/*New Rules*/
-.mat-list-item{
-  color: var(--color-white-offwhite);
-  font-size: 15px;
-  font-weight: var(--font-regular);
-  text-transform: capitalize;
-  letter-spacing:.6px;
-}
-h3.mat-subheader{
-  color: var(--color-kaki-light60);
-  height: 15px;
-  font-size: 10px;
-  text-transform: uppercase;
-  padding-top: 25px;
-}
-.mat-list-base{
-  padding-top: 186px;/* 186px */
-  /* margin: 0 100px; */
-}
-.mat-nav-list .mat-list-item{
-  height: 56px;
-}
-.mat-divider{
-  display: none;
-}
-.mat-icon-button {
-  color: var(--color-darkblue);
-}
-.slogan{
-  font-size: 12px;
-  font-weight:var(--font-regular);
-  color: var(--color-kaki-default);
-  opacity: 0.8;
-  line-height: 85px;
-  text-align: center;
-  letter-spacing: 10px;
-  text-transform: uppercase;
-  align-self: center;
-  margin-left: 25px;
-}
-.logo-imoka{
-  align-self: center;
-  margin-top: -6px;
-  margin-left: 10px;
-}
-
-.mat-toolbar > a{
-  margin: 0 10px;
-
-}
-.mat-toolbar > button{
-  margin-left: 10px;
-  margin-right: 20px;
-}
-.mat-card-title{
-  font-size: 14px;
 }
