@@ -10,6 +10,10 @@ const iMokaBE = require('./imokaBackEnd.js')
 const Messenger = require('./messenger.js')
 const randomAccessFile = require('random-access-file')
 
+if ('ELECTRON_IS_DEV' in process.env && parseInt(process.env.ELECTRON_IS_DEV, 10) === 1) {
+	require('electron-reload')(path.join(__dirname, '..', 'dist'), {})
+}
+
 app.disableHardwareAcceleration()
 
 let win, backend, mess;

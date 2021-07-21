@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+FROM ubuntu:focal
 
 LABEL version=v1.1
 
@@ -11,29 +11,28 @@ ENV PYTHONNOUSERSITE="true"
 ### All the dependencies
 RUN apt-get clean all && \
     apt-get update && \
-    apt-get -y upgrade && \
     export DEBIAN_FRONTEND=noninteractive && \ 
     apt-get install -qy make build-essential gcc g++ \
     	 libopenmpi-dev zlib1g-dev libssl-dev  \
     	libarmadillo-dev libboost-test-dev \
     	libboost-dev libboost-system-dev libboost-math-dev \
     	libboost-program-options-dev libboost-serialization-dev \
-    	python3  \
+    	python3 libgtk-3-0 libnotify4 xdg-utils libgbm1 libglib2.0-bin \
     	fastqc samtools python3-pip libxml-libxml-perl curl \
     	bedtools libxml-parser-perl  \
     	gzip gawk libz-dev wget cmake perl graphviz locales && \
     pip3 install --no-cache-dir  SimpSOM numpy scipy sklearn pandas && \
-### mlpack v3.0.4
-### wget http://www.mlpack.org/files/mlpack-3.0.4.tar.gz
+### mlpack v3.4.2
 	cd /iMOKA/external/ && \
- 	tar -xvzpf mlpack-3.0.4.tar.gz && \
- 	mkdir -p ./mlpack-3.0.4/build && \
- 	cd ./mlpack-3.0.4/build/ && \
+	wget https://mlpack.org/files/mlpack-3.4.2.tar.gz && \
+ 	tar -xvzpf mlpack-3.4.2.tar.gz && \
+ 	mkdir -p ./mlpack-3.4.2/build && \
+ 	cd ./mlpack-3.4.2/build/ && \
  	cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_CLI_EXECUTABLES=OFF -DBUILD_PYTHON_BINDINGS=OFF -DBUILD_TESTS=OFF -DUSE_OPENMP=ON  ../ && \
  	make -j4 && \
  	make install && \
  	cd /iMOKA/external/ && \
- 	rm -fr ./mlpack-3.0.4 ./mlpack-3.0.4.tar.gz && \
+ 	rm -fr ./mlpack-3.4.2 ./mlpack-3.*.tar.gz && \
 ### KMC
 ## wget https://github.com/refresh-bio/KMC/releases/download/v3.0.0/KMC3.linux.tar.gz 
 	cd /iMOKA/external/ && \
@@ -76,7 +75,10 @@ RUN	cd /iMOKA/Release && \
     apt-get autoclean && \
 	rm -rf /var/lib/apt/lists/* /var/log/dpkg.log
 
+### GUI
 
+COPY ./imoka.deb /imoka.deb
+RUN apt-get install -qy /imoka.deb && rm /imoka.deb && rm -rf /var/lib/apt/lists/* /var/log/dpkg.log
     
 ENTRYPOINT ["iMOKA_core"]
 

@@ -200,11 +200,16 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 			info["mapping"]= user_conf;
 			std::cout << "Step " << step++ << " : Mapping the sequences... ";std::cout.flush();
 			gg.setPerfectMatch(perfect_match);
-			gg.alignSequences(mapper);
-			std::cout << "done.\nStep " << step++ << " : Annotating...";
-			std::cout.flush();
-			gg.annotate(annotation_file,repeat_annotation ,  out_file + ".sequences.bed", coverage_limit);
+			uint64_t n_of_mapped = gg.alignSequences(mapper);
 			std::cout << "done.\n";
+			std::cout.flush();
+			if (n_of_mapped == 0 ){
+				json_config= "nomap";
+			} else {
+				std::cout << "Step " << step++ << " : Annotating...";
+				gg.annotate(annotation_file,repeat_annotation ,  out_file + ".sequences.bed", coverage_limit);
+				std::cout << "done.\n";
+			}
 
 		} else {
 			std::cerr << "Warning: given configuration " << json_config << " is not valid: " << mapper.error_message << "\nThe job will proceed with nomap configurations.\n"  ;
@@ -213,7 +218,6 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 	}
 
 	if ( json_config == "nomap" ) {
-
 		info["mapping"]="nomap";
 		std::cout << "Step " << step++ << " : processing the best k-mers for each graph...";std::cout.flush();
 		gg.processUnAnnotated();

@@ -239,7 +239,7 @@ bool BinaryDB::open(std::string file) {
 	prefix_size = prefix_v_size / 2;
 	suffix_size = suffix_v_size / 2;
 	current_prefix_range = { Prefix(prefix_size) , {0,0} };
-	buffer_prefix_size = std::ceil((buffer_size * unit_prefix_binary)/10);
+	buffer_prefix_size = 100 * unit_prefix_binary;
 	buffer_size*=unit_suffix_binary;
 	suffix= Suffix(suffix_size);
 	buffer_p=buffer_size; // oblige to fill the buffer
@@ -294,7 +294,6 @@ int64_t BinaryDB::bestPrefixSize(std::string file) {
 
 std::vector<Kmer> BinaryDB::getPartitions(uint64_t n){
 	std::vector<Kmer> out;
-
 	uint64_t batch = std::ceil(this->size()/n);
 	uint64_t cur_suffix=current_suffix;
 	for (uint64_t i=batch; i < this->size() ; i+=batch ){
@@ -368,7 +367,7 @@ bool BinaryDB::go_to(uint64_t n){
 	current_suffix=n;
 	fillBuffer();
 	fillPrefixBuffer();
-	getNext();
+	return getNext();
 }
 
 

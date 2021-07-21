@@ -29,7 +29,7 @@ public:
 	void makeEdges(double);
 	void makeGraphsFromBestExtension(double);
 	void generateSequencesFromGraphs(double);
-	void alignSequences(Mapper &);
+	uint64_t alignSequences(Mapper &);
 	void recoverWinners(double corr);
 	void setCountMatrix(std::string file);
 	void filter(double , uint64_t);

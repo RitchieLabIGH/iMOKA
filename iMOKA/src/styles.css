@@ -3,6 +3,7 @@
 @import "~@fortawesome/fontawesome-free/css/all.css";
 @import "./style/bootstrap-grid.min.css";
 @import "./style/bootstrap-utilities.min.css";
+@import "./style/icon-style.css";
 
 html, body { height: 100%; }
 body { 
@@ -87,12 +88,12 @@ a {
       .5em 0 0 white;}}
 
 .fa {
-	font-size: 24px;
+	font-size: 1.5em;
 }
 
 
 .fab {
-	font-size: 24px;
+	font-size: 1.5em;
 }
 
 .padding-1 {

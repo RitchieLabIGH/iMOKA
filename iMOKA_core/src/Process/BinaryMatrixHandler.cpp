@@ -251,8 +251,8 @@ bool BinaryMatrixHandler::stable(std::string source, std::string outfile,
 					<< "\n";
 		}
 	}
-
 	final_ofs.close();
+	return true;
 }
 
 /// Dump a matrix in text format in alphabetic order
@@ -268,9 +268,9 @@ bool BinaryMatrixHandler::dump(std::string input, std::string output,
 		std::string from_k, std::string to_k, bool normalized,
 		bool write_header) {
 	if (normalized) {
-		_dump<double>(input, output, from_k, to_k, write_header);
+		return _dump<double>(input, output, from_k, to_k, write_header);
 	} else {
-		_dump<uint32_t>(input, output, from_k, to_k, write_header);
+		return _dump<uint32_t>(input, output, from_k, to_k, write_header);
 	}
 
 }

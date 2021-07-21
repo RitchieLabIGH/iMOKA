@@ -117,9 +117,9 @@ bool Classification::classificationFilterMulti(std::string file_in,
 			<< ".\n";
 
 	BinaryMatrix bm(file_in, true);
-	mlpack::Log::Warn.ignoreInput = true;
 	const std::vector<Kmer> partitions = bm.getPartitions(
 			omp_get_max_threads());
+
 	std::pair<double, double> stable_thr;
 	if (stable != 0) {
 		stable_thr = StableProcess::estimate_stable_thresholds(file_in,

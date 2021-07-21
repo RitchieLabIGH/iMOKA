@@ -50,7 +50,6 @@
 #include "Process/Classification.h"
 #include "Process/BinaryMatrixHandler.h"
 
-#include "Matrix/BinaryMatrix.h"
 
 std::string help() {
 	std::stringstream ss;

@@ -58,6 +58,12 @@ public:
 		} else {
 			buffer_size = bs;
 		}
+	}
+
+
+	void print_sizes(){
+		std::cout << " " << unit_suffix_binary << "\n";
+		std::cout << " " << unit_prefix_binary << "\n";
 
 	}
 
@@ -93,6 +99,14 @@ public:
 	}
 	uint32_t & getCount() {
 		return suffix.count;
+	}
+
+	int64_t getUnitPrefixSize(){
+		return unit_prefix_binary;
+	}
+
+	int64_t getUnitSuffixSize(){
+			return unit_suffix_binary;
 	}
 
 	bool go_to(Kmer & );

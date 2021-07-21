@@ -356,7 +356,7 @@ void KmerGraphSet::generateSequencesFromGraphs(double thr) {
 	return;
 }
 
-void KmerGraphSet::alignSequences(Mapper &mapper) {
+uint64_t KmerGraphSet::alignSequences(Mapper &mapper) {
 	uint64_t s;
 	std::string input_file = "./sequences_" + IOTools::timestamp() + ".fa";
 	/*std::string input_file = "./sequences.fa";*/
@@ -369,7 +369,7 @@ void KmerGraphSet::alignSequences(Mapper &mapper) {
 
 	int64_t new_pos = -1, tot_line = IOTools::countFileLines(output_file),
 			perc = 0, prev_perc = 0, curr_line = 0;
-	std::cout << "done.\n\tFound " << tot_line - 1
+	std::cout << "done.\n\tFound " << tot_line - (mapper.output_type == "pslx" ? 5 : 1)
 			<< " alignments.\nProgress: 0% \r";
 	std::cout.flush();
 	std::ifstream ifs(output_file);
@@ -445,6 +445,7 @@ void KmerGraphSet::alignSequences(Mapper &mapper) {
 	remove(output_file.c_str());
 	remove(std::string(output_file + ".err").c_str());
 	remove(std::string(output_file + ".out").c_str());
+	return  mapper_results.size();
 }
 
 void KmerGraphSet::findRegions(std::string bed_out) {
@@ -467,7 +468,7 @@ void KmerGraphSet::findRegions(std::string bed_out) {
 	regions.clear();
 	while (getline(ifs, line)) {
 		IOTools::split(line_arr, line, '\t');
-		IOTools::split(str_arr, line_arr[4], ',');
+		IOTools::split(str_arr, line_arr[3], ',');
 		regions.push_back( { });
 		for (auto s : str_arr) {
 			IOTools::split(line_arr, s, '_');

@@ -20,20 +20,20 @@
     <mat-toolbar>Menu</mat-toolbar>
     <mat-nav-list>
       <h3 matSubheader>General</h3>
-      <a mat-list-item routerLink="dashboard"><mat-icon matListIcon>dashboard</mat-icon> Dashboard</a>
-      <a mat-list-item routerLink="files"><mat-icon matListIcon>folder_open</mat-icon>File explorer</a>
-      <a mat-list-item routerLink="logger" *ngIf="session && session.profile.process_config.profiles[session.profile.process_config.current_profile]"><mat-icon matListIcon>work</mat-icon> Jobs</a>
+      <a mat-list-item routerLink="dashboard"><mat-icon fontSet="fa" fontIcon="icon-dashboard" matListIcon ></mat-icon> Dashboard</a>
+      <a mat-list-item routerLink="files"><mat-icon fontSet="fa" fontIcon="icon-search" matListIcon ></mat-icon>File explorer</a>
+      <a mat-list-item routerLink="logger" *ngIf="session && session.profile.process_config.profiles[session.profile.process_config.current_profile]"><mat-icon fontSet="fa" fontIcon="fa-sticky-note" matListIcon ></mat-icon> Jobs Logs</a>
       <mat-divider></mat-divider>
       <ng-container *ngIf="session && session.profile.process_config.profiles.length > 0">
       	<h3 matSubheader >Preprocess</h3>
-      	<a mat-list-item routerLink="dred"><mat-icon fontSet="fa" fontIcon="fa-database" matListIcon ></mat-icon>Workspace</a>
+      	<a mat-list-item routerLink="dred"><mat-icon fontSet="fa" fontIcon="icon-work" matListIcon ></mat-icon>Workspace</a>
       </ng-container>
       <ng-container *ngIf="session && (session.files.kmers ||session.files.importance || session.files.som)  ">
       <mat-divider></mat-divider>
       <h3 matSubheader>Data analysis</h3>
-      <a mat-list-item routerLink="klist" *ngIf="session && session.files.kmers" ><mat-icon matListIcon>table-chart</mat-icon>K-mer list</a>
-      <a mat-list-item routerLink="models" *ngIf="session && session.files.importance"><mat-icon fontSet="fa"  fontIcon="fa-project-diagram" matListIcon ></mat-icon> Prediction models</a>
-      <a mat-list-item routerLink="som" *ngIf="session && session.files.som"><mat-icon matListIcon>map</mat-icon> Samples SOM</a>
+      <a mat-list-item routerLink="klist" *ngIf="session && session.files.kmers" ><mat-icon fontSet="fa" fontIcon="icon-list" matListIcon ></mat-icon>K-mer list</a>
+      <a mat-list-item routerLink="models" *ngIf="session && session.files.importance"><mat-icon fontSet="fa" fontIcon="icon-net" matListIcon ></mat-icon> Prediction models</a>
+      <a mat-list-item routerLink="som" *ngIf="session && session.files.som"><mat-icon fontSet="fa" fontIcon="icon-som" matListIcon ></mat-icon> Samples SOM</a>
       </ng-container>
    	 <!--  <mat-divider></mat-divider> -->
    	  <h3 matSubheader>Others</h3>

@@ -148,11 +148,15 @@ void BinaryMatrix::initDBs() {
 	if (getenv("IMOKA_MAX_MEM_GB")) {
 		try {
 			uint32_t max_mem = std::stoll(getenv("IMOKA_MAX_MEM_GB"));
-			double Gb_ov_cores_db_Kline = 0.000011; // empirical factor
+			BinaryDB tmp(count_files[0]);
+			int64_t up_size = tmp.getUnitPrefixSize(), us_size = tmp.getUnitSuffixSize(), n_thr= omp_get_max_threads(), n_db= count_files.size();
+			double max_mem_bit = max_mem * 1000000000;
+			max_mem_bit-= ( up_size * 1000 * n_db * n_thr );
 			binary_db_buffer = std::ceil(
-					max_mem
-							/ (Gb_ov_cores_db_Kline * count_files.size()
-									* omp_get_max_threads())) * 1000;
+					(max_mem_bit )
+							/ (us_size * n_db
+									* n_thr)) ;
+			tmp.close();
 			if (binary_db_buffer < 1000) {
 				binary_db_buffer = 1000;
 			}
@@ -176,7 +180,7 @@ void BinaryMatrix::initDBs() {
 	}
 	for (uint64_t sample = 0; sample < count_files.size(); sample++) {
 		bin_databases[sample].setBufferSize(binary_db_buffer);
-		if (!bin_databases[sample].open(count_files[sample])) {
+		if (! bin_databases[sample].open(count_files[sample]) ) {
 			std::cerr << "WARNING! Database " << count_files[sample]
 					<< " is empty! \n";
 		}
