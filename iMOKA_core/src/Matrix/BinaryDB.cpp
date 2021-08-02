@@ -47,7 +47,7 @@ void BinaryDB::fillBuffer() {
 	}
 	file = fopen(file_name.c_str(), "rb");
 	int r = fseek(file, suffix_init_p + (unit_suffix_binary * current_suffix),
-			SEEK_SET);
+	SEEK_SET);
 	buffer_size = fread(stream_buffer.data(), 1, buffer_size, file);
 	buffer_p = 0;
 	fclose(file);
@@ -343,7 +343,7 @@ bool BinaryDB::go_to(Kmer &target) {
 	while (L < R) {
 		m = ((L + R) / 2) + ((L + R % 2 == 0) ? 0 : 1);
 		r = fseek(file_prefix, (prefix_init_p + (unit_prefix_binary * m)),
-				SEEK_SET);
+		SEEK_SET);
 		r = fread(tmp_prefix.kmer.data(), 1, prefix_v_byte_size, file_prefix);
 		if (prefix < tmp_prefix) {
 			R = m - 1;
@@ -357,6 +357,12 @@ bool BinaryDB::go_to(Kmer &target) {
 	if (!(prefix == getPrefix())) {
 		current_suffix = getPrefix().first_suffix;
 		getNext();
+		// Go to the k-mer after the target ( if any )
+		while (getKmer() < target) {
+			if (!getNext()) {
+				return false;
+			}
+		}
 		return false;
 	}
 	file = fopen(file_name.c_str(), "rb");
@@ -376,7 +382,7 @@ bool BinaryDB::go_to(Kmer &target) {
 	current_suffix = L;
 	getNext();
 	while (getKmer() < target) {
-		if ( ! getNext() ) {
+		if (!getNext()) {
 			return false;
 		}
 	}

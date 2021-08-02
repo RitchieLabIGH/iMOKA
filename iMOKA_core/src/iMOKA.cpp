@@ -117,10 +117,15 @@ int main(int argc, char** argv) {
 		imoka::matrix::KmerMatrixLine<double> line;
 		matrix.getLine(line);
 		imoka::matrix::Kmer kmer=line.getKmer();
-		std::vector<imoka::matrix::Kmer> partitions = matrix.getPartitions(100);
-		for (int i=0; i< 50 ;i++ ){
+		int n=1000;
+		std::vector<imoka::matrix::Kmer> partitions = matrix.getPartitions(n);
+		for (int i=0; i< n ;i++ ){
 			matrix.go_to(partitions[i]);
 			matrix.getLine(line);
+			if ( line.getKmer().str() != partitions[i].str() ){
+				std::cerr << i << " line: " << line.getKmer() << " target= " << partitions[i] <<  " !"<< "\n";
+			}
+
 		}
 		done=true;
 	} else {
