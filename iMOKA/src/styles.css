@@ -5,6 +5,7 @@
 @import "./style/bootstrap-utilities.min.css";
 @import "./style/icon-style.css";
 
+
 html, body { height: 100%; }
 body { 
 	margin: 0; 
@@ -51,18 +52,6 @@ a {
 	top : 45%;
 }
 
-.margin-1 {
-	margin:10px;
-}
-.margin-2 {
-	margin:15px;
-}
-
-.margin-b1 {
-	margin-bottom:10px;
-}
-
-
 .loading:after {
   content: '...';
   animation: dots 1s steps(5, end) infinite;}
@@ -87,27 +76,9 @@ a {
       .25em 0 0 white,
       .5em 0 0 white;}}
 
-.fa {
-	font-size: 1.5em;
-}
-
-
-.fab {
-	font-size: 1.5em;
-}
-
-.padding-1 {
-	padding: 10px;
-}
 
 .mat-drawer-inner-container{
 	overflow-x: hidden !important;
-}
-
-
-
-.table-container table {
-  width: 100%;
 }
 
 .info-title {
@@ -170,4 +141,27 @@ a {
 .push-right{
 	position: absolute !important;
 	right:0;
+}
+
+.fa {
+	font-size: 24px;
+}
+
+.fab {
+	font-size: 24px;
+}
+:root{
+	--bs-gutter-x : 0 ;	
+}
+.row {
+	--bs-gutter-x : 0 ;
+}
+
+
+mat-icon {
+	vertical-align: middle;
+}
+
+table {
+  width: 100%;
 }

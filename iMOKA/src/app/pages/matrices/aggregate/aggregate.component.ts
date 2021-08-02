@@ -1,10 +1,10 @@
 import { Component, OnInit, Inject, NgZone } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { Matrix } from '../../../../interfaces/samples';
+import { Matrix } from '../../../interfaces/samples';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { QueueService } from '../../../../services/queue.service';
-import { Session, Setting } from '../../../../interfaces/session';
-import { UemService } from '../../../../services/uem.service';
+import { QueueService } from '../../../services/queue.service';
+import { Session, Setting } from '../../../interfaces/session';
+import { UemService } from '../../../services/uem.service';
 
 @Component({
 	selector: 'app-aggregate',

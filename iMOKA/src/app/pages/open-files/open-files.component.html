@@ -1,112 +1,175 @@
-<div  class="row" >
-<div class="col-md-6 p-2">
-<mat-card >
-	<mat-card-content>
-      <mat-list class="folder-list">
-        <h3 matSubheader style="padding:0;height:15px;">Current files</h3>
-        <mat-list-item dense *ngFor="let file of status">
-          <div matLine style="height:2em;">
-          <button  *ngIf="file.name" mat-icon-button color="warn" (click)="closeFile(file.ftype)"
-              title="Close this file">
-           <mat-icon>close</mat-icon>
-          </button>
-          <button  title="Open a new file" *ngIf="!file.name" mat-icon-button color="primary" (click)="loadData()"><mat-icon>open_in_browser</mat-icon></button>
-          <strong>{{file.des}}</strong>
-	      <span *ngIf="file.name"> : {{file.name}}</span>
-          
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12 p-2">
+      <div class="row">
+        <div class="col-md-6 p-2">
+          <mat-card style="min-height:250px;"> <mat-card-title>Load individual files</mat-card-title> <mat-card-content> <mat-list> <mat-list-item
+            dense
+            *ngFor="let file of status"
+          >
+          <div matLine>
+            <button
+              *ngIf="file.name"
+              mat-icon-button
+              (click)="closeFile(file.ftype)"
+              title="Close this file"
+            >
+              <mat-icon
+                fontSet="fa"
+                fontIcon="fa-window-close"
+                color="warn"
+                matListIcon
+              ></mat-icon>
+            </button>
+            <button
+              title="Open a new file"
+              *ngIf="!file.name"
+              mat-icon-button
+              color="primary"
+              (click)="loadData()"
+            >
+              <mat-icon matListIcon>open_in_browser</mat-icon>
+            </button>
+            <strong>{{file.des}}</strong> <span *ngIf="file.name"> : {{file.name}}</span>
           </div>
-            <div matLine>
-              <ng-container *ngIf="file.external && file.ftype == 'kmers' && session.profile.process_config.profiles.length > 0 ">
-              <mat-form-field> 
-                <mat-label>Save in library as</mat-label> 
-                <input matInput [(ngModel)]="new_name">
-              </mat-form-field>
-              <button matPrefix mat-icon-button title="Save"
-                (click)="saveExternal()"
-                [disabled]="! new_name || new_name.length < 3 ">
-                  <mat-icon>save</mat-icon>
-              </button>
-              </ng-container>
-              </div>
-        </mat-list-item>
-      </mat-list>
-	<div>
-	</div>
-  </mat-card-content>
-</mat-card>
-</div>
-<div class="col-md-6 p-2">
-<mat-card >
-  <mat-card-content>
-  
-  <p *ngIf="! session || ! session.matrices">There are no experiments
-    to show</p>
-  <mat-list class="folder-list" *ngIf="session && session.matrices">
-       <h3 matSubheader>
-       <button (click)="refresh()" mat-raised-button style="width:50%;">Refresh</button>
-       <button (click)="import()"  mat-raised-button color="primary" style="width:50%;">Import an experiment</button></h3>
-       
-  <mat-list-item *ngFor="let mat of session.matrices"
-    class="folder-list-element" (click)="openExperiment(mat)"
-    title="Click to open"> <mat-icon matListIcon
-    *ngIf="current_matrix && current_matrix.uid == mat.uid">folder_open</mat-icon>
-  <mat-icon matListIcon
-    *ngIf="! current_matrix || current_matrix.uid != mat.uid">folder</mat-icon>
-  <h4>{{mat.name}}</h4>
-  </mat-list-item> </mat-list> 
-</mat-card-content> 
-</mat-card></div>
-<div class="col-12 p-2"> 
-<mat-card  style="height:50vh;"> 
-  <mat-card-content   *ngIf="current_matrix" >
-    <div class="row">
-		<div class="col-md-4">
-			<h3>{{current_matrix.name}}</h3>
-              <div class="button-list-v">
-                <button mat-raised-button color="primary" [disabled]="! current_matrix.aggregated"
-                    (click)="openFile(current_matrix.uid)">Open this k-mer
-                  list</button>
-                <button mat-raised-button (click)="showInfoMatrix()">Details</button>
-                <button mat-raised-button (click)="export()">Export this experiment</button>
-                <button mat-raised-button (click)="delete(current_matrix.uid)" color="warn">Delete this experiment</button>
-              </div>
-		</div>
-        <div class="col-md-4" >
-            <h4>Random forest models</h4>
-			<mat-list *ngIf="current_matrix.models && current_matrix.models.length > 0"  class="file-list" >
-			<mat-list-item *ngFor="let rfm of current_matrix.models">
-            <div title="Open this experiment: {{rfm.name}}"  (click)="openFile(current_matrix.uid+' RF '+rfm.name)">
-			 <button mat-icon-button> <mat-icon matListIcon>open_in_browser</mat-icon></button>
-			   {{rfm.name|date}} : {{rfm.description}}
+          <div
+            matLine
+            *ngIf="file.external && file.ftype == 'kmers' && session.profile.process_config.profiles.length > 0 "
+          >
+            <mat-form-field> <mat-label>Save in library as</mat-label> <input
+              matInput
+              [(ngModel)]="new_name"
+            > </mat-form-field>
+            <button
+              matPrefix
+              mat-icon-button
+              title="Save"
+              (click)="saveExternal()"
+              [disabled]="! new_name || new_name.length < 3 "
+            >
+              <mat-icon>save</mat-icon>
+            </button>
+          </div>
+          </mat-list-item> </mat-list>
+          <div></div>
+          </mat-card-content> </mat-card>
+        </div>
+        <div class="col-md-6 p-2">
+          <mat-card style="min-height:250px;"> <mat-card-title> Library <span class="push-right">
+            <button
+              (click)="import()"
+              style="margin-right: 0.5em"
+              mat-raised-button
+            >Import an experiment</button>
+            <button
+              (click)="refresh()"
+              style="margin-right: 0.5em"
+              mat-raised-button
+            >Refresh</button>
+          </span> </mat-card-title> <mat-card-content>
+          <p *ngIf="! session || ! session.matrices">There are no experiments to show</p>
+          <div
+            class="row p-3"
+            *ngIf="session && session.matrices"
+          >
+            <div
+              class="col-md-4 col-sm-6 clickable p-2"
+              style="border-width: 1px; border-color: black; border-style: solid;"
+              *ngFor="let mat of session.matrices"
+              (click)="openExperiment(mat)"
+              title="Click to open"
+            >
+              <mat-icon *ngIf="current_matrix && current_matrix.uid == mat.uid">folder_open</mat-icon>
+              <mat-icon *ngIf="! current_matrix || current_matrix.uid != mat.uid">folder</mat-icon>
+              <strong style="margin-left: 10px"> {{mat.name}}</strong>
             </div>
-             <button class="push-right" color="warn" mat-icon-button title="Remove this RF experiment" (click)="delete(current_matrix.uid+' RF '+rfm.name);">
-                    <mat-icon>remove_circle_outline</mat-icon>
-                  </button> </mat-list-item> </mat-list> <span
-				*ngIf="!current_matrix.models  || current_matrix.models.length == 0 ">None
-				available</span>
           </div>
-          <div class="col-md-4">
-			<h4>Self Organizing maps</h4>
-			<mat-list class="file-list"
-				*ngIf="current_matrix.som && current_matrix.som.length > 0 ">
-			<ng-container *ngFor="let som of current_matrix.som">
-                <h3 matSubheader>{{som.name | date}} : {{som.description}} 
-                  <button color="warn" mat-icon-button title="Remove this SOM experiment" (click)="delete(current_matrix.uid+' SOM '+som.name);">
-                    <mat-icon>remove_circle_outline</mat-icon>
-                  </button> 
-                </h3>
-                <mat-list-item *ngFor="let exp of som.experiments" (click)="openFile(current_matrix.uid+' SOM '+som.name+' '+exp.nsize)">
-                    <mat-icon matListIcon>open_in_browser</mat-icon>Map of dimension {{exp.nsize}}x{{exp.nsize}} 
-                </mat-list-item>
-                <span *ngIf="som.experiments.lenght == 0 ">None detected. It might still running</span> 
-             </ng-container></mat-list> 
-             <span *ngIf="!current_matrix.som  || current_matrix.som.length == 0 ">None
-				available</span> 
-		</div>
+          </mat-card-content> </mat-card>
+        </div>
+        <div
+          class="col-12"
+          *ngIf="current_matrix"
+        ><div class="row" >
+          <div class="col-md-4 p-2" >
+            <mat-card style="min-height:250px;"> <mat-card-title>Experiment: {{current_matrix.name}}</mat-card-title> <mat-card-content>
+            <div class="button-list-v">
+              <button
+                mat-raised-button
+                color="primary"
+                [disabled]="! current_matrix.aggregated"
+                (click)="openFile(current_matrix.uid)"
+              >Open this k-mer list</button>
+              <button
+                mat-raised-button
+                (click)="showInfoMatrix()"
+              >Details</button>
+              <button
+                mat-raised-button
+                (click)="export()"
+              >Export this experiment</button>
+              <button
+                mat-raised-button
+                (click)="delete(current_matrix.uid)"
+                color="warn"
+              >Delete this experiment</button>
+            </div>
+            </mat-card-content> </mat-card>
+          </div>
+          <div class="col-md-4 p-2">
+            <mat-card style="min-height:250px;"> <mat-card-title>Random forest models</mat-card-title> <mat-card-content> <mat-list
+              *ngIf="current_matrix.models && current_matrix.models.length > 0"
+              class="file-list"
+            > <mat-list-item *ngFor="let rfm of current_matrix.models">
+            <div
+              class="random_forest_model_item_text"
+              title="Open this experiment: {{rfm.name}}"
+              (click)="openFile(current_matrix.uid+' RF '+rfm.name)"
+            >
+              <button mat-icon-button>
+                <mat-icon matListIcon>open_in_browser</mat-icon>
+              </button>
+              {{rfm.name|date}} : {{rfm.description}}
+            </div>
+            <button
+              class="push-right"
+              color="warn"
+              mat-icon-button
+              title="Remove this RF experiment"
+              (click)="delete(current_matrix.uid+' RF '+rfm.name);"
+            >
+              <mat-icon>remove_circle_outline</mat-icon>
+            </button>
+            </mat-list-item> </mat-list> <span
+              *ngIf="!current_matrix.models  || current_matrix.models.length == 0 "
+              class="none_data_message"
+            >None available</span> </mat-card-content> </mat-card>
+          </div>
+          <div class="col-md-4 p-2">
+            <mat-card style="min-height:250px;"> <mat-card-title>Self Organizing maps</mat-card-title> <mat-card-content> <mat-list
+              class="file-list"
+              *ngIf="current_matrix.som && current_matrix.som.length > 0 "
+            > <ng-container *ngFor="let som of current_matrix.som">
+            <h3 matSubheader>
+              {{som.name | date}} : {{som.description}}
+              <button
+                color="warn"
+                mat-icon-button
+                title="Remove this SOM experiment"
+                (click)="delete(current_matrix.uid+' SOM '+som.name);"
+              >
+                <mat-icon>remove_circle_outline</mat-icon>
+              </button>
+            </h3>
+            <mat-list-item
+              *ngFor="let exp of som.experiments"
+              (click)="openFile(current_matrix.uid+' SOM '+som.name+' '+exp.nsize)"
+            > <mat-icon matListIcon>open_in_browser</mat-icon> Map of dimension {{exp.nsize}}x{{exp.nsize}} </mat-list-item> <span *ngIf="som.experiments.lenght == 0 ">None detected. It might still running</span> </ng-container></mat-list> <span
+              *ngIf="!current_matrix.som  || current_matrix.som.length == 0 "
+              class="none_data_message"
+            >None available</span> </mat-card-content> </mat-card>
+          </div></div>
+        </div>
+      </div>
     </div>
-	</mat-card-content>
-  <mat-card-content *ngIf="!current_matrix">
-    <h3>Select an experiment to see here the details</h3>
-  </mat-card-content>
-</mat-card>
+  </div>
 </div>

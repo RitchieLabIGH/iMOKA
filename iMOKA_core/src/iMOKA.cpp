@@ -113,6 +113,15 @@ int main(int argc, char** argv) {
 	else if (action == "aggregate" || action == "config")
 		done = imoka::process::Aggregation(logStreamBuff).run(argc, argv);
 	else if (action == "test") {
+		imoka::matrix::BinaryMatrix matrix(argv[2]);
+		imoka::matrix::KmerMatrixLine<double> line;
+		matrix.getLine(line);
+		imoka::matrix::Kmer kmer=line.getKmer();
+		std::vector<imoka::matrix::Kmer> partitions = matrix.getPartitions(100);
+		for (int i=0; i< 50 ;i++ ){
+			matrix.go_to(partitions[i]);
+			matrix.getLine(line);
+		}
 		done=true;
 	} else {
 		std::ostream logStream(logStreamBuff);

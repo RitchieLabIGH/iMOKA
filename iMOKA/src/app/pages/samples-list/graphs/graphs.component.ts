@@ -1,11 +1,11 @@
 import { Component, OnInit, NgZone, Inject ,OnDestroy} from '@angular/core';
-import { Session } from '../../../../interfaces/session';
-import {UemService} from '../../../../services/uem.service';
-import {QueueService} from '../../../../services/queue.service';
-import {SamplesService} from '../../../../services/samples.service';
+import { Session } from '../../../interfaces/session';
+import {UemService} from '../../../services/uem.service';
+import {QueueService} from '../../../services/queue.service';
+import {SamplesService} from '../../../services/samples.service';
 import { MAT_DIALOG_DATA } from '@angular/material';
 import {Subscription} from 'rxjs';
-import {Sample, Matrix} from '../../../../interfaces/samples';
+import {Sample, Matrix} from '../../../interfaces/samples';
 
 interface Prediction {
 	index : number, 

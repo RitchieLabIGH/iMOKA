@@ -21,12 +21,11 @@ import { SequenceInfoComponent } from './k-mer-list/dialog/sequence-info/sequenc
 import { OpenTrackComponent } from './k-mer-list/dialog/open-track/open-track.component';
 import { DataTablesModule } from 'angular-datatables';
 import { SetupComponent } from './setup/setup.component';
-import { SamplesListComponent } from './data-reduction/samples-list/samples-list.component';
-import { DialogNewComponent } from './data-reduction/samples-list/dialog-new/dialog-new.component';
-import { DataReductionComponent } from './data-reduction/data-reduction.component';
-import { MatricesComponent } from './data-reduction/matrices/matrices.component';
-import { AggregateComponent } from './data-reduction/matrices/aggregate/aggregate.component';
-import { ReduceComponent } from './data-reduction/matrices/reduce/reduce.component';
+import { SamplesListComponent } from './samples-list/samples-list.component';
+import { DialogNewComponent } from './samples-list/dialog-new/dialog-new.component';
+import { MatricesComponent } from './matrices/matrices.component';
+import { AggregateComponent } from './matrices/aggregate/aggregate.component';
+import { ReduceComponent } from './matrices/reduce/reduce.component';
 import { MapSetupComponent } from './setup/subpages/map_setup.component';
 import { MasterSetupComponent } from './setup/subpages/master_setup.component';
 import { OpenFilesComponent } from './open-files/open-files.component';
@@ -40,9 +39,9 @@ import { NodesInfoComponent } from './samples-som/nodes-info/nodes-info.componen
 import { HexamapComponent } from './samples-som/hexamap/hexamap.component';
 
 import {AboutComponent} from './about/about.component';
-import {SampleComponent} from './data-reduction/samples-list/sample/sample.component';
+import {SampleComponent} from './samples-list/sample/sample.component';
 import {VideoComponent} from './dashboard/video/video.component';
-import {GraphsComponent} from './data-reduction/samples-list/graphs/graphs.component';
+import {GraphsComponent} from './samples-list/graphs/graphs.component';
 
 import {LoggerComponent} from './logger/logger.component';
 
@@ -65,7 +64,6 @@ PlotlyModule.plotlyjs = PlotlyJS;
 		SetupComponent,
 		SamplesListComponent,
 		DialogNewComponent,
-		DataReductionComponent,
 		MatricesComponent,
 		AggregateComponent,
 		ReduceComponent,

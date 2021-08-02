@@ -28,13 +28,8 @@ export class SampleTableSource implements DataSource<Sample> {
 
     update(): Promise<any> {
         return new Promise(( resolve, reject ) => {
-            this.sampleService.getSamples(true).pipe(
-                catchError(() => {
-                    reject();
-                    return of( [] );
-                }
-                ),
-            ).subscribe( response => {
+            this.sampleService.getSamples(true).subscribe( response => {
+				console.log(response)
                 this.all_samples = response;
                 resolve();
             }, ( err ) => { reject( err ); } );

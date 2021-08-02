@@ -1,10 +1,10 @@
 import { Component, OnInit, Inject, NgZone } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { Matrix } from '../../../../interfaces/samples';
-import { Setting } from '../../../../interfaces/session';
+import { Matrix } from '../../../interfaces/samples';
+import { Setting } from '../../../interfaces/session';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { QueueService } from '../../../../services/queue.service';
-import { UemService } from '../../../../services/uem.service';
+import { QueueService } from '../../../services/queue.service';
+import { UemService } from '../../../services/uem.service';
 
 @Component({
 	selector: 'app-reduce',

@@ -1,4 +1,7 @@
-<div *ngIf="!session" class="centered">
+<div
+  *ngIf="!session"
+  class="centered"
+>
   <div class="sk-cube-grid">
     <div class="sk-cube sk-cube1"></div>
     <div class="sk-cube sk-cube2"></div>
@@ -12,71 +15,169 @@
   </div>
   <h1 class="loading-message">{{init_message}}</h1>
 </div>
-<mat-sidenav-container class="sidenav-container" *ngIf="session">
-  <mat-sidenav #drawer class="sidenav" fixedInViewport
-      [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
-      [mode]="(isHandset$ | async) ? 'over' : 'side'"
-      [opened]="(isHandset$ | async) === false">
-    <mat-toolbar>Menu</mat-toolbar>
-    <mat-nav-list>
-      <h3 matSubheader>General</h3>
-      <a mat-list-item routerLink="dashboard"><mat-icon fontSet="fa" fontIcon="icon-dashboard" matListIcon ></mat-icon> Dashboard</a>
-      <a mat-list-item routerLink="files"><mat-icon fontSet="fa" fontIcon="icon-search" matListIcon ></mat-icon>File explorer</a>
-      <a mat-list-item routerLink="logger" *ngIf="session && session.profile.process_config.profiles[session.profile.process_config.current_profile]"><mat-icon fontSet="fa" fontIcon="fa-sticky-note" matListIcon ></mat-icon> Jobs Logs</a>
-      <mat-divider></mat-divider>
-      <ng-container *ngIf="session && session.profile.process_config.profiles.length > 0">
-      	<h3 matSubheader >Preprocess</h3>
-      	<a mat-list-item routerLink="dred"><mat-icon fontSet="fa" fontIcon="icon-work" matListIcon ></mat-icon>Workspace</a>
-      </ng-container>
-      <ng-container *ngIf="session && (session.files.kmers ||session.files.importance || session.files.som)  ">
-      <mat-divider></mat-divider>
-      <h3 matSubheader>Data analysis</h3>
-      <a mat-list-item routerLink="klist" *ngIf="session && session.files.kmers" ><mat-icon fontSet="fa" fontIcon="icon-list" matListIcon ></mat-icon>K-mer list</a>
-      <a mat-list-item routerLink="models" *ngIf="session && session.files.importance"><mat-icon fontSet="fa" fontIcon="icon-net" matListIcon ></mat-icon> Prediction models</a>
-      <a mat-list-item routerLink="som" *ngIf="session && session.files.som"><mat-icon fontSet="fa" fontIcon="icon-som" matListIcon ></mat-icon> Samples SOM</a>
-      </ng-container>
-   	 <!--  <mat-divider></mat-divider> -->
-   	  <h3 matSubheader>Others</h3>
-   	  <a mat-list-item routerLink="setup"><mat-icon matListIcon>settings_applications</mat-icon>Settings</a>
-      <a mat-list-item routerLink="about" ><mat-icon matListIcon>info</mat-icon>About iMOKA</a>
-    </mat-nav-list>
-  </mat-sidenav>
-  <mat-sidenav-content  >
-    <mat-toolbar color="primary"  style="z-index:10000000">
+<mat-sidenav-container
+  class="sidenav-container"
+  *ngIf="session"
+> <mat-sidenav
+  #drawer
+  class="sidenav"
+  fixedInViewport
+  [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
+  [mode]="(isHandset$ | async) ? 'over' : 'side'"
+  [opened]="(isHandset$ | async) === false"
+> <mat-toolbar>Menu</mat-toolbar> <mat-nav-list class="menu-list" >
+<h3 matSubheader>General</h3>
+<a
+  mat-list-item
+  routerLink="dashboard"
+><mat-icon
+    fontSet="fa"
+    fontIcon="icon-dashboard"
+    matListIcon
+  ></mat-icon> Dashboard</a> <a
+  mat-list-item
+  routerLink="files"
+><mat-icon
+    fontSet="fa"
+    fontIcon="icon-search"
+    matListIcon
+  ></mat-icon>File explorer</a> <a
+  mat-list-item
+  routerLink="logger"
+  *ngIf="session && session.profile.process_config.profiles[session.profile.process_config.current_profile]"
+><mat-icon
+    fontSet="fa"
+    fontIcon="icon-work"
+    matListIcon
+  ></mat-icon> Jobs Logs</a> <mat-divider></mat-divider> <ng-container *ngIf="session && session.profile.process_config.profiles.length > 0">
+<h3 matSubheader>Preprocess</h3>
+<a
+  mat-list-item
+  routerLink="samples"
+><mat-icon
+    fontSet="fa"
+    fontIcon="icon-db"
+    matListIcon
+  ></mat-icon>Samples</a> 
+  <a
+  mat-list-item
+  routerLink="matrices"
+><mat-icon
+    matListIcon
+    fontSet="fa"
+    fontIcon="fa-list-alt"
+  ></mat-icon> Matrices</a></ng-container> <ng-container *ngIf="session && (session.files.kmers ||session.files.importance || session.files.som)  "> <mat-divider></mat-divider>
+<h3 matSubheader>Data analysis</h3>
+<a
+  mat-list-item
+  routerLink="klist"
+  *ngIf="session && session.files.kmers"
+><mat-icon
+    fontSet="fa"
+    fontIcon="icon-list"
+    matListIcon
+  ></mat-icon>K-mer list</a> <a
+  mat-list-item
+  routerLink="models"
+  *ngIf="session && session.files.importance"
+><mat-icon
+    fontSet="fa"
+    fontIcon="icon-net"
+    matListIcon
+  ></mat-icon> Prediction models</a> <a
+  mat-list-item
+  routerLink="som"
+  *ngIf="session && session.files.som"
+><mat-icon
+    fontSet="fa"
+    fontIcon="icon-som"
+    matListIcon
+  ></mat-icon> Samples SOM</a> </ng-container> <mat-divider></mat-divider>
+<h3 matSubheader>Others</h3>
+<a
+  mat-list-item
+  routerLink="setup"
+><mat-icon matListIcon>settings_applications</mat-icon>Settings</a> <a
+  mat-list-item
+  routerLink="about"
+><mat-icon matListIcon>info</mat-icon>About iMOKA</a> </mat-nav-list> </mat-sidenav> 
+<mat-sidenav-content>
+      <mat-toolbar
+        color="primary"
+        style="z-index:10000000"
+      >
       <button
         type="button"
         aria-label="Toggle sidenav"
         mat-icon-button
-        (click)="drawer.toggle()" >
+        (click)="drawer.toggle()"
+      >
         <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
       </button>
-      <div><img style="height:50px;vertical-align:middle;" src="assets/images/iMOKA_white.png"><span><strong>i</strong>nteractive <strong>M</strong>ulti <strong>O</strong>bjective <strong>K</strong>-mer <strong>A</strong>nalysis </span></div>  
-     
-     <span style="width:100%"></span>
-     <a class="float-right" title="GitHub" mat-icon-button href="https://ritchielabigh.github.io/iMOKA/" target="_blank"><mat-icon fontSet="fab" fontIcon="fa-github"></mat-icon></a>
-     <a class="float-right" title="Settings" mat-icon-button routerLink="setup" ><mat-icon>settings_applications</mat-icon></a>
-     <button class="float-right" title="Alerts" mat-icon-button (click)="hideAlert=!hideAlert" ><mat-icon *ngIf="hideAlert">notifications</mat-icon><mat-icon *ngIf="!hideAlert">notifications_none</mat-icon></button>
-     
-    </mat-toolbar>
-    <div [class.main-open]="drawer.opened" [class.main-closed]="!drawer.opened" class="pl-2">
-    	<router-outlet></router-outlet>
-    </div>
-  </mat-sidenav-content>
-</mat-sidenav-container>
-<div class="message-container-bg cdk-overlay-dark-backdrop" [class.hidden]="hideAlert && ! blocked" (click)="hideAlert=true"></div>
-<div class="message-container" [class.hidden]="hideAlert">
-	<mat-card class="mat-elevation-z6 message-card" >
-		<mat-card-title>Alerts</mat-card-title>
-		<mat-card-content>
-			<mat-list>
-			<mat-list-item *ngFor="let mex of messages; let i=index">
-				<button mat-icon-button (click)="messages.splice(i,1)" title="Remove this message" ><mat-icon>cancel</mat-icon></button> {{mex.message}} <mat-icon title="{{mex.details ? mex.details : mex.message}}">info</mat-icon>
-			</mat-list-item>
-			</mat-list>
-		</mat-card-content>
-	</mat-card>
+      <div>
+        <img
+          style="height: 50px; vertical-align: middle;"
+          src="assets/images/iMOKA_white.png"
+        ><span class="d-none d-md-inline"><strong>i</strong>nteractive <strong>M</strong>ulti <strong>O</strong>bjective <strong>K</strong>-mer <strong>A</strong>nalysis </span>
+      </div>
+      <span style="width: 100%"></span> <a
+        class="float-right"
+        title="GitHub"
+        mat-icon-button
+        href="https://ritchielabigh.github.io/iMOKA/"
+        target="_blank"
+      ><mat-icon
+          fontSet="fab"
+          fontIcon="fa-github"
+        ></mat-icon></a> <a
+        class="float-right"
+        title="Settings"
+        mat-icon-button
+        routerLink="setup"
+      ><mat-icon>settings_applications</mat-icon></a>
+      <button
+        class="float-right"
+        title="Alerts"
+        mat-icon-button
+        (click)="hideAlert=!hideAlert"
+      >
+        <mat-icon *ngIf="hideAlert">notifications</mat-icon>
+        <mat-icon *ngIf="!hideAlert">notifications_none</mat-icon>
+      </button>
+      </mat-toolbar>
+      <div class="router-container" >
+          <router-outlet></router-outlet>
+      </div>
+</mat-sidenav-content> </mat-sidenav-container>
+<div
+  class="message-container-bg cdk-overlay-dark-backdrop"
+  [class.hidden]="hideAlert && ! blocked"
+  (click)="hideAlert=true"
+></div>
+<div
+  class="message-container"
+  [class.hidden]="hideAlert"
+>
+  <mat-card class="mat-elevation-z6 message-card"> <mat-card-title>Alerts</mat-card-title> <mat-card-content> <mat-list> <mat-list-item *ngFor="let mex of messages; let i=index">
+  <button
+    mat-icon-button
+    (click)="messages.splice(i,1)"
+    title="Remove this message"
+  >
+    <mat-icon>cancel</mat-icon>
+  </button>
+  {{mex.message}} <mat-icon title="{{mex.details ? mex.details : mex.message}}">info</mat-icon> </mat-list-item> </mat-list> </mat-card-content> </mat-card>
 </div>
-<div class="waiting-container" [class.hidden]="!blocked" *ngIf="blocked">
-  <mat-progress-spinner style="margin:auto;" diameter="100" [mode]="blocked.progress && blocked.progress > 3 ? 'determinate' : 'indeterminate' " [value]="blocked.progress" ></mat-progress-spinner>
+<div
+  class="waiting-container"
+  [class.hidden]="!blocked"
+  *ngIf="blocked"
+>
+  <mat-progress-spinner
+    style="margin:auto;"
+    diameter="100"
+    [mode]="blocked.progress && blocked.progress > 3 ? 'determinate' : 'indeterminate' "
+    [value]="blocked.progress"
+  ></mat-progress-spinner>
   <h3 class="blocked-message">{{blocked.message}}</h3>
 </div>

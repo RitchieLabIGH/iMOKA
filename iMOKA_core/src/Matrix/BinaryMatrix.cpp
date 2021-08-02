@@ -337,7 +337,10 @@ bool BinaryMatrix::go_to(Kmer &target) {
 	current_kmers.clear();
 	for (auto &bdb : bin_databases) {
 		bdb.go_to(target);
-		current_kmers.insert(bdb.getKmer());
+		if (bdb.getKmer() >= target ){
+			current_kmers.insert(bdb.getKmer());
+		}
+
 	}
 	return true;
 }

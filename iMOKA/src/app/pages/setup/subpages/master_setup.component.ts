@@ -39,6 +39,33 @@ export class MasterSetupComponent implements OnInit {
 			});
 	}
 	remove() {
+		this.uem.removeProfile({ profile_number: this.current_profile }).subscribe(
+			result => {
+				this.zone.run(() => {
+					this.loading_message = result.message;
+				});
+			},
+			error => {
+				this.zone.run(() => {
+					if (typeof error == "string") {
+						this.err_message = error;
+					} else {
+						this.err_message = JSON.stringify(error);
+					}
+				});
+			}, () => {
+				this.zone.run(() => {
+					this.loading = false;
+					this.modify = false;
+					this.setProfile();
+				});
+				setTimeout(()=>{
+						this.zone.run(()=>{
+							this.err_message=undefined;
+						})
+					}, 2000)
+			}
+		);
 	}
 	selectFolder(){
 		this.fs.getFileName({title : "Select an empty folder for your local iMOKA directory", properties : ["createDirectory", 'openDirectory'], buttonLabel :"Select" }).then((res)=>{
@@ -52,13 +79,13 @@ export class MasterSetupComponent implements OnInit {
 	
 	setSingularityImage(){
 		this.zone.run(()=>{
-			this.mainParam.controls.original_image.setValue('https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.0/iMOKA');
+			this.mainParam.controls.original_image.setValue('https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.1/iMOKA');
 		});
 	}
 	
 	setExtSingularityImage(){
 		this.zone.run(()=>{
-			this.mainParam.controls.original_image.setValue('https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.0/iMOKA_extended');	
+			this.mainParam.controls.original_image.setValue('https://github.com/RitchieLabIGH/iMOKA/releases/download/v1.1/iMOKA_extended');	
 		});
 	}
 	save(event?: any) {

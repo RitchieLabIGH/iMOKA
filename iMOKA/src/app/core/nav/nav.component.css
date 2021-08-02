@@ -1,20 +1,29 @@
 .sidenav-container {
   height: 100%;
+  width:100%;
 }
-
 .sidenav {
-  width: 210px;/*original:180px*/
+  width: 210px;
   overflow-x: hidden;
+  
+}
+.menu-list {
+	height:calc(100% - 80px);
+	overflow:auto;
+}
+.menu-list::-webkit-scrollbar {
+  display: none;
+}
+.menu-list .mat-subheader {
+	padding-top:1em;
+	padding-bottom: 0;
+	height:1.5em;
 }
 
-.main-open {
-	width : calc( 100vw - 250px );
-	height: calc( 100vh - 64px );
-	
-}
-.main-closed {
-	width: calc(100vw - 15px);
-	height: calc( 100vh - 80px );
+.router-container {
+	width:100%;
+	height:calc(100% - 64px);
+	overflow:auto; 
 }
 
 a {

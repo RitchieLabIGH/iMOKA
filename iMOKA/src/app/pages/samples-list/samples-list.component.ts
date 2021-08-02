@@ -1,12 +1,11 @@
 import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
 
-import { TracksService } from '../../../services/tracks.service';
-import { SamplesService } from '../../../services/samples.service';
+import { SamplesService } from '../../services/samples.service';
 
-import { SampleTableSource } from '../../../data/sample-table.source';
+import { SampleTableSource } from '../../data/sample-table.source';
 
-import { Session } from '../../../interfaces/session';
-import { Matrix, Sample} from '../../../interfaces/samples';
+import { Session } from '../../interfaces/session';
+import { Matrix, Sample} from '../../interfaces/samples';
 
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';

@@ -1,7 +1,7 @@
 import { Component, OnInit, NgZone, ViewChild } from '@angular/core';
-import { QueueService } from '../../../../services/queue.service';
-import { UemService } from '../../../../services/uem.service';
-import { Session } from '../../../../interfaces/session';
+import { QueueService } from '../../../services/queue.service';
+import { UemService } from '../../../services/uem.service';
+import { Session } from '../../../interfaces/session';
 import { MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators, ValidatorFn , AbstractControl} from '@angular/forms';
 import { MatStepper } from '@angular/material/stepper';

@@ -3,7 +3,6 @@
 <mat-card-content>
 <div class="row">
 <div  class="col">
-  <strong>Useful videos</strong>
   <mat-action-list dense style="height:100%; overflow-y:auto;">
   <button *ngFor="let video of videos" mat-list-item (click)="current_video=video">{{video.title}}</button>
   </mat-action-list>

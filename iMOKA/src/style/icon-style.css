@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'icomoon';
-  src:  url('fonts/icomoon.eot?rbsr0i');
-  src:  url('fonts/icomoon.eot?rbsr0i#iefix') format('embedded-opentype'),
-    url('fonts/icomoon.ttf?rbsr0i') format('truetype'),
-    url('fonts/icomoon.woff?rbsr0i') format('woff'),
-    url('fonts/icomoon.svg?rbsr0i#icomoon') format('svg');
+  src:  url('fonts/icomoon.eot?dg8mxa');
+  src:  url('fonts/icomoon.eot?dg8mxa#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?dg8mxa') format('truetype'),
+    url('fonts/icomoon.woff?dg8mxa') format('woff'),
+    url('fonts/icomoon.svg?dg8mxa#icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -25,6 +25,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-import .path1:before {
+  content: "\e907";
+  color: rgb(0, 0, 0);
+}
+.icon-import .path2:before {
+  content: "\e908";
+  margin-left: -1em;
+  color: rgb(255, 255, 255);
+}
 .icon-work:before {
   content: "\e900";
 }
@@ -45,6 +54,9 @@
 }
 .icon-db:before {
   content: "\e906";
+}
+.icon-file-zip:before {
+  content: "\e92b";
 }
 .icon-filter:before {
   content: "\ea5b";

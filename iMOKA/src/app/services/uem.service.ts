@@ -95,6 +95,28 @@ export class UemService {
 		   this.ipc.send( "action", id, request ); 
         });
     }
+
+	removeProfile(request) : Observable<any>{
+        var id = this.request;
+        this.request += 1;
+        request.id = id; 
+        request.action= "removeProfile";
+        return new Observable<any>(observer=>{
+           this.ipc.on("action-"+id, (event, response)=>{
+              if ( response.code == 0){
+                  observer.next(response);
+              } else {
+                  observer.error(response);
+              }
+              if (response.message == "COMPLETED"){
+                  this.ipc.send("getSession");
+                  observer.complete();
+                  this.ipc.removeAllListeners("action-"+id);
+              }
+           });
+		   this.ipc.send( "action", id, request ); 
+        });
+    }
     
     
     

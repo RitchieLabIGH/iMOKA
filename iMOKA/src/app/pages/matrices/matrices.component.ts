@@ -1,18 +1,18 @@
 import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
 
-import { TracksService } from '../../../services/tracks.service';
-import { SamplesService } from '../../../services/samples.service';
+import { TracksService } from '../../services/tracks.service';
+import { SamplesService } from '../../services/samples.service';
 
-import { MatrixTableSource } from '../../../data/matrix-table.source';
+import { MatrixTableSource } from '../../data/matrix-table.source';
 
-import {Matrix} from '../../../interfaces/samples';
+import {Matrix} from '../../interfaces/samples';
 
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 
 import { ReduceComponent } from './reduce/reduce.component';
 import { AggregateComponent } from './aggregate/aggregate.component';
-import { InfoComponent, InfoData, InfoListElement } from '../../../core/info/info.component';
+import { InfoComponent, InfoData, InfoListElement } from '../../core/info/info.component';
 import {MatBottomSheet} from '@angular/material/bottom-sheet';
 
 @Component({

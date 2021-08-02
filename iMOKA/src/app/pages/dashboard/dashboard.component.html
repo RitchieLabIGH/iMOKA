@@ -1,6 +1,7 @@
-<div class="container">
-<ng-container *ngIf="session"> <ng-container *ngIf="session.profile.process_config.profiles.length == 0">
-
+<div class="container-fluid">
+<div class="row"><div class="col-12 p-2">
+<ng-container *ngIf="session"> 
+  <ng-container *ngIf="session.profile.process_config.profiles.length == 0">
   <div class="row">
     <div class="col-md-6 p-2">
       <mat-card style="height:250px;"> <mat-card-title>Welcome to iMOKA</mat-card-title> <mat-card-content>
@@ -36,20 +37,20 @@
   </div>
   <ng-container *ngIf="session.matrices.length > 0">
   <div class="row ">
-    <div class="col-12">
+    <div class="col-12 p-2">
       <h3>Matrices information</h3>
     </div>
-    <div class="col-md-6 p-1">
+    <div class="col-md-6 p-2">
       <mat-card> <mat-card-content style="height : 250px;"> <plotly-plot *ngIf="plots.matrices" [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'matrix')" [data]="plots.matrices.data" [layout]="plots.matrices.layout"></plotly-plot> </mat-card-content> </mat-card>
     </div>
-    <div class="col-md-6 p-1" *ngIf="! this.filters.matrix">
+    <div class="col-md-6 p-2" *ngIf="! this.filters.matrix">
       <mat-card> <mat-card-content style="height : 250px; overflow:auto;"> <mat-action-list>
       <button *ngFor="let mat of session.matrices" mat-list-item (click)="this.filters.matrix=mat.name;updateCurrentMatrix()">
         <strong style="text-align: right; width: 50%">{{mat.name}} </strong><span style="text-align: left; width: 50%"> : {{mat.names.length}} samples</span>
       </button>
       </mat-action-list> </mat-card-content> </mat-card>
     </div>
-    <div class="col-md-6 p-1" *ngIf="this.filters.matrix">
+    <div class="col-md-6 p-2" *ngIf="this.filters.matrix">
       <mat-card *ngIf="current_matrix; let mat"> <mat-card-content style="height : 250px;;">
       <h3 (click)="this.filters.matrix=false;updateCurrentMatrix()">
         <button mat-icon-button>
@@ -98,21 +99,22 @@
   </div>
   </ng-container> </ng-container> <ng-container *ngIf="samples && samples.length > 0">
   <div class="row">
-    <div class="col-12">
+    <div class="col-12 p-2">
       <h3>Samples Information</h3>
     </div>
-    <div class="col-md-6 p-1" *ngIf="plots.k_lengths; let plot">
+    <div class="col-md-6 p-2" *ngIf="plots.k_lengths; let plot">
       <mat-card> <mat-card-content style="height : 250px;"> <plotly-plot [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'kl')" [data]="plot.data" [layout]="plot.layout"></plotly-plot> </mat-card-content> </mat-card>
     </div>
-    <div class="col-md-6 p-1" *ngIf="plots.metadata; let plot">
+    <div class="col-md-6 p-2" *ngIf="plots.metadata; let plot">
       <mat-card> <mat-card-content style="height : 250px;"> <plotly-plot [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'metadata')" [data]="plot.data" [layout]="plot.layout"></plotly-plot> </mat-card-content> </mat-card>
     </div>
-    <div class="col-md-6 p-1" *ngIf="plots.total_counts; let plot">
+    <div class="col-md-6 p-2" *ngIf="plots.total_counts; let plot">
       <mat-card> <mat-card-content style="height : 250px;"> <plotly-plot [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'tc')" [data]="plot.data" [layout]="plot.layout"></plotly-plot> </mat-card-content> </mat-card>
     </div>
-    <div class="col-md-6 p-1" *ngIf="plots.suffix_counts; let plot">
+    <div class="col-md-6 p-2" *ngIf="plots.suffix_counts; let plot">
       <mat-card> <mat-card-content style="height : 250px;"> <plotly-plot [useResizeHandler]="true" (plotly_click)="selectFilter($event, 'sc')" [data]="plot.data" [layout]="plot.layout"></plotly-plot> </mat-card-content> </mat-card>
     </div>
   </div>
   </ng-container> </ng-container> </ng-container>
+</div></div>  
 </div>

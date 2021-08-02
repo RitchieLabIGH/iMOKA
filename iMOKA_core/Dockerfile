@@ -17,7 +17,7 @@ RUN apt-get clean all && \
     	libarmadillo-dev libboost-test-dev \
     	libboost-dev libboost-system-dev libboost-math-dev \
     	libboost-program-options-dev libboost-serialization-dev \
-    	python3 libgtk-3-0 libnotify4 xdg-utils libgbm1 libglib2.0-bin \
+    	python3 \
     	fastqc samtools python3-pip libxml-libxml-perl curl \
     	bedtools libxml-parser-perl  \
     	gzip gawk libz-dev wget cmake perl graphviz locales && \
@@ -75,10 +75,6 @@ RUN	cd /iMOKA/Release && \
     apt-get autoclean && \
 	rm -rf /var/lib/apt/lists/* /var/log/dpkg.log
 
-### GUI
-
-COPY ./imoka.deb /imoka.deb
-RUN apt-get install -qy /imoka.deb && rm /imoka.deb && rm -rf /var/lib/apt/lists/* /var/log/dpkg.log
     
 ENTRYPOINT ["iMOKA_core"]
 

@@ -32,7 +32,7 @@ export class SamplesService {
                 dataTablesParameters.recordsTotal= arg.recordsTotal;
                 dataTablesParameters.recordsFiltered=arg.recordsFiltered;
                 dataTablesParameters.stats = arg.stats;
-				if ( arg.data.hasOwnProperty('sort') ){
+				if ( typeof arg.data != "string" ){
 					observer.next(arg.data);	
 				} else {
 					observer.next([]);

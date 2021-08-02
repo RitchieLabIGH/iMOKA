@@ -19,7 +19,7 @@
         <button mat-raised-button color='primary' (click)="modify=true" *ngIf="!modify">Modify</button>
         <button mat-raised-button color='primary' [disabled]="!isValid()" (click)="save()" *ngIf="modify">Save</button>
         <button mat-raised-button (click)="clear(false)" *ngIf="modify">Clear</button>
-        <!-- <button mat-raised-button colot='warn' (click)="remove()" *ngIf="modify">Remove</button> TODO -->
+        <button mat-raised-button color='warn' (click)="remove()" *ngIf="modify">Remove</button>
         <button mat-raised-button (click)="setProfile()" *ngIf="modify && this.session.profile.process_config.profiles.length > 0">Close</button>
         <button mat-raised-button color='primary' (click)="clear(true)" *ngIf="!modify">New</button>
         <p *ngIf="loading">{{loading_message}}</p>
