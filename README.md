@@ -51,7 +51,9 @@ This project is founded by the University of Montpellier (France) as part of the
 - angular-material : https://material.angular.io/
 
 
-
+#### Helpful feedbacks and suggestions
+- [@jakewendt](https://github.com/jakewendt)
+- [@subrina](https://github.com/subrina)
 
 
 
