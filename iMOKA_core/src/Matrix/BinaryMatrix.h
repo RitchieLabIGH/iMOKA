@@ -94,6 +94,10 @@ public:
 		return max;
 	}
 
+	double getMinNormalizationFactor() {
+		return *std::min_element(normalization_factors.begin(), normalization_factors.end());
+	}
+
 	bool go_to(Kmer&);
 
 	void setRescalingFactor(uint64_t rf) {
@@ -106,7 +110,6 @@ public:
 		} else {
 			binary_db_buffer = bdbb;
 		}
-
 	}
 	std::vector<uint64_t> total_counts;
 	std::vector<double> normalization_factors;

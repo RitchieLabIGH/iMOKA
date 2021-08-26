@@ -155,7 +155,7 @@ bool Classification::classificationFilterMulti(std::string file_in,
 		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
 		BinaryMatrix mat(file_in, true);
 		Kmer to_kmer(mat.k_len, std::pow(4, mat.k_len) - 1);
-
+		double min_norm_count = mat.getMinNormalizationFactor() * min; // The counts lower than this are zeros to level the samples with the one having the lowest depth.
 		KmerMatrixLine<double> line;
 		if (thr != omp_get_max_threads() - 1) {
 			to_kmer = partitions[thr];
@@ -194,6 +194,11 @@ bool Classification::classificationFilterMulti(std::string file_in,
 		while (running) {
 			if (line.getKmer() <= to_kmer) {
 				if (mat.getMaxRawCount(line) >= min) {
+					for (int i = 0; i < line.count.size(); i++) {
+						if (line.count[i] < min_norm_count) {
+							line.count[i] = 0;
+						}
+					}
 					for (auto &proc : processes) {
 						proc->run(line);
 					}
@@ -218,47 +223,54 @@ bool Classification::classificationFilterMulti(std::string file_in,
 	} // parallel end
 
 	if (stable != 0) {
-		std::ofstream sofs(file_out + "_stable.tsv");
+
 		for (int i = 1; i < omp_get_max_threads(); i++) {
 			for (int j = 0; j < 3; j++) {
-				stable_results[0][j].insert(stable_results[0][j].end(),
-						stable_results[i][j].begin(),
-						stable_results[i][j].end());
-				stable_results[i][j].clear();
+				if (stable_results[i][j].size() > 0) {
+					stable_results[0][j].insert(stable_results[0][j].end(),
+							stable_results[i][j].begin(),
+							stable_results[i][j].end());
+					stable_results[i][j].clear();
+				}
 			}
 		}
-		KmerMeanStdLine & aref=stable_results[0][0][0]; // Due to an annoying Eclipse bug, using reference to the object instad of directly the element in the array
-		std::vector<double> medians = { 0, 0, 0 };
-		for (int j = 0; j < 3; j++) {
-			std::sort(stable_results[0][j].begin(), stable_results[0][j].end(),
-					[](auto &a, auto &b) {
-						return a.stdev < b.stdev;
-					});
-			if (stable_results[0][j].size() > stable) {
-				stable_results[0][j].resize(stable);
+		if (stable_results[0][0].size() > 1 && stable_results[0][1].size() > 1
+				&& stable_results[0][2].size() > 1) {
+			KmerMeanStdLine &aref = stable_results[0][0][0]; // Due to an annoying Eclipse bug, using reference to the object instad of directly the element in the array
+			std::vector<double> medians = { 0, 0, 0 };
+			for (int j = 0; j < 3; j++) {
+				std::sort(stable_results[0][j].begin(),
+						stable_results[0][j].end(), [](auto &a, auto &b) {
+							return a.stdev < b.stdev;
+						});
+				if (stable_results[0][j].size() > stable) {
+					stable_results[0][j].resize(stable);
+				}
+				aref = stable_results[0][j][std::floor(
+						stable_results[0][j].size() / 2)];
+				if (stable_results[0][j].size() % 2 == 0) {
+					medians[j] = aref.mean;
+				} else {
+					KmerMeanStdLine &bref = stable_results[0][j][std::floor(
+							stable_results[0][j].size() / 2) + 1];
+					medians[j] = (aref.mean + bref.mean) / 2;
+				}
 			}
-			aref=stable_results[0][j][stable_results[0][j].size() / 2];
-			if ( stable_results[0][j].size() % 2 == 0 ){
-				medians[j] = aref.mean;
-			} else {
-				KmerMeanStdLine & bref=stable_results[0][j][(stable_results[0][j].size() / 2) + 1];
-				medians[j] = (aref.mean+ bref.mean ) /2;
+			std::ofstream sofs(file_out + "_stable.tsv");
+			sofs << "#{ 'j' : " << (medians[1] / medians[0]) << ", 'k' : "
+					<< (medians[1] / medians[2])
+					<< " }\nkmer\ttype\tmean\tstd\n";
+			for (int j = 0; j < 3; j++) {
+				for (uint64_t i = 0; i < stable_results[0][j].size(); i++) {
+					aref = stable_results[0][j][i];
+					sofs << aref.kmer << "\t"
+							<< (j == 0 ? "LOW" : j == 1 ? "MEDIUM" : "HIGH")
+							<< "\t" << aref.mean << "\t" << aref.stdev << "\n";
+				}
 			}
-		}
 
-		sofs << "#{ 'j' : " << (medians[1] / medians[0]) << ", 'k' : "
-				<< (medians[1] / medians[2]) << " }\nkmer\ttype\tmean\tstd\n";
-		for (int j = 0; j < 3; j++) {
-			for (uint64_t i = 0; i < stable_results[0][j].size(); i++) {
-				aref=stable_results[0][j][i];
-				sofs << aref.kmer << "\t"
-						<< (j == 0 ? "LOW" : j == 1 ? "MEDIUM" : "HIGH") << "\t"
-						<< aref.mean << "\t"
-						<< aref.stdev << "\n";
-			}
+			sofs.close();
 		}
-
-		sofs.close();
 	}
 
 	std::ofstream final_ofs(file_out);
