@@ -16,12 +16,12 @@ namespace matrix {
 class BinaryMatrix: public Matrix {
 public:
 	BinaryMatrix();
-	BinaryMatrix(std::string file, bool query_mode = false) {
-		load(file, query_mode);
+	BinaryMatrix(std::string file) {
+		load(file);
 	}
 	;
 	virtual ~BinaryMatrix();
-	void load(std::string jsonHeader, bool query_mode = false);
+	void load(std::string jsonHeader);
 	void save(std::string jsonHeader);
 	void create(std::string inputFile, double rescale_f = 1,
 			int64_t prefix_size = -1);
@@ -68,7 +68,8 @@ public:
 			std::vector<KmerMatrixLine<double>> &response);
 	void getLines(std::vector<Kmer> &request,
 			std::vector<KmerMatrixLine<uint32_t>> &response);
-
+	void getLine(Kmer &request,
+			KmerMatrixLine<uint32_t> &response );
 	template<class T>
 	bool getBatch(std::vector<KmerMatrixLine<T>> &buffer, uint64_t l) {
 		uint64_t row;
@@ -108,9 +109,11 @@ public:
 		if (isOpen()) {
 			std::cerr << "Error! Set the total space before open the matrix.";
 		} else {
+			custom_buffer_size=true;
 			binary_db_buffer = bdbb;
 		}
 	}
+	bool custom_buffer_size=false;
 	std::vector<uint64_t> total_counts;
 	std::vector<double> normalization_factors;
 	std::vector<BinaryDB> bin_databases;
@@ -130,7 +133,6 @@ private:
 	std::set<Kmer> current_kmers;
 	void initKmerVector(int64_t prefix_size);
 	void initDBs();
-	bool query_mode = false;
 	uint64_t file_len;
 	uint64_t n_of_bd;
 }

@@ -244,7 +244,7 @@ public:
 		{
 			uint64_t thr = omp_get_thread_num(), skip = 0;
 			std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
-			BinaryMatrix mat(source, true);
+			BinaryMatrix mat(source);
 			Kmer to_kmer(mat.k_len, std::pow(4, mat.k_len) - 1);
 			KmerMatrixLine<double> line;
 			if (thr != omp_get_max_threads() - 1) {

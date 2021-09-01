@@ -23,7 +23,7 @@ public:
 	bool run(int argc, char** argv);
 	bool redundancyFilter(std::string in_matrix, std::string out_file,
 			std::string count_matrix, std::string blat_config, uint64_t overlap,
-			double threshold, double final_thr, double coverage_limit, double corr, bool perfect_match, double lfct);
+			double threshold, double final_thr, double coverage_limit,/* double corr,*/ bool perfect_match, double lfct);
 	void print_conf(std::string where);
 private:
 	const std::string default_config =

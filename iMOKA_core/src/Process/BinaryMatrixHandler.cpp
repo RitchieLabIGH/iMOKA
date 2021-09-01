@@ -154,7 +154,7 @@ bool BinaryMatrixHandler::run(int argc, char **argv) {
 
 bool BinaryMatrixHandler::stable(std::string source, std::string outfile,
 		uint64_t max_n) {
-	BinaryMatrix bm(source, true);
+	BinaryMatrix bm(source);
 	const std::vector<Kmer> partitions = bm.getPartitions(
 			omp_get_max_threads());
 	std::pair<double, double> means_ranges = StableProcess::estimate_stable_thresholds(source,
@@ -168,7 +168,7 @@ bool BinaryMatrixHandler::stable(std::string source, std::string outfile,
 		uint64_t thr = omp_get_thread_num();
 		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
 		auto start = std::chrono::high_resolution_clock::now();
-		BinaryMatrix mat(source, true);
+		BinaryMatrix mat(source);
 		std::string file_out_thr = outfile + std::to_string(thr);
 		std::string expected_end, reading_time, total_time, process_time;
 		uint64_t tot_lines = 0;

@@ -1321,6 +1321,11 @@ class Processor {
 		return new Promise((resolve, reject) =>{
 			this.getSSH().then((ssh)=>{
 				ssh.execCommand("mkdir -p "+this.options.storage_folder + "/.singularity/ && realpath "+this.options.storage_folder).then((result)=>{
+					if (!this.checkResSSH(result)){
+						reject(result.stderr);
+						return;
+					}
+					this.options.storage_folder = result.stdout;
 					let promise;
 					if ( this.options.update ){
 						this.download_block=true;
@@ -1359,11 +1364,8 @@ class Processor {
 							}
 						});
 					}
-					if (!this.checkResSSH(result)){
-						reject(result.stderr);
-						return;
-					}
-					this.options.storage_folder = result.stdout;
+					
+					
 					if (! this.options.singularity_version ){
 						let result_promise;
 						if (this.options.connection_type == "cluster"){
@@ -1454,6 +1456,7 @@ class Processor {
 				error_callback(err)
 			} else {
 				console.log("Error removing file "+filename)
+				console.log(err)
 			}
 		});
 	}
@@ -1476,7 +1479,13 @@ class Processor {
 							ssh.execCommand( cluster_command ).then((response)=>{
 								if (this.checkResSSH(response)){
 									let job_n = this.getJobNumber(response.stdout);
-									this.observeJob(job_n, remote_script).subscribe(observer);
+									this.observeJob(job_n, remote_script).subscribe((res)=>{
+										observer.next(res)
+									}, (err)=>{
+										observer.error(err)
+									}, ()=>{
+										observer.complete();
+									});
 								} else {
 									observer.error(response.stderr);
 								}
@@ -1500,7 +1509,7 @@ class Processor {
 			this.getSSH().then((ssh)=>{
 				let setting = clusterCommands[this.options.cluster_type];
 				let command=setting["check_job"]+job_n;
-				let tick= function() {
+				let tick= ()=>{
 					ssh.execCommand(command).then((response)=>{
 						if (this.checkResSSH(response)){
 							let result = setting.parse_jobs(response.stdout);
@@ -1511,12 +1520,16 @@ class Processor {
 								ssh.execCommand("sleep 1 && cat "+remote_script+".out && cat "+remote_script+".err >&2 && rm "+remote_script+"*").then((response)=>{
 									observer.next(response);
 									observer.complete();
-								}).catch(observer.error);
+								}).catch((err)=>{
+									observer.error(err)	
+								});
 							}
 						} else {
 							observer.error(response.stderr);
 						}
-					}).catch(observer.error);
+					}).catch((err)=>{
+					observer.error(err)	
+					});
 				};
 				setTimeout(tick, 500);
 			}).catch((err)=>{observer.error(err); console.log(err);observer.complete();});
@@ -1544,9 +1557,9 @@ class Processor {
 				stream.write(content);
 				stream.end();
 				resolve(output_file);
-
 			});
 			stream.once('error', (err)=>{
+				
 				reject(err);
 			});
 		});

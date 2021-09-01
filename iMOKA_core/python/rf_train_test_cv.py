@@ -76,6 +76,9 @@ def run(training, test, file_output, n_trees=100, nmodels=1, max_features = 20, 
     for i in range(0, len(classnames)):
         Y_test[test_groups == classnames[i]]=i
     n_dim=values.shape[1]
+    if max_features > n_dim:
+        max_features=n_dim
+        print("Found {} dimensions. Using max_features of {}".format(n_dim, n_dim))
     groupcount = np.bincount(Y)
     print("Starting the creation of {} models.".format(nmodels))
     print("Original data have {} dimensions with {} samples, divided in {} groups:".format(n_dim, values.shape[0],len(classnames)))

@@ -26,7 +26,6 @@ bool Aggregation::run(int argc, char** argv){
 					("T,global-threshold","Global minimum value for whom the nodes will be used to build the graphs",cxxopts::value<double>()->default_value("70"))
 					("d,de-coverage-threshold","Consider ad differentially expressed a gene if at least one trascipt is covered for more than this threshold in sequences.",cxxopts::value<double>()->default_value("50"))
 					("m,mapper-config", "Mapper configuration JSON file",cxxopts::value<std::string>()->default_value("nomap"))
-					("corr","Agglomerate k-mers with a correlation higher than this threshold and in the same gene or unmapped.", cxxopts::value<double>()->default_value("1"))
 					("C,consistency","Consistency between nodes. The higher, the more different two sequential nodes can be. Minimum: 0.5 . Default: 1", cxxopts::value<double>()->default_value("2"))
 					("c,count-matrix", "The count matrix.", cxxopts::value<std::string>()->default_value("nocount"))
 					("p,perfect-match", "Don't consider sequences with mismatches or indels");
@@ -44,7 +43,7 @@ bool Aggregation::run(int argc, char** argv){
 					parsedArgs["global-threshold"].as<double>(),
 					parsedArgs["origin-threshold"].as<double>(),
 					parsedArgs["de-coverage-threshold"].as<double>(),
-					parsedArgs["corr"].as<double>(),
+					//parsedArgs["corr"].as<double>(),
 					parsedArgs["perfect-match"].count() != 0,
 					parsedArgs["consistency"].as<double>()
 					);
@@ -101,7 +100,7 @@ void Aggregation::print_conf(std::string where) {
 bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 		std::string count_matrix, std::string json_config, uint64_t w,
 		double threshold = 70, double final_thr = 80,
-		double coverage_limit = 10, double corr=1, bool perfect_match=false, double logfc_thr =2) {
+		double coverage_limit = 10, /*double corr=1,*/ bool perfect_match=false, double logfc_thr =2) {
 	std::string json_info_file = out_file+".info.json";
 	std::ofstream infoJSON(json_info_file);
 	int step=0;
@@ -132,11 +131,11 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 			<< "\t- General threshold= " << threshold << "\n"
 			<< "\t- Source threshold= " << final_thr << "\n"
 			<< "\t- Coverage limit= " << coverage_limit << "\n"
-			<< "\t- Correlation thr= " << corr << "\n"<< "\t- Consistency= " << logfc_thr << "\n";
+			/*<< "\t- Correlation thr= " << corr << "\n"*/<< "\t- Consistency= " << logfc_thr << "\n";
 
 	json info = {{"input_file",in_file }, {"output_file" , out_file}, {"count_matrix", count_matrix},
 
-	 {"shift", w}, {"global_threshold",threshold }, {"source_threshold",final_thr }, {"coverage_thr", coverage_limit}, {"correlation_thr", corr} ,
+	 {"shift", w}, {"global_threshold",threshold }, {"source_threshold",final_thr }, {"coverage_thr", coverage_limit}, /*{"correlation_thr", corr} ,*/
 	{"starting_time", std::time(0)}};
 
 
@@ -223,48 +222,25 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 		gg.processUnAnnotated();
 		std::cout << "done.\n";
 	}
-	std::cout << "Step " << step++ << " : Recovering winners and counts...";
+	std::cout << "Step " << step++ << " : Recovering winners...";
 	std::cout.flush();
-	gg.recoverWinners(corr);
+	gg.recoverWinners();
 	info["mem_after_winner"] = IOTools::format_space_human(IOTools::getCurrentProcessMemory());
 	std::cout  << "done.\n\tCurrent memory: "<< info["mem_after_winner"]<< "\nStep " << step++ << " : Writing output files...";
-	std::ofstream out_str;
-	out_str.open(out_file+".kmers.matrix");
-	uint64_t n_of_winner=0;
-	if ( gg.has_matrix ){
-		matrix::BinaryMatrix bm(count_matrix);
-		IOTools::printMatrixHeader(out_str, bm.col_names, bm.col_groups);
-
-		for (int i=0; i < gg.counts.size() ;i++){
-			if (! gg.winning_nodes[i]->masked ){
-				out_str << gg.counts[i].getKmer() ;
-				for (int j=0; j< gg.counts[i].count.size(); j++ ) out_str << "\t" << (gg.counts[i].count[j] / bm.normalization_factors[j] ) ;
-				out_str << "\n";
-				n_of_winner++;
-			}
-		}
-		out_str.close();
-		info["final_kmers"]=n_of_winner;
-	} else {
-		for (int i=0; i < gg.counts.size() ;i++){
-			if (! gg.winning_nodes[i]->masked ) n_of_winner++;
-		}
-	}
+	info["final_kmers"]=gg.winning_nodes.size();
 
 	if ( json_config != "nomap" ){
+		std::ofstream out_str;
 		out_str.open(out_file+".kmers.bed");
 		for (int i=0; i< gg.winning_nodes.size(); i++){
 			auto & node = gg.winning_nodes[i];
-			if (! node->masked){
-				for ( auto pos : gg.winner_pos[i]){
-					out_str << gg.winner_mapper_results[pos].to_bed() ;
-				}
+			for ( auto pos : gg.winner_pos[i]){
+				out_str << gg.winner_mapper_results[pos].to_bed() ;
 			}
 		}
 		out_str.close();
 	}
-	gg.write_json(out_file + ".json");
-	gg.write_tsv(out_file+".tsv");
+	gg.write_output(out_file);
 	info["end_time"]= std::time(0);
 
 	infoJSON.open(json_info_file);

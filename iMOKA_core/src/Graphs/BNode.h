@@ -32,7 +32,7 @@ public:
 	int64_t graph = -1;
 	std::set<uint64_t> edgesOut;
 	std::set<uint64_t> edgesIn;
-	bool masked=false;
+	/*bool masked=false;*/
 	uint64_t id;
 	bool root = true;
 	friend bool operator<(const BNode& l, const BNode& r){

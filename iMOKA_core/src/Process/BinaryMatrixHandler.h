@@ -38,7 +38,7 @@ private:
 	template<class T>
 	bool _extract(std::string input, std::string source, std::string output) {
 		BinaryMatrix bm;
-		bm.load(source, true);
+		bm.load(source);
 		std::ofstream ofs;
 		std::streambuf *buf;
 		if (output == "stdout") {

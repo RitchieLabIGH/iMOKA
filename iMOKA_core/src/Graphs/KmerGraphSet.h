@@ -30,7 +30,7 @@ public:
 	void makeGraphsFromBestExtension(double);
 	void generateSequencesFromGraphs(double);
 	uint64_t alignSequences(Mapper &);
-	void recoverWinners(double corr);
+	void recoverWinners(/*double corr*/);
 	void setCountMatrix(std::string file);
 	void filter(double , uint64_t);
 	bool load(std::string in_file, double threshold);
@@ -41,8 +41,8 @@ public:
 	uint64_t size() { return nodes.size(); };
 	void setPerfectMatch(bool perfect_match ) {this->perfect_match=perfect_match;};
 	std::vector<std::string> graph_type;
-	void write_json(std::string);
-	void write_tsv(std::string);
+	void write_output(std::string);
+
 	std::vector<BNode*> winning_nodes;
 	std::map<std::string, std::pair<uint64_t, uint64_t>> graph_type_count;
 	std::vector<std::vector<uint64_t>> group_map;
@@ -60,7 +60,6 @@ public:
 	std::vector<std::string> predictors_groups;
 	std::vector<std::string> sample_groups_names;
 	std::vector<std::string> kmer_sequences;
-	std::vector<KmerMatrixLine<uint32_t>> counts;
 	uint64_t n_columns;
 	uint64_t n_groups;
 	uint64_t k_len;
@@ -79,13 +78,14 @@ private:
 	bool checkNeighbour(uint64_t, uint64_t, double);
 	void getNeighbours(uint64_t n, uint64_t neighbour_size, std::set<uint64_t> & neighbour);
 	void findSplicing(MapperResultLine &);
+	void write_tsv_line(json & node, std::ofstream &tsv_out);
 	std::set<uint64_t> findNodes(BNode & node, uint64_t l);
 	void write_genes_json(std::ofstream &);
 	void write_sequences_json(std::ofstream &);
 	void write_signatures_json(std::ofstream &);
-	void write_kmers(std::ofstream &);
+	void write_kmers(std::ofstream &,std::ofstream &,std::ofstream &);
 	int64_t addWinningNode(Event & );
-	json generate_kmer_json(uint64_t node_idx);
+	json generate_kmer_json(uint64_t node_idx, KmerMatrixLine<uint32_t> & kmer);
 	BNode & getMaxKmer(std::string seq, uint64_t graph);
 	std::vector<std::vector<double>> generateValues(GraphSequence &);
 	void getNodeCounts();

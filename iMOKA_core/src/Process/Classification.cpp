@@ -116,7 +116,7 @@ bool Classification::classificationFilterMulti(std::string file_in,
 			<< IOTools::format_space_human(IOTools::getCurrentProcessMemory())
 			<< ".\n";
 
-	BinaryMatrix bm(file_in, true);
+	BinaryMatrix bm(file_in);
 	const std::vector<Kmer> partitions = bm.getPartitions(
 			omp_get_max_threads());
 
@@ -153,9 +153,9 @@ bool Classification::classificationFilterMulti(std::string file_in,
 	{
 		uint64_t thr = omp_get_thread_num();
 		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
-		BinaryMatrix mat(file_in, true);
+		BinaryMatrix mat(file_in);
 		Kmer to_kmer(mat.k_len, std::pow(4, mat.k_len) - 1);
-		double min_norm_count = mat.getMinNormalizationFactor() * min; // The counts lower than this are zeros to level the samples with the one having the lowest depth.
+		double min_norm_count = min / mat.getMinNormalizationFactor() ; // The counts lower than this are zeros to level the samples with the one having the lowest depth.
 		KmerMatrixLine<double> line;
 		if (thr != omp_get_max_threads() - 1) {
 			to_kmer = partitions[thr];
@@ -331,7 +331,7 @@ bool Classification::clusterizationFilter(std::string file_in,
 			<< IOTools::format_space_human(IOTools::getCurrentProcessMemory())
 			<< ".\n";
 	int max_thr = omp_get_max_threads();
-	BinaryMatrix bm(file_in, true);
+	BinaryMatrix bm(file_in);
 	const uint64_t k_len = bm.k_len, batch_size = std::floor(
 			((std::pow(4, bm.k_len)) - 1) / max_thr), nsam =
 			bm.col_names.size();
@@ -348,7 +348,7 @@ bool Classification::clusterizationFilter(std::string file_in,
 		uint64_t thr = omp_get_thread_num();
 		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
 		auto start = std::chrono::high_resolution_clock::now();
-		BinaryMatrix mat(file_in, true);
+		BinaryMatrix mat(file_in);
 		std::string file_out_thr = file_out + std::to_string(thr);
 		uint64_t tot_lines = 0, siglines = 0;
 		uint64_t a = thr * batch_size, b = ((thr + 1) * batch_size) - 1;

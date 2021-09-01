@@ -33,7 +33,8 @@ void BinaryMatrix::create(std::string inFile, double rf, int64_t prefix_size) {
 				std::cerr << "ERROR! input file not well formatted\n";
 				exit(1);
 			}
-			if (IOTools::getFileSize(columns[0]) > 5 || IOTools::fileExists(columns[0] + ".sorted.bin") ) {
+			if (IOTools::getFileSize(columns[0]) > 5
+					|| IOTools::fileExists(columns[0] + ".sorted.bin")) {
 				count_files.push_back(columns[0]);
 				col_names.push_back(columns[1]);
 				col_groups.push_back(columns[2]);
@@ -108,13 +109,12 @@ void BinaryMatrix::save(std::string file) {
 	ofs.close();
 }
 
-void BinaryMatrix::load(std::string file, bool q_mode) {
+void BinaryMatrix::load(std::string file) {
 	clear();
 	source_file = file;
 	std::ifstream ifs(file);
 	json header = json::parse(ifs);
 	ifs.close();
-	query_mode = q_mode;
 	for (auto e : header["count_files"]) {
 		count_files.push_back(e);
 	}
@@ -145,42 +145,46 @@ void BinaryMatrix::load(std::string file, bool q_mode) {
 void BinaryMatrix::initDBs() {
 	bin_databases.resize(count_files.size());
 	current_kmers.clear();
-	if (getenv("IMOKA_MAX_MEM_GB")) {
-		try {
-			uint32_t max_mem = std::stoll(getenv("IMOKA_MAX_MEM_GB"));
-			BinaryDB tmp(count_files[0]);
-			int64_t up_size = tmp.getUnitPrefixSize(), us_size = tmp.getUnitSuffixSize(), n_thr= omp_get_max_threads(), n_db= count_files.size();
-			double max_mem_bit = max_mem * 1000000000;
-			max_mem_bit-= ( up_size * 1000 * n_db * n_thr );
-			binary_db_buffer = std::ceil(
-					(max_mem_bit )
-							/ (us_size * n_db
-									* n_thr)) ;
-			tmp.close();
-			if (binary_db_buffer < 1000) {
-				binary_db_buffer = 1000;
-			}
-		} catch (std::exception &e) {
-			std::cerr << "WARNING: environmental IMOKA_MAX_MEM_GB "
-					<< getenv("IMOKA_MAX_MEM_GB")
-					<< " has to be an integer number.\n" << e.what() << "\n";
-		}
-	} else {
-		if (getenv("IMOKA_INNER_BUFFER_SIZE")) {
+	if (!custom_buffer_size) {
+		if (getenv("IMOKA_MAX_MEM_GB")) {
 			try {
-				binary_db_buffer = std::stoll(
-						getenv("IMOKA_INNER_BUFFER_SIZE"));
+				uint32_t max_mem = std::stoll(getenv("IMOKA_MAX_MEM_GB"));
+				BinaryDB tmp(count_files[0]);
+				int64_t up_size = tmp.getUnitPrefixSize(), us_size =
+						tmp.getUnitSuffixSize(), n_thr = omp_get_max_threads(),
+						n_db = count_files.size();
+				double max_mem_bit = max_mem * 1000000000;
+				max_mem_bit -= (up_size * 1000 * n_db * n_thr);
+				binary_db_buffer = std::ceil(
+						(max_mem_bit) / (us_size * n_db * n_thr));
+				tmp.close();
+				if (binary_db_buffer < 1000) {
+					binary_db_buffer = 1000;
+				}
 			} catch (std::exception &e) {
-				std::cerr << "WARNING: environmental IMOKA_INNER_BUFFER_SIZE "
-						<< getenv("IMOKA_INNER_BUFFER_SIZE")
+				std::cerr << "WARNING: environmental IMOKA_MAX_MEM_GB "
+						<< getenv("IMOKA_MAX_MEM_GB")
 						<< " has to be an integer number.\n" << e.what()
 						<< "\n";
+			}
+		} else {
+			if (getenv("IMOKA_INNER_BUFFER_SIZE")) {
+				try {
+					binary_db_buffer = std::stoll(
+							getenv("IMOKA_INNER_BUFFER_SIZE"));
+				} catch (std::exception &e) {
+					std::cerr
+							<< "WARNING: environmental IMOKA_INNER_BUFFER_SIZE "
+							<< getenv("IMOKA_INNER_BUFFER_SIZE")
+							<< " has to be an integer number.\n" << e.what()
+							<< "\n";
+				}
 			}
 		}
 	}
 	for (uint64_t sample = 0; sample < count_files.size(); sample++) {
 		bin_databases[sample].setBufferSize(binary_db_buffer);
-		if (! bin_databases[sample].open(count_files[sample]) ) {
+		if (!bin_databases[sample].open(count_files[sample])) {
 			std::cerr << "WARNING! Database " << count_files[sample]
 					<< " is empty! \n";
 		}
@@ -268,11 +272,6 @@ bool BinaryMatrix::getLine(KmerMatrixLine<double> &line) {
 
 }
 
-
-
-
-
-
 void BinaryMatrix::getLines(std::vector<Kmer> &request,
 		std::vector<KmerMatrixLine<double>> &response) {
 	response.clear();
@@ -298,8 +297,23 @@ void BinaryMatrix::getLines(std::vector<Kmer> &request,
 	return;
 }
 
+void BinaryMatrix::getLine(Kmer &request, KmerMatrixLine<uint32_t> &response) {
+	response.count.resize(normalization_factors.size(), 0);
+	response.setKmer(request);
+	std::vector<std::vector<double>> columns(bin_databases.size());
+#pragma omp parallel for schedule(dynamic, 1)
+	for (uint64_t i = 0; i < bin_databases.size(); i++) {
+		if (bin_databases[i].go_to(request)) {
+			response.count[i] = bin_databases[i].getCount();
+		} else {
+			response.count[i] = 0;
+		}
+	}
+	return;
+}
+
 void BinaryMatrix::getLines(std::vector<Kmer> &request,
-		std::vector<KmerMatrixLine<uint32_t>> &response ) {
+		std::vector<KmerMatrixLine<uint32_t>> &response) {
 	response.clear();
 	response.resize(request.size());
 	uint64_t row = 0;
@@ -337,7 +351,7 @@ bool BinaryMatrix::go_to(Kmer &target) {
 	current_kmers.clear();
 	for (auto &bdb : bin_databases) {
 		bdb.go_to(target);
-		if (bdb.getKmer() >= target ){
+		if (bdb.getKmer() >= target) {
 			current_kmers.insert(bdb.getKmer());
 		}
 

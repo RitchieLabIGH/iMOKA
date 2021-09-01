@@ -369,7 +369,8 @@ uint64_t KmerGraphSet::alignSequences(Mapper &mapper) {
 
 	int64_t new_pos = -1, tot_line = IOTools::countFileLines(output_file),
 			perc = 0, prev_perc = 0, curr_line = 0;
-	std::cout << "done.\n\tFound " << tot_line - (mapper.output_type == "pslx" ? 5 : 1)
+	std::cout << "done.\n\tFound "
+			<< tot_line - (mapper.output_type == "pslx" ? 5 : 1)
 			<< " alignments.\nProgress: 0% \r";
 	std::cout.flush();
 	std::ifstream ifs(output_file);
@@ -445,7 +446,7 @@ uint64_t KmerGraphSet::alignSequences(Mapper &mapper) {
 	remove(output_file.c_str());
 	remove(std::string(output_file + ".err").c_str());
 	remove(std::string(output_file + ".out").c_str());
-	return  mapper_results.size();
+	return mapper_results.size();
 }
 
 void KmerGraphSet::findRegions(std::string bed_out) {
@@ -533,9 +534,9 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 	std::map<std::string, std::set<uint64_t>> rep_elements;
 
 	std::ofstream tmp_bed(bed_out);
-	uint64_t n_of_seq=0;
+	uint64_t n_of_seq = 0;
 	for (uint64_t i = 0; i < mapper_results.size(); i++) {
-		n_of_seq+=1;
+		n_of_seq += 1;
 		tmp_bed
 				<< mapper_results[i].to_bed(
 						std::to_string(
@@ -547,7 +548,7 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 		// Add the information about the most expressed group
 	}
 	tmp_bed.close();
-	if ( n_of_seq == 0 ){
+	if (n_of_seq == 0) {
 		throw "Error! No sequences given!\n ";
 	}
 	if (repeats != "NONE") {
@@ -586,10 +587,10 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 		repeat_res.close();
 		bed_out += ".norep.bed";
 		tmp_bed.open(bed_out);
-		n_of_seq=0;
+		n_of_seq = 0;
 		for (uint64_t i = 0; i < mapper_results.size(); i++) {
-			if ( ! is_repeat[mapper_results[i].query_index] ) {
-				n_of_seq+=1;
+			if (!is_repeat[mapper_results[i].query_index]) {
+				n_of_seq += 1;
 				tmp_bed
 						<< mapper_results[i].to_bed(
 								std::to_string(
@@ -608,7 +609,7 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 	std::map<std::string, std::string> gene_names;
 	std::string line;
 
-	if ( n_of_seq == 0 ){
+	if (n_of_seq == 0) {
 		std::cout << "\n\tAll the sequences mapped to repetitive elements";
 		std::cout.flush();
 	} else {
@@ -617,11 +618,11 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 		findRegions(bed_out);
 		std::string tmp_bed_file_out = bed_out + ".intersected.bed";
 		int r =
-			system(
-					std::string(
-							"bedtools intersect -loj -a " + bed_out + " -b "
-									+ annotation_files + " > "
-									+ tmp_bed_file_out).c_str());
+				system(
+						std::string(
+								"bedtools intersect -loj -a " + bed_out + " -b "
+										+ annotation_files + " > "
+										+ tmp_bed_file_out).c_str());
 		if (r != 0) {
 			exit(r);
 		}
@@ -637,7 +638,7 @@ void KmerGraphSet::annotate(std::string annotation_files, std::string repeats,
 			if (running)
 				buffer.push_back(line);
 			if (buffer.size() >= max_buffer || !running) {
-	#pragma omp parallel for
+#pragma omp parallel for
 				for (uint64_t l = 0; l < buffer.size(); l++) {
 					Annotation ann(buffer[l]);
 					results[omp_get_thread_num()].push_back(ann);
@@ -968,10 +969,42 @@ void KmerGraphSet::findSplicing(MapperResultLine &mr) {
 	}
 }
 
-void KmerGraphSet::write_json(std::string out_file) {
-	std::ofstream json_out(out_file);
+void KmerGraphSet::write_tsv_line(json & node, std::ofstream & tsv_out) {
+	std::string sep = "\t";
+	tsv_out << node["kmer"] << sep << node["graph_id"] << sep << node["graph"]
+			<< sep;
+	std::set<std::string> genes;
+	for (auto ev : node["events"]) {
+		tsv_out << ev["type"] << ";";
+		for (auto gen : ev["gene"]) {
+			genes.insert(gen.dump());
+		}
+	}
+	tsv_out << sep;
+	for (auto gen : genes) {
+		tsv_out << gen << ";";
+	}
+	for (auto val : node["values"]) {
+		tsv_out << sep << val;
+	}
+	for (auto val : node["pvalues"]) {
+		tsv_out << sep << val;
+	}
+	for (auto val : node["fc"]) {
+		tsv_out << sep << val;
+	}
+	tsv_out << "\n";
+}
+
+void KmerGraphSet::write_output(std::string out_file) {
+	std::ofstream json_out(out_file + ".json");
 	json_out << "{ \"info\" : " << infos.dump() << ", \n ";
-	write_kmers(json_out);
+	std::ofstream tsv_out(out_file + ".tsv");
+	std::ofstream matrix_out;
+	if (has_matrix) {
+		matrix_out.open(out_file + ".kmers.matrix");
+	}
+	write_kmers(json_out, tsv_out, matrix_out);
 	if (winning_nodes.size() > 0)
 		json_out << ",\n";
 	write_genes_json(json_out);
@@ -983,6 +1016,10 @@ void KmerGraphSet::write_json(std::string out_file) {
 	write_sequences_json(json_out);
 	json_out << "}\n";
 	json_out.close();
+	tsv_out.close();
+	if (has_matrix) {
+		matrix_out.close();
+	}
 
 }
 
@@ -1030,16 +1067,62 @@ void KmerGraphSet::write_sequences_json(std::ofstream &ofs) {
 	ofs << (first ? "" : "\n]\n");
 }
 
-void KmerGraphSet::write_kmers(std::ofstream &ofs) {
+void KmerGraphSet::write_kmers(std::ofstream &json_out, std::ofstream &tsv_out,
+		std::ofstream &matrix_out) {
 	bool first = true;
-	for (int64_t i = 0; i < winning_nodes.size(); i++) {
-		if (!winning_nodes[i]->masked) {
-			ofs << (first ? "\"kmers\" : [\n" : ",\n")
-					<< generate_kmer_json(i).dump();
-			first = false;
-		}
+	BinaryMatrix bm;
+	if (has_matrix) {
+		bm.setBinaryDbsBuffer(5); /// Reduce memory impact
+		bm.load(matrix_file);
+		IOTools::printMatrixHeader(matrix_out, bm.col_names, bm.col_groups);
 	}
-	ofs << (first ? "" : "\n]\n");
+	std::string sep = "\t";
+	tsv_out << "kmer" << sep << "graph_number" << sep << "graph_type" << sep
+			<< "events" << sep << "genes";
+	for (auto el : this->predictors_groups) {
+		tsv_out << sep << el << "_acc";
+	}
+	for (auto el : this->predictors_groups) {
+		tsv_out << sep << el << "_pval";
+	}
+	for (auto el : this->predictors_groups) {
+		tsv_out << sep << el << "_fc";
+	}
+	tsv_out << "\n";
+	tsv_out.flush();
+	int64_t buffer_size=500;
+	std::vector<KmerMatrixLine<uint32_t>> kmer(buffer_size);
+	KmerMatrixLine<uint32_t> & current_k = kmer[0];
+	std::vector<Kmer> request(buffer_size);
+	int64_t buffer_pos=buffer_size;
+	for (int64_t i = 0; i < winning_nodes.size(); i++) {
+		if (has_matrix) {
+			if (buffer_pos == buffer_size){
+				int64_t max_buff = winning_nodes.size() > i+buffer_size ? buffer_size : winning_nodes.size()-i;
+				for ( int64_t j = 0; j < max_buff ; j++ ){
+					request[j]=winning_nodes[i+j]->kmer;
+				}
+				bm.getLines(request, kmer);
+				buffer_pos=0;
+			}
+			current_k= kmer[buffer_pos];
+			matrix_out << current_k.getKmer();
+			for (int j = 0; j < current_k.count.size(); j++)
+				matrix_out << "\t"
+						<< (current_k.count[j] / bm.normalization_factors[j]);
+			matrix_out << "\n";
+			buffer_pos++;
+		}
+		json node=generate_kmer_json(i, current_k);
+		write_tsv_line(node, tsv_out);
+		json_out << (first ? "\"kmers\" : [\n" : ",\n")
+				<< node.dump();
+		first = false;
+	}
+	json_out << (first ? "" : "\n]\n");
+	if ( has_matrix){
+		bm.clear();
+	}
 }
 
 BNode& KmerGraphSet::getMaxKmer(std::string seq, uint64_t graph_idx) {
@@ -1117,48 +1200,50 @@ void KmerGraphSet::rescale() {
 				<< "\n";
 	}
 }
+/*
 
-int KmerGraphSet::aggregateCorrelated(double corr_thr) {
-	if (corr_thr == 1) {
-		return 0;
-	}
-	std::vector<std::set<uint64_t>> genes_per_node(winning_nodes.size());
-	for (int i = 0; i < winning_nodes.size(); i++) {
-		winning_nodes[i]->masked = false;
-		for (auto &j : winner_pos[i]) {
-			for (auto &g : winner_mapper_results[j].genes)
-				genes_per_node[i].insert(g);
-		}
-	}
-	std::set<uint64_t> intersection;
-	int masked = 0;
-	for (int i = 0; i < winning_nodes.size(); i++) {
-		for (int j = i + 1; j < winning_nodes.size(); j++) {
-			intersection.clear();
-			std::set_intersection(genes_per_node[i].begin(),
-					genes_per_node[i].end(), genes_per_node[j].begin(),
-					genes_per_node[j].end(),
-					std::inserter(intersection, intersection.begin()));
-			if ((genes_per_node[i].size() == 0 && genes_per_node[j].size() == 0)
-					|| intersection.size() > 0) {
-				if (Stats::correlationCoefficient(counts[i].count,
-						counts[j].count) > corr_thr) {
-					double max_a = winning_nodes[i]->getBestValue();
-					double max_b = winning_nodes[j]->getBestValue();
-					if (max_a > max_b) {
-						winning_nodes[j]->masked = true;
-					} else {
-						winning_nodes[i]->masked = true;
-					}
-					masked++;
-				}
-			}
-		}
-	}
-	return masked;
-}
+ int KmerGraphSet::aggregateCorrelated(double corr_thr) {
+ if (corr_thr == 1) {
+ return 0;
+ }
+ std::vector<std::set<uint64_t>> genes_per_node(winning_nodes.size());
+ for (int i = 0; i < winning_nodes.size(); i++) {
+ winning_nodes[i]->masked = false;
+ for (auto &j : winner_pos[i]) {
+ for (auto &g : winner_mapper_results[j].genes)
+ genes_per_node[i].insert(g);
+ }
+ }
+ std::set<uint64_t> intersection;
+ int masked = 0;
+ for (int i = 0; i < winning_nodes.size(); i++) {
+ for (int j = i + 1; j < winning_nodes.size(); j++) {
+ intersection.clear();
+ std::set_intersection(genes_per_node[i].begin(),
+ genes_per_node[i].end(), genes_per_node[j].begin(),
+ genes_per_node[j].end(),
+ std::inserter(intersection, intersection.begin()));
+ if ((genes_per_node[i].size() == 0 && genes_per_node[j].size() == 0)
+ || intersection.size() > 0) {
+ if (Stats::correlationCoefficient(counts[i].count,
+ counts[j].count) > corr_thr) {
+ double max_a = winning_nodes[i]->getBestValue();
+ double max_b = winning_nodes[j]->getBestValue();
+ if (max_a > max_b) {
+ winning_nodes[j]->masked = true;
+ } else {
+ winning_nodes[i]->masked = true;
+ }
+ masked++;
+ }
+ }
+ }
+ }
+ return masked;
+ }
+ */
 
-void KmerGraphSet::recoverWinners(double corr) {
+void KmerGraphSet::recoverWinners(/*double corr*/) {
 	winning_nodes.clear();
 	for (auto &ev : events) {
 		addWinningNode(ev);
@@ -1182,10 +1267,6 @@ void KmerGraphSet::recoverWinners(double corr) {
 	}
 
 	getNodePositions();
-	getNodeCounts();
-	int masked = aggregateCorrelated(corr);
-
-	infos["correlation_thr"] = corr;
 }
 
 void KmerGraphSet::getNodePositions() {
@@ -1343,7 +1424,8 @@ int64_t KmerGraphSet::addWinningNode(Event &ev) {
 	return winner_idx;
 }
 
-json KmerGraphSet::generate_kmer_json(uint64_t node_idx) {
+json KmerGraphSet::generate_kmer_json(uint64_t node_idx,
+		KmerMatrixLine<uint32_t> &kmer) {
 	BNode &node = *(winning_nodes[node_idx]);
 	json json_events;
 	for (auto e : winner_events[node_idx]) {
@@ -1372,13 +1454,13 @@ json KmerGraphSet::generate_kmer_json(uint64_t node_idx) {
 	data["events"] = json_events;
 
 	if (has_matrix) {
-		data["counts"] = counts[node_idx].count;
+		data["counts"] = kmer.count;
 		std::vector<double> mean_by_group(n_groups), sd_by_group(n_groups);
 		std::vector<std::vector<double>> group_counts(n_groups);
 		for (int i = 0; i < n_groups; i++) {
 			for (int j : group_map[i])
 				group_counts[i].push_back(
-						counts[node_idx].count[j] / normalization_factors[j]);
+						kmer.count[j] / normalization_factors[j]);
 		}
 		for (int i = 0; i < n_groups; i++) {
 			double mean = Stats::mean(group_counts[i]);
@@ -1407,63 +1489,5 @@ json KmerGraphSet::generate_kmer_json(uint64_t node_idx) {
 	return data;
 }
 
-void KmerGraphSet::write_tsv(std::string out_file) {
-	std::ofstream tsv_out(out_file);
-	std::string sep = "\t";
-	tsv_out << "kmer" << sep << "graph_number" << sep << "graph_type" << sep
-			<< "events" << sep << "genes";
-	for (auto el : this->predictors_groups) {
-		tsv_out << sep << el << "_acc";
-	}
-	for (auto el : this->predictors_groups) {
-		tsv_out << sep << el << "_pval";
-	}
-	for (auto el : this->predictors_groups) {
-		tsv_out << sep << el << "_fc";
-	}
-	tsv_out << "\n";
-	tsv_out.flush();
-	for (int i = 0; i < winning_nodes.size(); i++) {
-		if (!winning_nodes[i]->masked) {
-			json node = generate_kmer_json(i);
-			tsv_out << node["kmer"] << sep << node["graph_id"] << sep
-					<< node["graph"] << sep;
-			std::set<std::string> genes;
-			for (auto ev : node["events"]) {
-				tsv_out << ev["type"] << ";";
-				for (auto gen : ev["gene"]) {
-					genes.insert(gen.dump());
-				}
-			}
-			tsv_out << sep;
-			for (auto gen : genes) {
-				tsv_out << gen << ";";
-			}
-			for (auto val : node["values"]) {
-				tsv_out << sep << val;
-			}
-			for (auto val : node["pvalues"]) {
-				tsv_out << sep << val;
-			}
-			for (auto val : node["fc"]) {
-				tsv_out << sep << val;
-			}
-			tsv_out << "\n";
-		}
-	}
-}
-
-void KmerGraphSet::getNodeCounts() {
-	if (has_matrix) {
-		std::vector<Kmer> requests;
-		for (auto &node : winning_nodes) {
-			requests.push_back(node->kmer);
-		}
-		counts.resize(winning_nodes.size());
-		BinaryMatrix bm(matrix_file);
-		bm.getLines(requests, counts);
-		bm.clear();
-	}
-}
 }
 }
