@@ -46,7 +46,8 @@ export class AggregateComponent implements OnInit {
 						global_accuracy: [70, [Validators.min(0), Validators.max(100)]],
 						shift: [1, [Validators.min(1), Validators.max(5)]],
 						de_cov: [50, [Validators.min(1), Validators.max(100)]],
-						corr: [0.95, [Validators.min(0.5), Validators.max(1.00)]],
+						perfectMatch: [false],
+						consistency : [2, [Validators.min(0.5), Validators.max(5)]],
 						mapper: [-1],
 						annotation: [-1],
 					});

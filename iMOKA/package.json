@@ -3,6 +3,7 @@
   "version": "1.1.0",
   "main": "electron/main.js",
   "description": "iMOKA GUI",
+  "homepage": "https://github.com/RitchieLabIGH/iMOKA",
   "license": "CECILL-2.1",
   "author": "Claudio Lorenzi",
   "scripts": {
@@ -81,6 +82,7 @@
   "config": {
     "forge": {
       "packagerConfig": {
+      	"icon": "./src/assets/images/256x256.ico",
         "ignore": [
           "^/out",
           "^/node_modules",

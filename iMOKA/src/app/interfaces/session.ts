@@ -24,7 +24,7 @@ export class MapConfiguration {
     flag_multi_thread : string="";
     flag_out : string=" ";
 	io_order : string = "io";
-    options : string=" -out=pslx -stepSize=5 -repMatch=2253 -minScore=30 -minIdentity=90 /blat_ref/hg38.2bit ";
+    options : string=" -out=pslx -q=rna -stepSize=5 -repMatch=2253 -minScore=30 -minIdentity=95 -ooc=/blat_ref/hg38.11.ooc /blat_ref/hg38.2bit  ";
     output_type : string ="pslx";
     parallel : number=  -1 ;
 }
@@ -32,6 +32,8 @@ export class MapConfiguration {
 export class AnnotationConfiguration {
     name : string = "Default Annotation";
     file : string = "/blat_ref/gencode.v29.annotation.noIR.gtf";
+    repeats: string = "/blat_ref/hg38_repmask.bed";
+
 }
 export class Setting {
     connection_type : string = "local";

@@ -23,6 +23,7 @@ import { Subscription } from 'rxjs';
 
 import { RandomForestComponent } from './dialog/random-forest/random-forest.component';
 import { NewSomComponent } from './dialog/som/new-som.component';
+import { FilterComponent } from './dialog/filter/filter.component';
 
 import Ideogram from '../../plugins/ideogram/dist/js/ideogram.min.js';
 import { FileService } from '../../services/file.service'
@@ -57,7 +58,6 @@ export class KMerListComponent implements OnInit, OnDestroy {
 	cols: any = {};
 	session: Session;
 	hasKmer: boolean = false;
-	groups: any;
 	predictors: any;
 	externalTracks: ExternalTrack[];
 	browserSequenceTrack: any;
@@ -104,8 +104,9 @@ export class KMerListComponent implements OnInit, OnDestroy {
 			track = this.externalTracks[parseInt(track_n.split("_")[0])];
 		}
 		if (track) this.addExternalTrack(track);
-
 	};
+	
+	
 
 	ngOnInit() {
 		this.dataSource = new KmerTableSource(this.trackService);
@@ -168,7 +169,8 @@ export class KMerListComponent implements OnInit, OnDestroy {
 			if (max_len > 0 && fname.length > max_len) {
 				fname = "..." + fname.substr(-max_len)
 			}
-			if (this.session.files.kmers.original_request && this.session.matrices && this.session.matrices.hasOwnProperty("find") ) {
+			try{
+			if (this.session.files.kmers.original_request && this.session.matrices ) {
 				let mat = this.session.matrices.find((mt) => { return mt.uid == this.session.files.kmers.original_request })
 				if (mat) {
 					return " matrix " + mat.name
@@ -178,6 +180,10 @@ export class KMerListComponent implements OnInit, OnDestroy {
 			} else {
 				return " file " + fname;
 			}
+			} catch(err){
+				console.log(err)
+			}
+			
 		} else {
 			return "";
 		}
@@ -295,25 +301,9 @@ export class KMerListComponent implements OnInit, OnDestroy {
 	}
 
 	initDtOptions(): KmerDataTableOptions {
-		return {
-			displayedColumns: ['best_rank', 'kmer', 'position', 'genes', 'events'],
-			search: { value: "" },
-			order: { name: 'best_rank', asc: true },
-			subset: [],
-			bmu: [],
-			eventsFilter: [],
-			minCount: 0,
-			minPred: 0,
-			minFC: 0,
-			minPval: 1,
-			maxMap: -1,
-			pageSize: 10,
-			pageIndex: 0,
-			draw: 0,
-			recordsTotal: 0,
-			recordsFiltered: 0,
-			stats: { genes: [], events: [] }
-		};
+		if (this.info.kmers) return new KmerDataTableOptions(this.info.kmers.predictors.length);
+		
+		return new KmerDataTableOptions(1);
 	}
 
 	loadDataInfo(file_type: string, info: { events: any[]; }) {
@@ -398,7 +388,17 @@ export class KMerListComponent implements OnInit, OnDestroy {
 		const dialogRef = this.dialog.open(OpenTrackComponent, { data: { tracks: this.externalTracks } })
 		dialogRef.afterClosed().subscribe(track => track && this.addExternalTrack(track));
 	}
-
+	
+	filter(){
+		const dialogRef = this.dialog.open(FilterComponent, { data: { dtOptions : this.dtOptions, groups : this.info.kmers.predictors } })
+		dialogRef.afterClosed().subscribe(opts => opts && this.setOptions(opts) );
+	}
+	setOptions(opts: any){
+		this.dtOptions=opts;
+		this.refreshTable("search")
+	}
+	
+	
 	showGeneOntology() {
 		this.trackService.getGenes({ all: false }).then(response => {
 			if (response.data && response.data.length > 0) {

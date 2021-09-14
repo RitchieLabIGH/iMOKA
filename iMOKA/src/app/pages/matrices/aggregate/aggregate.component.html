@@ -1,94 +1,118 @@
 
-<h1 mat-dialog-title>Aggregate the {{matrix.name}} </h1>
-<div mat-dialog-content class="main-dialog">
-	<div >
-		<mat-vertical-stepper linear="true" #stepper>
-		<mat-step [stepControl]="detailsControl">
-		<form [formGroup]="detailsControl">
-			<ng-template matStepLabel>Aggregation parameters</ng-template>
-			<div    >
-				<div   >
-					<mat-form-field> 
-						<mat-label>Accuracy</mat-label> 
-						<input matInput required formControlName="accuracy" type="number"> 
-						<mat-hint>Minimum accuracy needed to generate a graph</mat-hint> 
-					</mat-form-field>
-				</div>
-				<div   >
-					<mat-form-field> 
-						<mat-label>Global accuracy</mat-label> 
-						<input matInput required formControlName="global_accuracy" type="number"> 
-						<mat-hint>Minimum global accuracy to consider a k-mer</mat-hint> 
-					</mat-form-field>
-				</div>
-				<div   >
-					<mat-form-field>
-						<mat-label>Shift</mat-label> 
-						<input matInput required formControlName="shift" type="number"  >
-						<mat-hint>Connect k-mers that overlap with a shift of {{detailsControl.value.shift}}</mat-hint> 
-					</mat-form-field>
-				</div>
-				<div   >
-					<mat-form-field>
-						<mat-label>DE coverage</mat-label> 
-						<input matInput required formControlName="de_cov" type="number"> 
-						<mat-hint>Consider as DE the transcripts covered by more than this percentage </mat-hint> 
-					</mat-form-field>
-				</div>
-				<div   >
-					<mat-form-field>
-						<mat-label>Correlation </mat-label> 
-						<input matInput required formControlName="corr" type="number" > 
-						<mat-hint>Agglomerate k-mers with a correlation higher than this threshold and in the same gene or unmapped.</mat-hint> 
-					</mat-form-field>
-				</div>
-				<div   >
-					<mat-form-field>
-						<mat-label>Mapper configuration</mat-label> 
-						<mat-select  formControlName="mapper" required >
-							<mat-option value="-1">Don't map</mat-option>
-							<mat-option *ngFor="let map of mappers; let i=index" [value]="map" >{{map.name}}</mat-option>
-						</mat-select>  
-						<mat-hint>You can add new configurations in the settings</mat-hint> 
-					</mat-form-field>
-				</div>
-				<div   >
-					<mat-form-field>
-						<mat-label>Annotations</mat-label> 
-						<mat-select  formControlName="annotation" required >
-							<mat-option value="-1">Don't use annotations</mat-option>
-							<mat-option *ngFor="let ann of annotations; let i=index" [value]="ann" >{{ann.name}}</mat-option>
-						</mat-select>  
-						<mat-hint>You can add new configurations in the settings</mat-hint> 
-					</mat-form-field>
-				</div>
-			</div>
-		</form>
-		</mat-step> <mat-step [stepControl]="procControl">
-		<form [formGroup]="procControl">
-			<ng-template matStepLabel>Process resources</ng-template>
-			<div   
-				>
-				<div   >
-					<mat-form-field> 
-						<mat-label>Threads per process</mat-label> 
-						<input matInput required formControlName="cores" type="number"> 
-						<mat-hint>Number of cores used per process</mat-hint> 
-					</mat-form-field>
-				</div>
-				<div   >
-					<mat-form-field> 
-						<mat-label>Memory</mat-label> 
-						<input matInput required formControlName="mem" type="number"> 
-						<mat-hint>Memory required by the process in Gb (considering the mapping) </mat-hint> 
-					</mat-form-field>
-				</div>
-			</div>
-		</form>
-		</mat-step> </mat-vertical-stepper>
-	</div>
+<h1 mat-dialog-title>Aggregate the {{matrix.name}}</h1>
+<div
+  mat-dialog-content
+  class="main-dialog"
+>
+  <div>
+    <mat-vertical-stepper
+      linear="true"
+      #stepper
+    > <mat-step [stepControl]="detailsControl">
+    <form [formGroup]="detailsControl">
+      <ng-template matStepLabel>Aggregation parameters</ng-template>
+      <div class="row high-tiles">
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Accuracy</mat-label> <input
+            matInput
+            required
+            formControlName="accuracy"
+            type="number"
+          > <mat-hint>Minimum accuracy needed to generate a graph</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Global accuracy</mat-label> <input
+            matInput
+            required
+            formControlName="global_accuracy"
+            type="number"
+          > <mat-hint>Minimum global accuracy to consider a k-mer</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Shift</mat-label> <input
+            matInput
+            required
+            formControlName="shift"
+            type="number"
+          > <mat-hint>Connect k-mers that overlap with a shift of {{detailsControl.value.shift}}</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>DE coverage</mat-label> <input
+            matInput
+            required
+            formControlName="de_cov"
+            type="number"
+          > <mat-hint>Consider as DE the transcripts covered by more than this percentage </mat-hint> </mat-form-field>
+        </div>
+         <div class="col-md-4">
+          <mat-form-field> <mat-label>Consistency</mat-label> <input
+            matInput
+            required
+            formControlName="consistency"
+            type="number"
+          > <mat-hint>Consistency between nodes. The higher, the more different two sequential nodes can be. </mat-hint> </mat-form-field>
+        </div><div class="col-md-4"></div>
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Mapper configuration</mat-label> <mat-select
+            formControlName="mapper"
+            required
+          > <mat-option value="-1">Don't map</mat-option> <mat-option
+            *ngFor="let map of mappers; let i=index"
+            [value]="map"
+          >{{map.name}}</mat-option> </mat-select> <mat-hint>You can add new configurations in the settings</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Annotations</mat-label> <mat-select
+            formControlName="annotation"
+            required
+          > <mat-option value="-1">Don't use annotations</mat-option> <mat-option
+            *ngFor="let ann of annotations; let i=index"
+            [value]="ann"
+          >{{ann.name}}</mat-option> </mat-select> <mat-hint>You can add new configurations in the settings</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-12">
+          <mat-slide-toggle formControlName="perfectMatch">Perfect match</mat-slide-toggle>
+          <br>
+          <mat-hint> Don't consider sequences with mismatches or indels</mat-hint>
+        </div>
+      </div>
+    </form>
+    </mat-step> <mat-step [stepControl]="procControl">
+    <form [formGroup]="procControl">
+      <ng-template matStepLabel>Process resources</ng-template>
+      <div class="row">
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Threads per process</mat-label> <input
+            matInput
+            required
+            formControlName="cores"
+            type="number"
+          > <mat-hint>Number of cores used per process</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Memory</mat-label> <input
+            matInput
+            required
+            formControlName="mem"
+            type="number"
+          > <mat-hint>Memory required by the process in Gb (considering the mapping) </mat-hint> </mat-form-field>
+        </div>
+      </div>
+    </form>
+    </mat-step> </mat-vertical-stepper>
+  </div>
 </div>
-<div mat-dialog-actions align="end">
-	<button mat-button mat-dialog-close>Close</button>
-	<button mat-button [disabled]="!isValid()" (click)="send()">Run</button>
+<div
+  mat-dialog-actions
+  align="end"
+>
+  <button
+    mat-button
+    mat-dialog-close
+  >Close</button>
+  <button
+    mat-button
+    [disabled]="!isValid()"
+    (click)="send()"
+  >Run</button>
 </div>

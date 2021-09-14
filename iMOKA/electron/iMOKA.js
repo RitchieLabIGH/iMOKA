@@ -193,7 +193,7 @@ class iMOKA {
 		 
 		  experiment = "${imoka_home}/experiments/" +  proc.matrix.uid +"/", param = proc.parameters;
 		 let command = "singularity exec ${singularity_image} iMOKA_core reduce -i "+ experiment + "matrix.json -o " + experiment + "reduced.matrix "+
-		 	" -a " + param.accuracy + " -t " + param.test + " -e " + param.entropyone + " -E " + param.entropytwo + " -c "+ param.crossvalidation + " -s " + param.crossvalidationsd +" -m "+param.min+ " " ;
+		 	" -a " + param.accuracy + " -t " + param.test + " -e " + param.entropyone + " -E " + param.entropytwo + " -c "+ param.crossvalidation + " -s " + param.crossvalidationsd +" -m "+param.min+ " -S "+param.stable ;
 		 out.commands.push(command);
 		 out.memory = proc.process.mem ;  
 		 out.threads = proc.process.cores;
@@ -225,7 +225,7 @@ class iMOKA {
 		 /// To add later : singularity exec ${singularity_image} 
 		 let command = "singularity exec ${singularity_image} iMOKA_core aggregate -i "+ experiment + "reduced.matrix -o " + experiment + "aggregated -c "+experiment +"matrix.json " +
 		 	" -t " + param.accuracy + " -T " + param.global_accuracy + " -w " + param.shift + " -d " + param.de_cov +
-		 	" -m "+ mapper + " --corr " + param.corr +" " ;
+		 	" -m "+ mapper + " -C " + param.consistency +" "+(param.perfectMatch ? " -p " : "") ;
 		 out.commands.push(command);
 		 out.commands.push("rm -f " + experiment + "aggregated.kmers.matrix "+experiment+"aggregated.tsv" )
 		 out.memory = proc.process.mem; 

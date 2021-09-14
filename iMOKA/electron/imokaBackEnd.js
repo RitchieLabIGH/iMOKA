@@ -43,6 +43,14 @@ class iMokaBE extends EventEmitter {
 		}
 	}
 
+	deleteSamples(request) {
+		if (this.processor) {
+			return this.processor.deleteSamples(request.data);
+		} else {
+			throw "Processor not loaded";
+		}
+	}
+
 	exportExperiment(request) {
 		if (this.processor) {
 			return this.processor.exportExperiment(request);
@@ -1212,51 +1220,19 @@ class iMokaBE extends EventEmitter {
 				if (!asc) this.data.kmers.orders_idxs.kmers = this.data.kmers.orders_idxs.kmers.reverse();
 			}
 			let recordsFiltered = this.data.kmers.kmers.length;
-			if (!this.data.kmers.current_search.kmers || this.data.kmers.current_search.kmers != request.search || this.data.kmers.current_search.subset != request.subset || this.data.kmers.current_search.eventsFilter != request.eventsFilter || this.data.kmers.current_search.minPred != request.minPred) {
-				if (request.bmu.length > 0 || request.search.value.length >= 2 || request.subset.length > 0 || request.eventsFilter.length != this.data.kmers.info.events.length || request.minCount != 0 || request.minPred != 0 || request.minFC != 0 || request.minPval != 0 || request.maxMap > 0) {
-					this.data.kmers.current_search.kmers = request.search;
-					this.data.kmers.current_search.subset = request.subset;
-					this.data.kmers.current_search.bmu = request.bmu;
-					this.data.kmers.current_search.eventsFilter = request.eventsFilter;
-					this.data.kmers.current_search.minCount = request.minCount;
-					this.data.kmers.current_search.minPred = request.minPred;
-					this.data.kmers.current_search.minPval = request.minPval;
-					this.data.kmers.current_search.minFC = request.minFC;
-					if (!this.data.kmers.masks.kmers) this.data.kmers.masks.kmers = new Array(this.data.kmers.kmers.length);
-					for (var e = 0; e < this.data.kmers.kmers.length; e++) {
-						this.data.kmers.masks.kmers[e] = false;
-						if (request.bmu.length == 0 || request.bmu.includes(this.data.kmers.kmers[e].bmu)) {
-							if (request.maxMap < 1 || (this.data.kmers.kmers[e].alignments && this.data.kmers.kmers[e].alignments.length <= request.maxMap)) {
-								if (request.minPred == 0 || this.data.kmers.kmers[e].values.find((n) => { return n >= request.minPred; }) != undefined) {
-									if (request.minFC == 0 || !this.data.kmers.kmers[e].fc || this.data.kmers.kmers[e].fc.find((n) => { if (typeof n == "number") { return Math.abs(n) >= request.minFC; } else { return true; } }) != undefined) {
-										if (request.minPval == 0 || !this.data.kmers.kmers[e].pvalues || this.data.kmers.kmers[e].pvalues.find((n) => { return n <= request.minPval; }) != undefined) {
-											if (request.subset.length == 0 || request.subset.includes(this.data.kmers.kmers[e].kmer)) {
-												if (request.minCount == 0 || this.data.kmers.kmers[e].counts.find((n) => { return n >= request.minCount; }) != undefined) {
-													if (request.eventsFilter.length == this.data.kmers.info.events.length || this.hasEvents(this.data.kmers.kmers[e], request.eventsFilter)) {
-														if (this.data.kmers.current_search.kmers.value.length < 2 || JSON.stringify(this.data.kmers.kmers[e]).includes(this.data.kmers.current_search.kmers.value)) this.data.kmers.masks.kmers[e] = true;
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
+			let req_copy = JSON.parse(JSON.stringify(request))
+			req_copy.draw = 0;
 
-						if (!this.data.kmers.masks.kmers[e]) recordsFiltered--;
-					}
-
-				} else {
-					if (!this.data.kmers.masks.kmers) this.data.kmers.masks.kmers = new Array(this.data.kmers.kmers.length);
-					this.data.kmers.masks.kmers.fill(true);
+			if (!this.data.kmers.current_search || JSON.stringify(this.data.kmers.current_search) != JSON.stringify(req_copy)) {
+				this.data.kmers.masks.kmers = this.checkFilters(request);
+				for (var e = 0; e < this.data.kmers.kmers.length; e++) {
+					if (!this.data.kmers.masks.kmers[e]) recordsFiltered--;
 				}
 			} else {
-				if (!this.data.kmers.current_search.kmers) {
-					this.data.kmers.current_search.kmers = { "recordsFiltered": recordsFiltered };
-				} else {
-					recordsFiltered = this.data.kmers.current_search.kmers.recordsFiltered;
-				}
+				recordsFiltered = this.data.kmers.current_search.recordsFiltered;
 			}
+			request.recordsFiltered = recordsFiltered;
+			this.data.kmers.current_search = JSON.parse(JSON.stringify(request))
 			let data_to_send = [];
 			let count = 0, i = 0, start = request.pageIndex * request.pageSize, end = (request.pageIndex + 1) * (request.pageSize);
 			for (let order = 0; order < this.data.kmers.orders_idxs.kmers.length; order++) {
@@ -1285,6 +1261,59 @@ class iMokaBE extends EventEmitter {
 		});
 
 	};
+
+	checkFilters(request) {
+		let out = new Array(this.data.kmers.kmers.length);
+		out.fill(true);
+		if (request.bmu.length != 0) {
+			for (var e = 0; e < this.data.kmers.kmers.length; e++) {
+				if (!request.bmu.includes(this.data.kmers.kmers[e].bmu)) out[e] = false;
+			}
+		}
+		if (request.filters.maxMap != 0) {
+			for (var e = 0; e < this.data.kmers.kmers.length; e++) {
+				if (this.data.kmers.kmers.alignments && this.data.kmers.kmers.alignments.length > request.filters.maxMap) out[e] = false;
+			}
+		}
+		if (request.filters.minCount != 0 ) {
+			for (var e = 0; e < this.data.kmers.kmers.length; e++) {
+				if (this.data.kmers.kmers[e].counts.find((n) => { return n >= request.filters.minCount; }) == undefined) out[e] = false;
+			}
+		}
+		if (request.subset.length != 0 ) {
+			for (var e = 0; e < this.data.kmers.kmers.length; e++) {
+				if (! request.subset.includes(this.data.kmers.kmers[e].kmer)) out[e] = false;
+			}
+		}
+		if (request.eventsFilter.length != this.data.kmers.info.events.length ) {
+			for (var e = 0; e < this.data.kmers.kmers.length; e++) {
+				if (!(this.hasEvents(this.data.kmers.kmers[e], request.eventsFilter))) out[e] = false;
+			}
+		}
+		if (request.search.value.length >= 2 ) {
+			for (var e = 0; e < this.data.kmers.kmers.length; e++) {
+				if (!(JSON.stringify(this.data.kmers.kmers[e]).includes(request.search.value))) out[e] = false;
+			}
+		}
+		for (let g in this.data.kmers.info.predictors) {
+			if (request.filters.minPred[g] != 0 ) {
+				for (var e = 0; e < this.data.kmers.kmers.length; e++) {
+					if (this.data.kmers.kmers[e].values[g] < request.filters.minPred[g]) out[e] = false;
+				}
+			}
+			if (request.filters.minFC[g] != 0 ) {
+				for (var e = 0; e < this.data.kmers.kmers.length; e++) {
+					if (this.data.kmers.kmers[e].fc[g] < request.filters.minFC[g]) out[e] = false;
+				}
+			}
+			if (request.filters.minPval[g] != 0 ) {
+				for (var e = 0; e < this.data.kmers.kmers.length; e++) {
+					if (this.data.kmers.kmers[e].pvalues[g] > request.filters.minPval[g]) out[e] = false;
+				}
+			}
+		}
+		return out;
+	}
 
 	hasEvents(dat, evs) {
 		for (let i = 0; i < dat.events.length; i++) {

@@ -157,7 +157,9 @@ a {
 	--bs-gutter-x : 0 ;
 }
 
-
+.high-tiles > div {
+	margin-bottom: 2em
+}
 mat-icon {
 	vertical-align: middle;
 }

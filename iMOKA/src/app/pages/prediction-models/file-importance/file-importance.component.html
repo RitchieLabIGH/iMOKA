@@ -1,29 +1,33 @@
 
 <div class="row"  >
-  <div class="col-md-6 p-2" >
-    <mat-card class="mat-elevation-z2"> <mat-card-title>
-    <h3>Informations</h3>
+  <div class="col-md-12 p-2" >
+    <mat-card > <mat-card-title>
+    Informations
     </mat-card-title> 
     <mat-card-content> 
-      <div  >
-        <div ><strong>Method</strong>: {{info.method}} </div>
+      <div class="row" >
+      <div class="col-md-6">
+        <div  ><strong>Method</strong>: {{info.method}} </div>
         <div ><strong>Number of samples</strong>: {{info.sample_names.length}} </div>
         <div ><strong>Number of features</strong>: {{info.total_features}}</div>
         <div ><strong>Number of models generated</strong>: {{info.nmodels}}</div>
+      </div>
+      <div class="col-md-6">
         <div ><strong>Groups</strong>:
         <ul>
           <li *ngFor="let grp of info.groups_names; let i = index"><strong>{{grp}}</strong>: {{info.groupcount[i]}} samples.</li>
         </ul></div>
         <div ></div>
       </div> 
+      </div>
      </mat-card-content>
      </mat-card>
   </div>
-  <div class="col-md-6 p-2">
-    <mat-card *ngIf="data.feature_importance"> <mat-card-title>
-    <h3>Features importance</h3>
+  <div class="col-md-12 p-2">
+    <mat-card > <mat-card-title>
+    Features importance
     </mat-card-title> <mat-card-content>
-    <div class="row" >
+    <div class="row" *ngIf="data.feature_importance" >
         <div  style="overflow: visible" class="col-md-6">
         <button [disabled]="data.feature_importance.from_pos < data.feature_importance.to_display" mat-icon-button (click)="data.feature_importance.from_pos=data.feature_importance.from_pos-data.feature_importance.to_display; updateFI()">
             <mat-icon>skip_previous</mat-icon>
@@ -37,12 +41,12 @@
           <mat-form-field> <mat-label>Display</mat-label> <input matInput [(ngModel)]="data.feature_importance.to_display" type='number' min="1" (change)="updateFI()"></mat-form-field>
         </div>
       <div  *ngIf="data.feature_importance && data.feature_importance.display_data" class="col-md-12">
-        <plotly-plot [revision]="revision" [useResizeHandler]="true" [style]="gstyle" [data]="data.feature_importance.display_data" [layout]="data.feature_importance.layout"></plotly-plot>
+        <plotly-plot  [useResizeHandler]="true" [revision]="revision" [data]="data.feature_importance.display_data" [layout]="data.feature_importance.layout" [style]="gstyle"></plotly-plot>
       </div>
     </div>
     </mat-card-content> </mat-card>
   </div>
-  <ng-container *ngIf="data.samples_eval">
+  <ng-container >
   <div  *ngFor="let dat of data.samples_eval; let i = index" class="col-md-6 p-2">
     <mat-card> <mat-card-title>
     <h3>{{dat.name}} samples evaluation</h3>

@@ -1,0 +1,60 @@
+<h1 mat-dialog-title>Filters</h1>
+<mat-dialog-content>
+<div class="row">
+  <div class="col-md-12"><h3>Global filters</h3></div>
+  <div class="col-md-6">
+    <mat-form-field> <input
+      matInput
+      placeholder="Maximum map"
+      [(ngModel)]="dtOptions.filters.maxMap"
+      type="number"
+      min="-1"
+    > </mat-form-field>
+  </div>
+  <div class="col-md-6">
+    <mat-form-field> <input
+      matInput
+      type="number"
+      placeholder="Minimum count"
+      [(ngModel)]="dtOptions.filters.minCount"
+    > </mat-form-field>
+  </div>
+  <ng-container *ngFor="let grp of groups; let idx=index">
+  <div class="col-md-12"><h3>Filter for {{grp}}</h3></div>
+  <div class="col-md-4">
+    <mat-form-field> <input
+      matInput
+      placeholder="Minimum accuracy"
+      type="number"
+      [(ngModel)]="dtOptions.filters.minPred[idx]"
+    > </mat-form-field>
+  </div>
+  <div class="col-md-4">
+    <mat-form-field> <input
+      matInput
+      placeholder="Minimum abs FC"
+      type="number"
+      [(ngModel)]="dtOptions.filters.minFC[idx]"
+    > </mat-form-field>
+  </div>
+  <div class="col-md-4">
+    <mat-form-field> <input
+      matInput
+      placeholder="Max p-val"
+      type="number"
+      [(ngModel)]="dtOptions.filters.minPval[idx]"
+    > </mat-form-field>
+  </div>
+  </ng-container>
+</div>
+</mat-dialog-content>
+<mat-dialog-actions>
+<button
+  mat-button
+  mat-dialog-close
+>Cancel</button>
+<button
+  mat-button
+  (click)="submit()"
+>Filter</button>
+</mat-dialog-actions>

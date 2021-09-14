@@ -37,6 +37,7 @@ export class ReduceComponent implements OnInit {
 				crossvalidationsd: [0.5, [Validators.min(0.05), Validators.max(5)]],
 				entropyone: [0.25, [Validators.min(0.05), Validators.max(1)]],
 				entropytwo: [0.05, [Validators.min(0.005), Validators.max(1)]],
+				stable : [10, [Validators.min(0), Validators.max(100)]]
 			});
 		});
 	}

@@ -26,7 +26,7 @@ bool Aggregation::run(int argc, char** argv){
 					("T,global-threshold","Global minimum value for whom the nodes will be used to build the graphs",cxxopts::value<double>()->default_value("70"))
 					("d,de-coverage-threshold","Consider ad differentially expressed a gene if at least one trascipt is covered for more than this threshold in sequences.",cxxopts::value<double>()->default_value("50"))
 					("m,mapper-config", "Mapper configuration JSON file",cxxopts::value<std::string>()->default_value("nomap"))
-					("C,consistency","Consistency between nodes. The higher, the more different two sequential nodes can be. Minimum: 0.5 . Default: 1", cxxopts::value<double>()->default_value("2"))
+					("C,consistency","Consistency between nodes. The higher, the more different two sequential nodes can be. Minimum: 0.5 ", cxxopts::value<double>()->default_value("2"))
 					("c,count-matrix", "The count matrix.", cxxopts::value<std::string>()->default_value("nocount"))
 					("p,perfect-match", "Don't consider sequences with mismatches or indels");
 			auto parsedArgs = options.parse(argc, argv);

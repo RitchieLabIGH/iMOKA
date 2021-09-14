@@ -22,32 +22,31 @@ sample_1&#9;drug_1:responsive;drug_2:resistant&#9;SRR0000000
 sample_2&#9;drug_1:resistant;sex:male&#9;http://example.com/read_1.fq;http://example.com/read_2.fq
 sample_3&#9;drug_2:responsive;ethnicity:caucasian&#9;/home/user/bam/sample_3.bam
 "></textarea>
-					<mat-hint>Divide the columns using the tab or a space,
+					<mat-hint>Columns: Name Metadata file(s). Divide the columns using the tab or a space,
 					the elements inside the columns with ";" and the metadata
-					key-vallue pairs with a ":" </mat-hint> </mat-form-field>
+					key-vallue pairs with a ":". </mat-hint> </mat-form-field>
 				</div>
 			</div>
 		</form>
 		</mat-step> <mat-step [stepControl]="detailsControl">
 		<form [formGroup]="detailsControl">
 			<ng-template matStepLabel>Process details</ng-template>
-			<div   
-				>
+			<div class="row">
 				
-				<div 
+				<div class="col-md-4" 
 					 >
 					<mat-form-field> <mat-label>K-mer
 					length</mat-label> <input matInput required formControlName="k_len"
 						type="number"> <mat-hint>The length of the
 					k-mers</mat-hint> </mat-form-field>
 				</div>
-				<div 
+				<div class="col-md-4"
 					 >
 					<mat-form-field> <mat-label>Noise threshold</mat-label> <input matInput required formControlName="minCount"
 						type="number"> <mat-hint>Minimum count to
 					consider a k-mer in a sample</mat-hint> </mat-form-field>
 				</div>
-				<div 
+				<div class="col-md-4"
 					 >
 					<mat-form-field
 						title="Reverse files will be converted in their reverse-complementary form before the k-mer count">
@@ -58,12 +57,12 @@ sample_3&#9;drug_2:responsive;ethnicity:caucasian&#9;/home/user/bam/sample_3.bam
 						value="rr">Reverse/Reverse</mat-option> </mat-select> <mat-hint>Used
 					only with paired end</mat-hint> </mat-form-field>
 				</div>
-				<div 
+				<div class="col-md-12"
 					 >
 					<mat-slide-toggle formControlName="fastqc">Run
 					FastQC</mat-slide-toggle>
 				</div>
-				<div 
+				<div class="col-md-12"
 					 >
 					<mat-slide-toggle formControlName="keepRaw">Keep
 					the raw and intermediate files</mat-slide-toggle>
@@ -73,23 +72,23 @@ sample_3&#9;drug_2:responsive;ethnicity:caucasian&#9;/home/user/bam/sample_3.bam
 		</mat-step> <mat-step [stepControl]="procControl">
 		<form [formGroup]="procControl">
 			<ng-template matStepLabel>Process resources</ng-template>
-			<div   
+			<div class="row"
 				>
-				<div 
+				<div class="col-md-4"
 					 >
 					<mat-form-field> <mat-label>Threads
 					per process</mat-label> <input matInput required formControlName="cores"
 						type="number"> <mat-hint>Number of cores used
 					per process</mat-hint> </mat-form-field>
 				</div>
-				<div 
+				<div class="col-md-4"
 					 >
 					<mat-form-field> <mat-label>Max memory
 					in Gb per process</mat-label> <input matInput required formControlName="mem"
 						type="number"> <mat-hint>Max ram used per
 					process </mat-hint> </mat-form-field>
 				</div>
-				<div 
+				<div class="col-md-4"
 					 >
 					<mat-form-field> <mat-label>Divide jobs</mat-label> <input matInput required formControlName="njobs"
 						type="number"> <mat-hint>Divide the task in multiple jobs</mat-hint> </mat-form-field>

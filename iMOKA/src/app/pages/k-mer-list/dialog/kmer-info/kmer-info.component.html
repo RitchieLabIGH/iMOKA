@@ -10,7 +10,9 @@
           <strong matLine>k-mer sequence</strong>
             <p >{{kmer.kmer}}</p>
           <strong matLine>Graph sequence</strong>
-            <p >{{kmer.sequence.sequence}}</p>
+            <p>
+            <textarea style="width:80%; height:80px;resize:none;" readonly>{{kmer.sequence.sequence}}</textarea>
+            </p>
           </div>
           <div class="col-md-6"> <strong matLine>Comparison values</strong>
             <p  *ngFor="let value of kmer.values; index as i">

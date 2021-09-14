@@ -1075,6 +1075,7 @@ void KmerGraphSet::write_kmers(std::ofstream &json_out, std::ofstream &tsv_out,
 		bm.setBinaryDbsBuffer(5); /// Reduce memory impact
 		bm.load(matrix_file);
 		IOTools::printMatrixHeader(matrix_out, bm.col_names, bm.col_groups);
+		matrix_out.flush();
 	}
 	std::string sep = "\t";
 	tsv_out << "kmer" << sep << "graph_number" << sep << "graph_type" << sep
@@ -1102,6 +1103,7 @@ void KmerGraphSet::write_kmers(std::ofstream &json_out, std::ofstream &tsv_out,
 				for ( int64_t j = 0; j < max_buff ; j++ ){
 					request[j]=winning_nodes[i+j]->kmer;
 				}
+				request.resize(max_buff);
 				bm.getLines(request, kmer);
 				buffer_pos=0;
 			}

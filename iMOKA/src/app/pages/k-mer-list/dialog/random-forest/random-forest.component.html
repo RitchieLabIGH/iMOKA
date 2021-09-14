@@ -6,14 +6,14 @@
 		<mat-step [stepControl]="mainParam">
 		<form [formGroup]="mainParam">
 			<ng-template matStepLabel>Main parameters</ng-template>
-			<div    >
-				<div   >
+			<div class="row high-tiles" >
+				<div class="col-md-6"  >
 					<mat-form-field> 
 						<mat-label>Experiment description</mat-label> 
 						<input matInput required formControlName="description"> 
 					</mat-form-field>
 				</div>
-				<div   >
+				<div class="col-md-6"  >
 					<mat-form-field> 
 						<mat-label>K-mers to use</mat-label> 
 						<mat-select required formControlName="which_features">
@@ -22,34 +22,34 @@
 						</mat-select> 
 					</mat-form-field>
 				</div>
-				<div   >
+				<div class="col-md-6"  >
 					<mat-form-field> 
 						<mat-label>Number of models</mat-label> 
 						<input matInput required formControlName="rounds" type="number"> 
 					</mat-form-field>
 				</div>
-				<div   >
+				<div class="col-md-6"  >
 					<mat-form-field>
 						<mat-label>Number of features</mat-label> 
 						<input matInput required formControlName="max_features" type="number"  >
 						<mat-hint>Use a subset of synegrgetic features</mat-hint> 
 					</mat-form-field>
 				</div>
-				<div   >
+				<div  class="col-md-6" >
 					<mat-form-field>
 						<mat-label>Number of trees</mat-label> 
 						<input matInput required formControlName="n_trees" type="number"> 
 						<mat-hint>Used in the feature importance evaluation </mat-hint> 
 					</mat-form-field>
 				</div>
-				<div   >
+				<div class="col-md-6"  >
 					<mat-form-field>
 						<mat-label>Cross validation</mat-label> 
 						<input matInput required formControlName="cross_validation" type="number" > 
 						<mat-hint>Cross validate to reduce overfitting.</mat-hint> 
 					</mat-form-field>
 				</div>
-				<div   >
+				<div class="col-md-6"  >
 					<mat-form-field>
 						<mat-label>Test fraction</mat-label> 
 						<input matInput required formControlName="test_fraction" type="number" > 
@@ -61,16 +61,16 @@
 		</mat-step> <mat-step [stepControl]="procControl">
 		<form [formGroup]="procControl">
 			<ng-template matStepLabel>Process resources</ng-template>
-			<div   
+			<div   class="row "
 				>
-				<div   >
+				<div  class="col-md-6" >
 					<mat-form-field> 
 						<mat-label>Threads per process</mat-label> 
 						<input matInput required formControlName="cores" type="number"> 
 						<mat-hint>Number of cores used per process</mat-hint> 
 					</mat-form-field>
 				</div>
-				<div   >
+				<div class="col-md-6"  >
 					<mat-form-field> 
 						<mat-label>Memory</mat-label> 
 						<input matInput required formControlName="mem" type="number"> 

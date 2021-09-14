@@ -126,9 +126,10 @@
         <h4>Samples operations</h4>
         <div class="button-list-v">
           <button mat-raised-button (click)="newSample()">Add a new sample</button>
+          <button mat-raised-button (click)="deleteSamples()">Delete selected samples</button>
           <button mat-raised-button (click)="modSelMetadata()" [disabled]="getSelectedNumber()==0">Add/Modify selected metadata</button>
           <button mat-raised-button (click)="graphSel()" [disabled]="getSelectedNumber()==0">Graphical informations</button>
-          <button mat-raised-button (click)="refreshTable('search', true)" title="Check on the disk for changes of your samples">Check changes</button>
+          <button mat-raised-button (click)="refreshTable('reset', true)" title="Check on the disk for changes of your samples">Check changes</button>
 
         </div>
         <h4>Matrix creation</h4>

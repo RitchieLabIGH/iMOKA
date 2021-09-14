@@ -27,7 +27,7 @@ export class PantherGoComponent implements OnInit, OnDestroy {
 
 	colors = ["#ffb317", "#f94646", "#feffa0", "#ffce69", "#4fce00", "#fc724f", "#fbfc90", "#21b5e2", "#00bd6a", "#52319b"];
 	win: { height: number, width: number };
-
+	error_message : string;
 
 
 	results: PatherDataRow[] = [];
@@ -60,6 +60,7 @@ export class PantherGoComponent implements OnInit, OnDestroy {
 	}
 	enrichmentAnalysis() {
 		this.loading = true;
+		this.error_message=undefined;
 		this.pService.enrichmentAnalysis(this.panther_options).then((results) => {
 			if (this.element) {
 				this.win = { height: this.element.nativeElement.offsetHeight, width: this.element.nativeElement.offsetWidth };
@@ -74,6 +75,8 @@ export class PantherGoComponent implements OnInit, OnDestroy {
 			this.groupGoGraphs();
 		}).finally(() => {
 			this.loading = false;
+		}).catch(err=>{
+			this.error_message = JSON.stringify(err);
 		});
 	}
 	groupGoGraphs() {

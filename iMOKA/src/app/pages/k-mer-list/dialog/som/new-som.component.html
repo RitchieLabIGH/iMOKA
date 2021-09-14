@@ -6,15 +6,15 @@
     <mat-step [stepControl]="mainParam">
     <form [formGroup]="mainParam">
       <ng-template matStepLabel>Main parameters</ng-template>
-      <div    >
-        <div   >
+      <div  class="row high-tiles"  >
+        <div class="col-md-6"  >
           <mat-form-field> 
             <mat-label>Experiment description</mat-label> 
             <input matInput required formControlName="description">
             <mat-hint>Give a name to this experiment</mat-hint> 
           </mat-form-field>
         </div>
-        <div   >
+        <div class="col-md-6"  >
           <mat-form-field> 
             <mat-label>K-mers to use</mat-label> 
             <mat-select required formControlName="which_features">
@@ -23,23 +23,23 @@
             </mat-select> 
           </mat-form-field>
         </div>
-        <div   >
+        <div class="col-md-6"  >
           <mat-form-field> 
             <mat-label>Iterations</mat-label> 
             <input matInput required formControlName="iterations" type="number">
             <mat-hint>Number of iterations for SOM training</mat-hint>
           </mat-form-field>
         </div>
-        <div   >
+        <div class="col-md-6"  >
           <mat-form-field>
             <mat-label>Start learning rate</mat-label> 
             <input matInput required formControlName="learn_rate" type="number"  >
           </mat-form-field>
         </div>
-        <div   >
+        <div class="col-md-6"  >
             <mat-slide-toggle required formControlName="norm">Normalize</mat-slide-toggle>
         </div>
-        <div   >
+        <div class="col-md-6"  >
         <mat-form-field>
           <mat-label>Squared network size by axe </mat-label>
             <mat-label>Start learning rate</mat-label> 
@@ -47,14 +47,14 @@
             <mat-hint>Value of 2 is a 2x2 network with 4 nodes. Multiple values will create multiple analyisis</mat-hint>
         </mat-form-field>
         </div>
-        <div   >
+        <div class="col-md-6"  >
         <mat-form-field>
           <mat-label>Number of cluster</mat-label>
             <input matInput required formControlName="csize" >
             <mat-hint>Number of cluster to cluster sample from SOM</mat-hint>
         </mat-form-field>
         </div>
-        <div   >
+        <div  class="col-md-6" >
           <mat-form-field>
             <mat-label>Classifier type</mat-label> 
             <mat-select formControlName="cftype">
@@ -68,16 +68,16 @@
     </mat-step> <mat-step [stepControl]="procControl">
     <form [formGroup]="procControl">
       <ng-template matStepLabel>Process resources</ng-template>
-      <div   
+      <div   class="row"
         >
-        <div   >
+        <div  class="col-md-6" >
           <mat-form-field> 
             <mat-label>Threads per process</mat-label> 
             <input matInput required formControlName="cores" type="number"> 
             <mat-hint>Number of cores used per process</mat-hint> 
           </mat-form-field>
         </div>
-        <div   >
+        <div  class="col-md-6" >
           <mat-form-field> 
             <mat-label>Memory</mat-label> 
             <input matInput required formControlName="mem" type="number"> 

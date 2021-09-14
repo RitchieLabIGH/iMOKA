@@ -33,21 +33,36 @@ export interface Event {
 
 
 export class KmerDataTableOptions {
-	displayedColumns: string[];
-	search: { value: string };
-	order: { name: string, asc: boolean };
-	subset: string[];
-	bmu : number[];
-	eventsFilter: string[];
-	minCount: number;
-	minPred: number;
-	minFC: number;
-	maxMap : number = -1;
-	minPval: number;
-	pageSize: number;
-	pageIndex: number;
-	draw: number;
-	recordsTotal: number;
-	recordsFiltered: number;
-	stats: { genes: any[], events: any[] };
+	
+	displayedColumns: string[]=['best_rank', 'kmer', 'position', 'genes', 'events'];
+	search: { value: string }={ value: "" };
+	order: { name: string, asc: boolean }={ name: 'best_rank', asc: true };
+	subset: string[]=[];
+	bmu : number[]=[];
+	eventsFilter: string[]=[];
+	filters : {
+		minCount: number,
+		minPred: number[],
+		minFC: number[],
+		minPval :number[],
+		maxMap : number	
+	} =  {
+				minCount: 0,
+				minPred : [],
+				minFC: [],
+				minPval : [],
+				maxMap : 0
+			};
+	pageSize: number = 10;
+	pageIndex: number = 0;
+	draw: number= 0;
+	recordsTotal: number = 0 ;
+	recordsFiltered: number = 0 ;
+	stats: { genes: any[], events: any[] } =  { genes: [], events: [] };
+	constructor(n_of_groups){
+		for (let k of ["minPred", "minFC"]){
+			this.filters[k] = new Array(n_of_groups).fill(0);
+		}
+		this.filters.minPval=  new Array(n_of_groups).fill(1);
+	}
 }

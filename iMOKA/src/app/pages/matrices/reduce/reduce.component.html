@@ -1,85 +1,123 @@
-<h1 mat-dialog-title>Reduce the matrix {{matrix.name}} </h1>
-<div mat-dialog-content class="main-dialog">
-	<div >
-		<mat-vertical-stepper linear="true" #stepper>
-		<mat-step [stepControl]="detailsControl">
-		<form [formGroup]="detailsControl">
-			<ng-template matStepLabel>Reduction parameters</ng-template>
-			<div class="high-tiles"    >
-				<div   >
-					<mat-form-field> 
-						<mat-label>Accuracy</mat-label> 
-						<input matInput required formControlName="accuracy" type="number"> 
-						<mat-hint>Accuracy threshold that the k-mers have to reach</mat-hint> 
-					</mat-form-field>
-				</div>
-                <div   >
-                  <mat-form-field> 
-                    <mat-label>Minimum count</mat-label> 
-                    <input matInput required formControlName="min" type="number"> 
-                    <mat-hint>Consider a k-mer only if at least one sample has a raw count higher than this value</mat-hint> 
-                    </mat-form-field>
-                </div>
-				<div   >
-					<mat-form-field> 
-						<mat-label>Test percentage</mat-label> 
-						<input matInput required formControlName="test" type="number"> 
-						<mat-hint>The percentage of the smallest group used to test each cv round</mat-hint> 
-					</mat-form-field>
-				</div>
-				<div   >
-					<mat-form-field>
-						<mat-label>Cross validation maximum rounds</mat-label> 
-						<input matInput required formControlName="crossvalidation" type="number"> 
-						<mat-hint>The maximum number of round in cross validation</mat-hint> 
-					</mat-form-field>
-				</div>
-				<div   >
-					<mat-form-field>
-						<mat-label>Cross validation SE</mat-label> 
-						<input matInput required formControlName="crossvalidationsd" type="number"  step="0.01">
-						<mat-hint> The cross validation will stop when the standard error of the accuracies will reach this value</mat-hint> 
-					</mat-form-field>
-				</div>
-				<div   >
-					<mat-form-field>
-						<mat-label>Entropy adjustment 1 </mat-label> 
-						<input matInput required formControlName="entropyone" type="number"  step="0.01"> 
-						<mat-hint>First adjustment for the entropy filter</mat-hint> 
-					</mat-form-field>
-				</div>
-				<div   >
-					<mat-form-field>
-						<mat-label>Entropy adjustment 2</mat-label> 
-						<input matInput required formControlName="entropytwo" type="number"  step="0.01">  
-						<mat-hint>Second adjustment for the entropy filter</mat-hint> 
-					</mat-form-field>
-				</div>
-			</div>
-		</form>
-		</mat-step> <mat-step [stepControl]="procControl">
-		<form [formGroup]="procControl">
-			<ng-template matStepLabel>Process resources</ng-template>
-			<div   
-				>
-				<div 
-					 >
-					<mat-form-field> <mat-label>Threads
-					per process</mat-label> <input matInput required formControlName="cores"
-						type="number"> <mat-hint>Number of cores used
-					per process</mat-hint> </mat-form-field>
-				</div>
-				<div 
-					 >
-					<mat-form-field> <mat-label>RAM available </mat-label> <input matInput required formControlName="mem"
-						type="number"> <mat-hint>Value in Gb</mat-hint> </mat-form-field>
-				</div>
-			</div>
-		</form>
-		</mat-step> </mat-vertical-stepper>
-	</div>
+<h1 mat-dialog-title>Reduce the matrix {{matrix.name}}</h1>
+<div
+  mat-dialog-content
+  class="main-dialog"
+>
+  <div>
+    <mat-vertical-stepper
+      linear="true"
+      #stepper
+    > <mat-step [stepControl]="detailsControl">
+    <form [formGroup]="detailsControl">
+      <ng-template matStepLabel>Reduction parameters</ng-template>
+      <div class="row high-tiles">
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Accuracy</mat-label> <input
+            matInput
+            required
+            formControlName="accuracy"
+            type="number"
+          > <mat-hint>Accuracy threshold that the k-mers have to reach</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Minimum count</mat-label> <input
+            matInput
+            required
+            formControlName="min"
+            type="number"
+          > <mat-hint>Consider a k-mer only if at least one sample has a raw count higher than this value</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Test percentage</mat-label> <input
+            matInput
+            required
+            formControlName="test"
+            type="number"
+          > <mat-hint>The percentage of the smallest group used to test each cv round</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Cross validation maximum rounds</mat-label> <input
+            matInput
+            required
+            formControlName="crossvalidation"
+            type="number"
+          > <mat-hint>The maximum number of round in cross validation</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Cross validation SE</mat-label> <input
+            matInput
+            required
+            formControlName="crossvalidationsd"
+            type="number"
+            step="0.01"
+          > <mat-hint> The cross validation will stop when the standard error of the accuracies will reach this value</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Stable </mat-label> <input
+            matInput
+            required
+            formControlName="stable"
+            type="number"
+            step="1"
+            min="0"
+          > <mat-hint>Estimate the stable k-mers to use for independent normalization. 0 = Disable, N = number of stable k-mers</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Entropy adjustment 1 </mat-label> <input
+            matInput
+            required
+            formControlName="entropyone"
+            type="number"
+            step="0.01"
+          > <mat-hint>First adjustment for the entropy filter</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-4">
+          <mat-form-field> <mat-label>Entropy adjustment 2</mat-label> <input
+            matInput
+            required
+            formControlName="entropytwo"
+            type="number"
+            step="0.01"
+          > <mat-hint>Second adjustment for the entropy filter</mat-hint> </mat-form-field>
+        </div>
+      </div>
+    </form>
+    </mat-step> <mat-step [stepControl]="procControl">
+    <form [formGroup]="procControl">
+      <ng-template matStepLabel>Process resources</ng-template>
+      <div class="row">
+        <div class="col-md-6">
+          <mat-form-field> <mat-label>Threads per process</mat-label> <input
+            matInput
+            required
+            formControlName="cores"
+            type="number"
+          > <mat-hint>Number of cores used per process</mat-hint> </mat-form-field>
+        </div>
+        <div class="col-md-6">
+          <mat-form-field> <mat-label>RAM available </mat-label> <input
+            matInput
+            required
+            formControlName="mem"
+            type="number"
+          > <mat-hint>Value in Gb</mat-hint> </mat-form-field>
+        </div>
+      </div>
+    </form>
+    </mat-step> </mat-vertical-stepper>
+  </div>
 </div>
-<div mat-dialog-actions align="end">
-	<button mat-button mat-dialog-close>Close</button>
-	<button mat-button [disabled]="!isValid()" (click)="send()">Run</button>
+<div
+  mat-dialog-actions
+  align="end"
+>
+  <button
+    mat-button
+    mat-dialog-close
+  >Close</button>
+  <button
+    mat-button
+    [disabled]="!isValid()"
+    (click)="send()"
+  >Run</button>
 </div>

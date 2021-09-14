@@ -43,7 +43,7 @@ bool Classification::run(int argc, char **argv) {
 					"Minimum raw count that at least one sample has to have to consider a k-mer",
 					cxxopts::value<int>()->default_value("5"))("S,stable",
 					"Estimate the stable k-mers to use for independent normalization. 0 = Disable, N = number of stable k-mers",
-					cxxopts::value<uint64_t>()->default_value("10"));
+					cxxopts::value<uint64_t>()->default_value("0"));
 			auto parsedArgs = options.parse(argc, argv);
 			if (parsedArgs.count("help") != 0
 					|| IOTools::checkArguments(parsedArgs,
@@ -155,7 +155,7 @@ bool Classification::classificationFilterMulti(std::string file_in,
 		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
 		BinaryMatrix mat(file_in);
 		Kmer to_kmer(mat.k_len, std::pow(4, mat.k_len) - 1);
-		double min_norm_count = min / mat.getMinNormalizationFactor() ; // The counts lower than this are zeros to level the samples with the one having the lowest depth.
+		double min_norm_count = min / mat.getMaxNormalizationFactor() ; // The counts lower than this are zeros to level the samples with the one having the lowest depth.
 		KmerMatrixLine<double> line;
 		if (thr != omp_get_max_threads() - 1) {
 			to_kmer = partitions[thr];

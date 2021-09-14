@@ -1,10 +1,10 @@
 <div class="row">
-  <div class="col-md-12">
+  <div class="col-md-8">
     <plotly-plot [data]="graph.data" [layout]="graph.layout"></plotly-plot>
   </div>
-</div>
-<div class="row">
   <div class="col-md-4">
+    <mat-card>
+      <mat-card-content>
     <mat-list dense> <mat-list-item>
     <h3 matLine>Best model</h3>
     <p matLine>{{model.name}}</p>
@@ -21,9 +21,16 @@
     <h3 matLine>The shape represents the prediction</h3>
     <h3 matLine>The color represents the given label</h3>
     </mat-list-item> </mat-list>
+    </mat-card-content></mat-card>
   </div>
-  <div class="col-md-4">
-    <h3>Confusion matrix</h3>
+</div>
+<div class="row">
+  
+  <div class="col-md-6 p-2">
+  <mat-card >
+  <mat-card-title>Confusion matrix</mat-card-title>
+      <mat-card-content>
+    
     <table class="mat-table mat-elevation-z8">
       <thead>
         <tr class="mat-header-row">
@@ -45,9 +52,12 @@
         </tr>
       </tbody>
     </table>
+    </mat-card-content></mat-card>
   </div>
-  <div class="col-md-4">
-    <h3>Metrics</h3>
+  <div class="col-md-6 p-2">
+  <mat-card >
+  <mat-card-title>Metrics</mat-card-title>
+      <mat-card-content>
     <table class="mat-table mat-elevation-z8">
       <thead>
         <tr class="mat-header-row">
@@ -77,5 +87,6 @@
         </ng-container>
       </tbody>
     </table>
+    </mat-card-content></mat-card>
   </div>
 </div>

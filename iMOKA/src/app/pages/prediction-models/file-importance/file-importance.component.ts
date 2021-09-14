@@ -1,26 +1,20 @@
-import { Component, Input, OnInit, AfterContentInit} from '@angular/core';
+import { Component, Input, OnInit} from '@angular/core';
 
 @Component({
 	selector: 'app-file-importance',
 	templateUrl: './file-importance.component.html',
 	styleUrls: ['./file-importance.component.css']
 })
-export class FileImportanceComponent implements OnInit, AfterContentInit {
+export class FileImportanceComponent implements OnInit {
 	@Input() data: any;
 	@Input() session: any;
 	@Input() importances: any;
 	info: any;
 	revision : number=1;
-	gstyle = { position: 'relative', width: '100%', height: '100%' };
+	gstyle = { width: '100%', height: '500px' };
 
 	constructor() { }
-	ngAfterContentInit(): void {
-		setTimeout(()=>{
-			this.updateFI();
-			this.updateSample();
-			this.revision=2;
-		}, 1000);
-	}
+	
 	ngOnInit() {
 		this.data.samples_eval = [];
 		this.info = this.session.files.importance.info;
@@ -44,15 +38,18 @@ export class FileImportanceComponent implements OnInit, AfterContentInit {
 					grp.y.push(this.importances[s.idx][j]);
 				});
 			});
+			graph.to_display = samples.length < 20 ? samples.length  : 20; 
 			graph.samples = samples.sort((a, b) => { return a.name < b.name ? -1 : 1; });
 			this.data.samples_eval.push(graph)
 		});
 		this.updateFI();
-		this.updateSample();	
-		setTimeout(()=>{
+		this.updateSample();
+		this.revision=this.revision+1;
+		setInterval(()=>{
 			this.updateFI();
-			this.updateSample();	
-		}, 500);
+			this.updateSample();
+			this.revision=this.revision+1;
+		}, 2000)
 		
 	}
 	updateFI() {

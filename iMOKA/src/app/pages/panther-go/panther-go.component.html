@@ -3,6 +3,7 @@
 <div mat-dialog-content class="main-dialog" #mainPage>
   <div class="row">
     <div class="col-12">
+      <div class="row" *ngIf="error_message"><div class="col-12">{{error_message}}</div></div>
       <div class="row">
       <mat-form-field class="col-md-3"> <mat-label>Enrichment type</mat-label> <mat-select [(ngModel)]="panther_options.enrichmentType" id="enrichmentType" value={{panther_options.enrichmentType}}> <mat-option *ngFor="let key of PDBEnrichmentTypeKeys" [value]="key">{{key}}</mat-option> </mat-select> </mat-form-field>
       <mat-form-field class="col-md-3"> <mat-label>Type</mat-label> <mat-select [(ngModel)]="panther_options.test_type" id="test_type" value={{panther_options.test_type}}> <mat-option *ngFor="let key of PDBTestTypeKeys" [value]="key">{{key}}</mat-option> </mat-select> </mat-form-field>

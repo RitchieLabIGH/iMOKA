@@ -44,13 +44,14 @@ import {VideoComponent} from './dashboard/video/video.component';
 import {GraphsComponent} from './samples-list/graphs/graphs.component';
 
 import {LoggerComponent} from './logger/logger.component';
-
+import {FilterComponent} from './k-mer-list/dialog/filter/filter.component';
 PlotlyModule.plotlyjs = PlotlyJS;
 
 
 @NgModule({
 	declarations: [
 		OpenFilesComponent,
+		FilterComponent,
 		KMerListComponent,
 		PantherGoComponent,
 		SamplesSomComponent,
@@ -106,6 +107,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
 		NewSomComponent,
 		SampleComponent,
 		GraphsComponent,
+		FilterComponent,
 	]
 })
 export class PagesModule { }
