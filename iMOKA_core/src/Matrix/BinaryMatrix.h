@@ -95,9 +95,7 @@ public:
 		return max;
 	}
 
-	double getMaxNormalizationFactor() {
-		return *std::max_element(normalization_factors.begin(), normalization_factors.end());
-	}
+
 
 	bool go_to(Kmer&);
 

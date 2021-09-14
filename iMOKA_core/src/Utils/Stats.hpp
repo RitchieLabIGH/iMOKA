@@ -346,7 +346,11 @@ public:
 		}
 		std::sort(X.begin(), X.end());
 		if (X.size() > 2) {
-			return {X[std::round(X.size()*0.25)], X[std::round(X.size()*0.5)],X[std::round(X.size()*0.75)]};
+			if ( X.size() % 2 == 0 ){
+				return {X[std::round(X.size()*0.25)], X[std::round(X.size()*0.5)],X[std::round(X.size()*0.75)]};
+			} else {
+				return {X[std::round(X.size()*0.25)], (X[std::floor(X.size()*0.5)] + X[std::ceil(X.size()*0.5)])/2 ,X[std::round(X.size()*0.75)]};
+			}
 		} else {
 			return {X[0], (X.size()==1 ? X[0] : ((X[0]+X[1]) /2)), X[X.size()==1 ? 0 : 1 ]};
 		}

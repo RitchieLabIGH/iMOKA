@@ -155,7 +155,7 @@ bool Classification::classificationFilterMulti(std::string file_in,
 		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
 		BinaryMatrix mat(file_in);
 		Kmer to_kmer(mat.k_len, std::pow(4, mat.k_len) - 1);
-		double min_norm_count = min / mat.getMaxNormalizationFactor() ; // The counts lower than this are zeros to level the samples with the one having the lowest depth.
+		double min_norm_count = min / Stats::getQuartiles(mat.normalization_factors)[0] ; // The counts lower than this are zeros to level the samples with the one having the lowest depth ( first quartile ).
 		KmerMatrixLine<double> line;
 		if (thr != omp_get_max_threads() - 1) {
 			to_kmer = partitions[thr];
