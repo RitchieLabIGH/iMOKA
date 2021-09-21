@@ -54,88 +54,13 @@ void BinaryDB::fillBuffer() {
 }
 
 void BinaryDB::fillPrefixBuffer() {
-	if (stream_buffer_prefix.size() != buffer_prefix_size) {
-		stream_buffer_prefix.resize(buffer_prefix_size);
-	}
-	file_prefix = fopen(file_name.c_str(), "rb");
-	int r = fseek(file_prefix,
-			(prefix_init_p + (unit_prefix_binary * current_prefix)), SEEK_SET);
-	buffer_prefix_size = fread(stream_buffer_prefix.data(), 1,
-			buffer_prefix_size, file_prefix);
-	p_buffer_p = 0;
-	fclose(file_prefix);
-}
-
-///	Disk binary search of the suffixes with pre-loaded prefixes
-/// @param fs file stream of the binary file
-/// @param target the k-mer to search
-/// @param prefixes_plus_positions the pre-loaded prefixes
-/// @return true if found, false if not. The current kmer and count are set to the result.
-bool BinaryDB::hybrid_binary_search(Kmer &target, std::vector<uchar> &prefixes,
-		std::vector<uchar> &suffixes_buffer) {
-	query_count = 0;
-	Prefix prefix(target, prefix_size), tmp_prefix(prefix_size);
-	Suffix suffix(target, suffix_size), tmp_suffix(suffix_size);
-	int64_t L = 0, m, R = tot_prefix - 1;
-	while (L < R) {
-		m = ((L + R) / 2) + ((L + R % 2 == 0) ? 0 : 1);
-		memcpy(tmp_prefix.kmer.data(), &prefixes.data()[m * unit_prefix_binary],
-				prefix_v_byte_size);
-		if (prefix < tmp_prefix) {
-			R = m - 1;
-		} else {
-			L = m;
-		}
-	}
-	memcpy(tmp_prefix.kmer.data(), &prefixes.data()[L * unit_prefix_binary],
-			prefix_v_byte_size);
-	if (!(prefix == tmp_prefix)) {
-		return false;
-	}
-	uint64_t suffix_prefix_start;
-	memcpy(&suffix_prefix_start,
-			&prefixes[(L * unit_prefix_binary) + prefix_v_byte_size], p_size);
-	if (L == tot_prefix - 1) {
-		R = tot_suffix - 1;
-		L = suffix_prefix_start;
-	} else {
-		R = L + 1;
-		L = suffix_prefix_start;
-		memcpy(&suffix_prefix_start,
-				&prefixes[(R * unit_prefix_binary) + prefix_v_byte_size],
-				p_size);
-		R = suffix_prefix_start - 1;
-	}
-	while (L < R) {
-		m = ((L + R) / 2) + ((L + R % 2 == 0) ? 0 : 1);
-		memcpy(tmp_suffix.kmer.data(),
-				&suffixes_buffer.data()[m * unit_suffix_binary],
-				suffix_v_byte_size);
-		if (suffix < tmp_suffix) {
-			R = m - 1;
-		} else {
-			L = m;
-		}
-	}
-	memcpy(tmp_suffix.kmer.data(),
-			&suffixes_buffer.data()[L * unit_suffix_binary],
-			suffix_v_byte_size);
-	memcpy(&query_count,
-			&suffixes_buffer[(L * unit_suffix_binary) + suffix_v_byte_size],
-			c_size);
-	return tmp_suffix == suffix;
+	loadPrefixes(stream_buffer_prefix);
 }
 
 std::vector<double> BinaryDB::getKmers(std::vector<Kmer> &requests) {
 	std::vector<double> out(requests.size(), 0);
-	std::vector<uchar> prefixes;
-	std::vector<uchar> suffixes;
-	loadPrefixes(prefixes);
-	loadSuffixes(suffixes);
 	for (uint64_t i = 0; i < out.size(); i++) {
-		if (hybrid_binary_search(requests[i], prefixes, suffixes)) {
-			out[i] = query_count;
-		}
+		 out[i] = binary_search(requests[i]);
 	}
 	return out;
 
@@ -257,11 +182,10 @@ bool BinaryDB::open(std::string file) {
 	prefix_size = prefix_v_size / 2;
 	suffix_size = suffix_v_size / 2;
 	current_prefix_range = { Prefix(prefix_size), { 0, 0 } };
-	buffer_prefix_size = 100 * unit_prefix_binary;
 	buffer_size *= unit_suffix_binary;
 	suffix = Suffix(suffix_size);
 	buffer_p = buffer_size; // oblige to fill the buffer
-	p_buffer_p = buffer_prefix_size;
+	fillPrefixBuffer();
 	return tot_suffix > 0;
 }
 
@@ -269,25 +193,17 @@ bool BinaryDB::getNextPrefix() {
 	if (current_prefix > tot_prefix) {
 		return false;
 	}
-	if (p_buffer_p == buffer_prefix_size) {
-		fillPrefixBuffer();
-	}
 	memcpy(current_prefix_range.first.kmer.data(),
-			&stream_buffer_prefix[p_buffer_p], prefix_v_byte_size);
-	p_buffer_p += prefix_v_byte_size;
+			&stream_buffer_prefix[current_prefix * unit_prefix_binary ], prefix_v_byte_size);
 	memcpy(&current_prefix_range.second.first,
-			&stream_buffer_prefix[p_buffer_p], p_size);
-	p_buffer_p += p_size;
+			&stream_buffer_prefix[(current_prefix * unit_prefix_binary)+prefix_v_byte_size], p_size);
+	current_prefix++;
 	if (current_prefix == tot_prefix) {
 		current_prefix_range.second.second = tot_suffix - 1;
 	} else {
-		if (p_buffer_p == buffer_prefix_size) {
-			fillPrefixBuffer();
-		}
 		memcpy(&current_prefix_range.second.second,
-				&stream_buffer_prefix[p_buffer_p + prefix_v_byte_size], p_size);
+				&stream_buffer_prefix[(current_prefix * unit_prefix_binary)+prefix_v_byte_size], p_size);
 	}
-	current_prefix++;
 	return true;
 }
 
@@ -296,9 +212,20 @@ void BinaryDB::loadSuffixes(std::vector<uchar> &suffixes) {
 	uint64_t suffixes_size = (tot_suffix * unit_suffix_binary);
 	fseek(file, suffix_init_p, SEEK_SET);
 	suffixes.resize(suffixes_size);
-	suffixes_size = fread(suffixes.data(), 1, suffixes.size(), file);
+	suffixes_size = fread(suffixes.data(), 1, suffixes_size, file);
 	fclose(file);
 }
+
+void BinaryDB::loadSuffixes(std::vector<uchar> &suffixes, uint64_t from_n,
+		uint64_t to_n) {
+	file = fopen(file_name.c_str(), "rb");
+	uint64_t suffixes_size = ((to_n - from_n) * unit_suffix_binary);
+	fseek(file, suffix_init_p + (from_n * unit_suffix_binary), SEEK_SET);
+	suffixes.resize(suffixes_size);
+	suffixes_size = fread(suffixes.data(), 1, suffixes_size, file);
+	fclose(file);
+}
+
 void BinaryDB::loadPrefixes(std::vector<uchar> &prefixes) {
 	file_prefix = fopen(file_name.c_str(), "rb");
 	uint64_t buffer_prefix_size = tot_prefix * unit_prefix_binary;
@@ -335,23 +262,23 @@ bool BinaryDB::go_to(Kmer &target) {
 	Suffix suffix(target, suffix_size), tmp_suffix(suffix_size);
 
 	buffer_p = buffer_size;
-	p_buffer_p = buffer_prefix_size; // oblige to fill the buffer
 
-	file_prefix = fopen(file_name.c_str(), "rb");
-	int r;
 	int64_t L = 0, m, R = tot_prefix - 1;
 	while (L < R) {
 		m = ((L + R) / 2) + ((L + R % 2 == 0) ? 0 : 1);
-		r = fseek(file_prefix, (prefix_init_p + (unit_prefix_binary * m)),
-		SEEK_SET);
-		r = fread(tmp_prefix.kmer.data(), 1, prefix_v_byte_size, file_prefix);
+		memcpy(tmp_prefix.kmer.data(),
+				&stream_buffer_prefix.data()[m * unit_prefix_binary],
+				prefix_v_byte_size);
 		if (prefix < tmp_prefix) {
 			R = m - 1;
 		} else {
 			L = m;
 		}
 	}
-	fclose(file_prefix);
+	memcpy(tmp_prefix.kmer.data(),
+			&stream_buffer_prefix.data()[L * unit_prefix_binary],
+			prefix_v_byte_size);
+
 	current_prefix = L;
 	getNextPrefix();
 	if (!(prefix == getPrefix())) {
@@ -365,20 +292,22 @@ bool BinaryDB::go_to(Kmer &target) {
 		}
 		return false;
 	}
-	file = fopen(file_name.c_str(), "rb");
+
 	L = current_prefix_range.second.first;
 	R = current_prefix_range.second.second - 1;
+	loadSuffixes(stream_buffer, L, R + 1);
+	uint64_t buffer_start = L;
 	while (L < R) {
 		m = ((L + R) / 2) + ((L + R % 2 == 0) ? 0 : 1);
-		r = fseek(file, suffix_init_p + (unit_suffix_binary * m), SEEK_SET);
-		r = fread(tmp_suffix.kmer.data(), 1, suffix_v_byte_size, file);
+		memcpy(tmp_suffix.kmer.data(),
+				&stream_buffer.data()[(m - buffer_start) * unit_suffix_binary],
+				suffix_v_byte_size);
 		if (suffix < tmp_suffix) {
 			R = m - 1;
 		} else {
 			L = m;
 		}
 	}
-	fclose(file);
 	current_suffix = L;
 	getNext();
 	while (getKmer() < target) {
@@ -389,6 +318,67 @@ bool BinaryDB::go_to(Kmer &target) {
 	return kmer == target;
 }
 
+///	Like goto but just return the count
+/// @param target the k-mer to search
+/// @return the count
+uint32_t BinaryDB::binary_search(Kmer &target) {
+	uint32_t out=0;
+	Prefix prefix(target, prefix_size), tmp_prefix(prefix_size);
+	Suffix suffix(target, suffix_size), tmp_suffix(suffix_size);
+	int64_t L = 0, m, R = tot_prefix - 1;
+	while (L < R) {
+		m = ((L + R) / 2) + ((L + R % 2 == 0) ? 0 : 1);
+		memcpy(tmp_prefix.kmer.data(), &stream_buffer_prefix.data()[m * unit_prefix_binary],
+				prefix_v_byte_size);
+		if (prefix < tmp_prefix) {
+			R = m - 1;
+		} else {
+			L = m;
+		}
+	}
+	memcpy(tmp_prefix.kmer.data(), &stream_buffer_prefix.data()[L * unit_prefix_binary],
+			prefix_v_byte_size);
+	if (!(prefix == tmp_prefix)) {
+		return out;
+	}
+	uint64_t suffix_prefix_start;
+	memcpy(&suffix_prefix_start,
+			&stream_buffer_prefix.data()[(L * unit_prefix_binary) + prefix_v_byte_size], p_size);
+	if (L == tot_prefix - 1) {
+		R = tot_suffix - 1;
+		L = suffix_prefix_start;
+	} else {
+		R = L + 1;
+		L = suffix_prefix_start;
+		memcpy(&suffix_prefix_start,
+				&stream_buffer_prefix.data()[(R * unit_prefix_binary) + prefix_v_byte_size],
+				p_size);
+		R = suffix_prefix_start - 1;
+	}
+	loadSuffixes(stream_buffer, L, R + 1);
+	uint64_t buffer_start = L;
+	while (L < R) {
+		m = ((L + R) / 2) + ((L + R % 2 == 0) ? 0 : 1);
+		memcpy(tmp_suffix.kmer.data(),
+				&stream_buffer.data()[(m - buffer_start) * unit_suffix_binary],
+				suffix_v_byte_size);
+		if (suffix < tmp_suffix) {
+			R = m - 1;
+		} else {
+			L = m;
+		}
+	}
+	memcpy(tmp_suffix.kmer.data(),
+			&stream_buffer.data()[(L - buffer_start) * unit_suffix_binary],
+			suffix_v_byte_size);
+	if ( tmp_suffix == suffix ){
+		memcpy(&out,
+					&stream_buffer.data()[((L - buffer_start) * unit_suffix_binary)
+							+ suffix_v_byte_size], c_size);
+	}
+	return out;
+}
+
 /// Go to the k-mer number n or, if absent, to the closest next in alphabetical order
 /// @param target
 /// @return true if found exactly the target
@@ -397,7 +387,6 @@ bool BinaryDB::go_to(uint64_t n) {
 	current_prefix = 0;
 	current_suffix = n;
 	fillBuffer();
-	fillPrefixBuffer();
 	return getNext();
 }
 

@@ -82,7 +82,7 @@
   "config": {
     "forge": {
       "packagerConfig": {
-      	"icon": "./src/assets/images/256x256.ico",
+        "icon": "./src/assets/images/256x256.ico",
         "ignore": [
           "^/out",
           "^/node_modules",

@@ -114,9 +114,9 @@ public:
 	std::vector<Kmer> getPartitions(uint64_t n);
 	std::string file_name;
 	static int64_t bestPrefixSize(std::string file);
-	uint32_t query_count;
 	std::pair<Prefix, std::pair<int64_t, int64_t>> current_prefix_range;
 	uint64_t current_suffix = 0;
+	uint32_t binary_search( Kmer & target);
 
 private:
 	int64_t prefix_size;
@@ -139,13 +139,11 @@ private:
 	Suffix suffix;
 	Kmer kmer;
 	uint64_t buffer_size = 1000000;
-	uint64_t buffer_prefix_size;
 	uint64_t tot_prefix = 0;
 	uint64_t tot_suffix = 0;
 
 	uint64_t current_prefix = 0;
 	uint64_t buffer_p = 0;
-	uint64_t p_buffer_p = 0;
 	uint64_t tot_count = 0;
 
 	FILE *file = NULL;
@@ -156,9 +154,10 @@ private:
 	void fillBuffer();
 	void fillPrefixBuffer();
 	bool getNextPrefix();
-	bool hybrid_binary_search( Kmer & target, std::vector<uchar> & prefixes, std::vector<uchar> & stream_buffer);
+
 	void loadPrefixes(std::vector<uchar> & prefixes);
 	void loadSuffixes(std::vector<uchar> & suffixes);
+	void loadSuffixes(std::vector<uchar> & suffixes, uint64_t from_n, uint64_t to_n);
 };
 }
 }

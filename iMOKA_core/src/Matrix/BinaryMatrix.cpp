@@ -300,14 +300,9 @@ void BinaryMatrix::getLines(std::vector<Kmer> &request,
 void BinaryMatrix::getLine(Kmer &request, KmerMatrixLine<uint32_t> &response) {
 	response.count.resize(normalization_factors.size(), 0);
 	response.setKmer(request);
-	std::vector<std::vector<double>> columns(bin_databases.size());
 #pragma omp parallel for schedule(dynamic, 1)
 	for (uint64_t i = 0; i < bin_databases.size(); i++) {
-		if (bin_databases[i].go_to(request)) {
-			response.count[i] = bin_databases[i].getCount();
-		} else {
-			response.count[i] = 0;
-		}
+		response.count[i] = bin_databases[i].binary_search(request);
 	}
 	return;
 }

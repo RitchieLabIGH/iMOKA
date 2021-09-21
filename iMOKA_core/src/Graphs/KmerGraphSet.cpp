@@ -1072,7 +1072,7 @@ void KmerGraphSet::write_kmers(std::ofstream &json_out, std::ofstream &tsv_out,
 	bool first = true;
 	BinaryMatrix bm;
 	if (has_matrix) {
-		bm.setBinaryDbsBuffer(5); /// Reduce memory impact
+		bm.setBinaryDbsBuffer(500); /// Reduce memory impact
 		bm.load(matrix_file);
 		IOTools::printMatrixHeader(matrix_out, bm.col_names, bm.col_groups);
 		matrix_out.flush();
@@ -1091,29 +1091,15 @@ void KmerGraphSet::write_kmers(std::ofstream &json_out, std::ofstream &tsv_out,
 	}
 	tsv_out << "\n";
 	tsv_out.flush();
-	int64_t buffer_size=500;
-	std::vector<KmerMatrixLine<uint32_t>> kmer(buffer_size);
-	KmerMatrixLine<uint32_t> & current_k = kmer[0];
-	std::vector<Kmer> request(buffer_size);
-	int64_t buffer_pos=buffer_size;
+	KmerMatrixLine<uint32_t> current_k ;
 	for (int64_t i = 0; i < winning_nodes.size(); i++) {
 		if (has_matrix) {
-			if (buffer_pos == buffer_size){
-				int64_t max_buff = winning_nodes.size() > i+buffer_size ? buffer_size : winning_nodes.size()-i;
-				for ( int64_t j = 0; j < max_buff ; j++ ){
-					request[j]=winning_nodes[i+j]->kmer;
-				}
-				request.resize(max_buff);
-				bm.getLines(request, kmer);
-				buffer_pos=0;
-			}
-			current_k= kmer[buffer_pos];
+			bm.getLine(winning_nodes[i]->kmer, current_k);
 			matrix_out << current_k.getKmer();
 			for (int j = 0; j < current_k.count.size(); j++)
 				matrix_out << "\t"
 						<< (current_k.count[j] / bm.normalization_factors[j]);
 			matrix_out << "\n";
-			buffer_pos++;
 		}
 		json node=generate_kmer_json(i, current_k);
 		write_tsv_line(node, tsv_out);
