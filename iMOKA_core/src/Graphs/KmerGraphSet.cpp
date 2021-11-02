@@ -89,7 +89,7 @@ void KmerGraphSet::setCountMatrix(std::string file) {
 	matrix_file = file;
 	has_matrix = IOTools::fileExists(file);
 	if (has_matrix) {
-		BinaryMatrix binm(matrix_file);
+		BinaryMatrix binm(matrix_file, false);
 		normalization_factors = binm.normalization_factors;
 		sample_groups_names = binm.unique_groups;
 		n_columns = binm.col_names.size();
@@ -100,6 +100,7 @@ void KmerGraphSet::setCountMatrix(std::string file) {
 		infos["count_normalization"] = binm.normalization_factors;
 		infos["groups_names"] = sample_groups_names;
 		infos["samples_names"] = binm.col_names;
+		binm.clear();
 	}
 
 }
@@ -1070,10 +1071,10 @@ void KmerGraphSet::write_sequences_json(std::ofstream &ofs) {
 void KmerGraphSet::write_kmers(std::ofstream &json_out, std::ofstream &tsv_out,
 		std::ofstream &matrix_out) {
 	bool first = true;
-	BinaryMatrix bm;
+	BinaryMatrix bm(true);
 	if (has_matrix) {
-		bm.setBinaryDbsBuffer(500); /// Reduce memory impact
 		bm.load(matrix_file);
+		std::cerr << "\n\nMemory = " << IOTools::format_space_human(IOTools::getCurrentProcessMemory()) << "\n";
 		IOTools::printMatrixHeader(matrix_out, bm.col_names, bm.col_groups);
 		matrix_out.flush();
 	}
@@ -1188,50 +1189,9 @@ void KmerGraphSet::rescale() {
 				<< "\n";
 	}
 }
-/*
 
- int KmerGraphSet::aggregateCorrelated(double corr_thr) {
- if (corr_thr == 1) {
- return 0;
- }
- std::vector<std::set<uint64_t>> genes_per_node(winning_nodes.size());
- for (int i = 0; i < winning_nodes.size(); i++) {
- winning_nodes[i]->masked = false;
- for (auto &j : winner_pos[i]) {
- for (auto &g : winner_mapper_results[j].genes)
- genes_per_node[i].insert(g);
- }
- }
- std::set<uint64_t> intersection;
- int masked = 0;
- for (int i = 0; i < winning_nodes.size(); i++) {
- for (int j = i + 1; j < winning_nodes.size(); j++) {
- intersection.clear();
- std::set_intersection(genes_per_node[i].begin(),
- genes_per_node[i].end(), genes_per_node[j].begin(),
- genes_per_node[j].end(),
- std::inserter(intersection, intersection.begin()));
- if ((genes_per_node[i].size() == 0 && genes_per_node[j].size() == 0)
- || intersection.size() > 0) {
- if (Stats::correlationCoefficient(counts[i].count,
- counts[j].count) > corr_thr) {
- double max_a = winning_nodes[i]->getBestValue();
- double max_b = winning_nodes[j]->getBestValue();
- if (max_a > max_b) {
- winning_nodes[j]->masked = true;
- } else {
- winning_nodes[i]->masked = true;
- }
- masked++;
- }
- }
- }
- }
- return masked;
- }
- */
 
-void KmerGraphSet::recoverWinners(/*double corr*/) {
+void KmerGraphSet::recoverWinners() {
 	winning_nodes.clear();
 	for (auto &ev : events) {
 		addWinningNode(ev);

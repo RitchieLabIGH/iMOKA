@@ -45,7 +45,7 @@ public:
 	virtual ~KmerLineProcess() {
 	}
 	;
-	virtual void run(KmerMatrixLine<T> &line) {
+	virtual void run(KmerMatrixLine<T> &line, double min_norm_count) {
 	}
 	;
 	virtual void close() {
@@ -116,7 +116,7 @@ public:
 	std::map<uint64_t, uint64_t> group_counts;
 	std::vector<double> res;
 
-	void run(KmerMatrixLine<double> &line) {
+	void run(KmerMatrixLine<double> &line, double min_norm_count) {
 		tot_lines++;
 		if (use_entropy)
 			entropy = Stats::entropy(line.count);
@@ -126,6 +126,19 @@ public:
 			keep = false;
 			for (double &v : res)
 				keep = keep || v >= min_acc;
+			if ( keep ) { // Check that at least one mean is greater than twice the minimum count
+				keep=false;
+				std::fill(means.begin(), means.end(), 0);
+				for (int i = 0; i < groups.size(); i++) {
+					means[groups[i]] += line.count[i];
+				}
+				for (int g = 0; g < group_counts.size(); g++) {
+					if ((means[g] / group_counts[g]) > min_norm_count * 1.5){
+						keep=true;
+						g=group_counts.size();
+					}
+				}
+			}
 			if (keep) {
 				kept++;
 				if (use_entropy) {
@@ -154,10 +167,6 @@ public:
 				ofs << line.getKmer();
 				for (double &v : res)
 					ofs << "\t" << v;
-				std::fill(means.begin(), means.end(), 0);
-				for (int i = 0; i < groups.size(); i++) {
-					means[groups[i]] += line.count[i];
-				}
 				for (int g = 0; g < group_counts.size(); g++) {
 					ofs << "\t" << (means[g] / group_counts[g]);
 				}
@@ -179,17 +188,21 @@ public:
 		ofs.close();
 	}
 private:
+	int prev_perc = 0;
 	void log(uint64_t current_kmer) {
 		double perc =
 				((current_kmer - kmer_A) / (long double) (kmer_Z - kmer_A))
 						* 100;
-		tlog << perc << "\t" << tot_lines << "\t" << kept << "\t" << minEntropy
-				<< "\t"
-				<< IOTools::format_time(
-						std::chrono::duration_cast<std::chrono::seconds>(
-								std::chrono::high_resolution_clock::now()
-										- start).count()) << "\n";
-		tlog.flush();
+		if (std::round(perc) != prev_perc) {
+			tlog << perc << "\t" << tot_lines << "\t" << kept << "\t"
+					<< minEntropy << "\t"
+					<< IOTools::format_time(
+							std::chrono::duration_cast<std::chrono::seconds>(
+									std::chrono::high_resolution_clock::now()
+											- start).count()) << "\n";
+			tlog.flush();
+			prev_perc = std::round(perc);
+		}
 	}
 
 }
@@ -244,7 +257,7 @@ public:
 		{
 			uint64_t thr = omp_get_thread_num(), skip = 0;
 			std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
-			BinaryMatrix mat(source);
+			BinaryMatrix mat(source, false);
 			Kmer to_kmer(mat.k_len, std::pow(4, mat.k_len) - 1);
 			KmerMatrixLine<double> line;
 			if (thr != omp_get_max_threads() - 1) {
@@ -290,7 +303,7 @@ public:
 		return out;
 	}
 
-	void run(KmerMatrixLine<double> &line) {
+	void run(KmerMatrixLine<double> &line, double min_norm_count) {
 		if (*std::min_element(line.count.begin(), line.count.end()) > 0) {
 			mean = Stats::mean(line.count);
 			if (mean < means_ranges.first) {

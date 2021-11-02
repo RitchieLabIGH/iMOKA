@@ -18,15 +18,16 @@ public:
 	BinaryDB() {
 	}
 	;
-	BinaryDB(std::string file) {
-		open(file);
+	BinaryDB(std::string file, bool query_mode) {
+		open(file, query_mode);
 	}
 	;
 
 	static bool create(std::string file, int64_t prefix_size);
-	bool open(std::string file);
+	bool open(std::string file, bool query_mode);
 	void close() {
 		tot_suffix = 0;
+		current_suffix=0;
 		stream_buffer.clear();
 		stream_buffer.shrink_to_fit();
 		stream_buffer_prefix.clear();
@@ -51,12 +52,12 @@ public:
 		return tot_suffix == 0 ? 100 :  ((current_suffix) * 100 / tot_suffix);
 	}
 	;
-	void setBufferSize(uint64_t bs) {
+	void setMaxMem(uint64_t max_mem) {
 		if (isOpen()) {
 			std::cerr
-					<< "ERROR: close the binaryDB before change the buffer size!\n";
+					<< "ERROR: close the binaryDB before change the memory size!\n";
 		} else {
-			buffer_size = bs;
+			_max_mem=max_mem;
 		}
 	}
 
@@ -125,7 +126,17 @@ private:
 	int64_t prefix_curr_p = 0;
 	int64_t prefix_init_p = 0;
 	int64_t suffix_init_p = 0;
-
+	bool _query_mode = false; // When true, load all the prefixes on memory, otherwise just load buffers
+	bool _all_prefix_loaded = false;
+	std::pair<bool, int64_t> find_prefix_memory(Prefix &);
+	std::pair<bool, int64_t> find_prefix_disk(Prefix &);
+	std::pair<bool, std::pair<int64_t,int64_t>> find_prefix_range_memory(Prefix &);
+	std::pair<bool, std::pair<int64_t,int64_t>> find_prefix_range_disk(Prefix &);
+	std::pair<bool, int64_t> find_suffix(Suffix &, int64_t start, int64_t end);
+	uint32_t find_suffix_count(Suffix &, int64_t start, int64_t end);
+	int64_t find_prefix_of_suffix(int64_t suffix_n);
+	int64_t find_prefix_of_suffix_mem(int64_t suffix_n);
+	int64_t find_prefix_of_suffix_disk(int64_t suffix_n);
 	/// The binary dimensions
 	int64_t unit_suffix_binary;
 	int64_t unit_prefix_binary;
@@ -139,13 +150,17 @@ private:
 	Suffix suffix;
 	Kmer kmer;
 	uint64_t buffer_size = 1000000;
+	uint64_t current_buffer_size = 1000000;
+	uint64_t buffer_prefix_size = 100;
+	uint64_t current_buffer_prefix_size = 100;
 	uint64_t tot_prefix = 0;
 	uint64_t tot_suffix = 0;
 
 	uint64_t current_prefix = 0;
 	uint64_t buffer_p = 0;
+	uint64_t p_buffer_p = 0; // only used when query mode is false
 	uint64_t tot_count = 0;
-
+	uint64_t _max_mem=10000000;
 	FILE *file = NULL;
 	FILE *file_prefix = NULL;
 	std::vector<uchar> stream_buffer;

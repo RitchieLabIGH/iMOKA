@@ -37,7 +37,7 @@ public:
 private:
 	template<class T>
 	bool _extract(std::string input, std::string source, std::string output) {
-		BinaryMatrix bm;
+		BinaryMatrix bm(true);
 		bm.load(source);
 		std::ofstream ofs;
 		std::streambuf *buf;
@@ -106,7 +106,7 @@ private:
 	template<class T>
 	bool _dump(std::string input, std::string output, std::string from_k,
 			std::string to_k, bool write_header = true) {
-		BinaryMatrix bm;
+		BinaryMatrix bm(false);
 		bm.load(input);
 		std::ofstream ofs;
 		std::streambuf *buf;

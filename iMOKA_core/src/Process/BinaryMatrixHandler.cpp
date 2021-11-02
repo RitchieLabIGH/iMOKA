@@ -101,7 +101,7 @@ bool BinaryMatrixHandler::run(int argc, char **argv) {
 				} else {
 					std::string input_matrix = parsedArgs["input"].as<
 							std::string>();
-					BinaryMatrix bm(input_matrix);
+					BinaryMatrix bm(input_matrix, false);
 					const uint64_t k_len = bm.k_len, batch_size = std::floor(
 							((std::pow(4, bm.k_len)) - 1)
 									/ omp_get_max_threads());
@@ -154,7 +154,7 @@ bool BinaryMatrixHandler::run(int argc, char **argv) {
 
 bool BinaryMatrixHandler::stable(std::string source, std::string outfile,
 		uint64_t max_n) {
-	BinaryMatrix bm(source);
+	BinaryMatrix bm(source, false);
 	const std::vector<Kmer> partitions = bm.getPartitions(
 			omp_get_max_threads());
 	std::pair<double, double> means_ranges = StableProcess::estimate_stable_thresholds(source,
@@ -168,7 +168,7 @@ bool BinaryMatrixHandler::stable(std::string source, std::string outfile,
 		uint64_t thr = omp_get_thread_num();
 		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
 		auto start = std::chrono::high_resolution_clock::now();
-		BinaryMatrix mat(source);
+		BinaryMatrix mat(source, false);
 		std::string file_out_thr = outfile + std::to_string(thr);
 		std::string expected_end, reading_time, total_time, process_time;
 		uint64_t tot_lines = 0;
@@ -196,7 +196,7 @@ bool BinaryMatrixHandler::stable(std::string source, std::string outfile,
 		while (running) {
 			if (line.getKmer() <= to_kmer) {
 				tot_lines++;
-				stp.run(line);
+				stp.run(line, 0);
 				if (tot_lines % 1000000 == 0) {
 					double perc = ((line.getKmer().to_int() - starting_kmer)
 							/ (long double) (to_kmer.to_int() - starting_kmer))
@@ -301,7 +301,7 @@ bool BinaryMatrixHandler::extract(std::string input, std::string source,
 /// @return bool true if everithing went well.
 bool BinaryMatrixHandler::create(std::string input, std::string output,
 		int64_t prefix, double rescaling) {
-	BinaryMatrix bm;
+	BinaryMatrix bm(false);
 	bm.create(input, rescaling, prefix);
 	bm.save(output);
 	return true;

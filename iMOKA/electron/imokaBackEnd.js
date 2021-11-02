@@ -199,7 +199,7 @@ class iMokaBE extends EventEmitter {
 					}
 				} else if (request.file_type == "genes") {
 					let obj, gene_name, gene_id, aln_pos;
-					this.push("Gene\tGeneName\tEvent\t" + that.data.kmers.info.predictors.join("\t") + "\tkmer\talignment\t" + that.data.kmers.info.groups_names.join("\t") + "\n");
+					this.push("Gene\tGeneName\tEvent\t" + that.data.kmers.info.predictors.join("\t") + "\tkmer\talignment\t" + that.data.kmers.info.groups_names.join("\t") + "\tInfo\n");
 					for (let order = 0; order < that.data.kmers.orders_idxs.kmers.length; order++) {
 						let i = that.data.kmers.orders_idxs.kmers[order];
 						if (!that.data.kmers.masks.kmers || that.data.kmers.masks.kmers[i]) {
@@ -225,7 +225,7 @@ class iMokaBE extends EventEmitter {
 										gene_name = "NA";
 										gene_id = "NA";
 									}
-									line = gene_id + "\t" + gene_name + "\t" + obj.events[e].type + "\t" + obj.values.join("\t") + "\t" + obj.kmer + "\t" + aln_pos + "\t" + obj.means.join("\t") + "\n";
+									line = gene_id + "\t" + gene_name + "\t" + obj.events[e].type + "\t" + obj.values.join("\t") + "\t" + obj.kmer + "\t" + aln_pos + "\t" + obj.means.join("\t") + "\t"+ obj.events[e].info.replaceAll("\n", ";") + "\n";
 									this.push(line);
 								}
 							}

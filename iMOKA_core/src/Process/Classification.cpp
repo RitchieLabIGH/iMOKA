@@ -32,6 +32,9 @@ bool Classification::run(int argc, char **argv) {
 					"E,entropy-adjustment-two",
 					"The adjustment value of the entropy filter that increase the threshold. Need to be greater than 0, otherwise disable the entropy assertment.",
 					cxxopts::value<double>()->default_value("0.05"))(
+							"C,confidence",
+							"Discard results with low confidence: at least one group has to have the abundance mean greater than confidence x min normalized count",
+							cxxopts::value<double>()->default_value("1.5"))(
 					"c,cross-validation", "Maximum number of cross validation",
 					cxxopts::value<uint64_t>()->default_value("100"))(
 					"s,standard-error",
@@ -63,7 +66,9 @@ bool Classification::run(int argc, char **argv) {
 					parsedArgs["cross-validation"].as<uint64_t>(),
 					parsedArgs["standard-error"].as<double>(),
 					parsedArgs["accuracy"].as<double>(),
-					parsedArgs["test-percentage"].as<double>(), adjustments,
+					parsedArgs["test-percentage"].as<double>(),
+					parsedArgs["confidence"].as<double>(),
+					adjustments,
 					parsedArgs["S"].as<uint64_t>());
 		}
 
@@ -110,16 +115,14 @@ bool Classification::run(int argc, char **argv) {
 /// @param adjustments
 bool Classification::classificationFilterMulti(std::string file_in,
 		std::string file_out, int min, uint64_t entropy_evaluation,
-		uint64_t cross_validation, double sd, double min_acc, double perc_test,
+		uint64_t cross_validation, double sd, double min_acc, double perc_test, double confidence,
 		std::vector<double> adjustments, uint64_t stable) {
-	std::cerr << "Memory occupied: "
-			<< IOTools::format_space_human(IOTools::getCurrentProcessMemory())
-			<< ".\n";
 
-	BinaryMatrix bm(file_in);
+	BinaryMatrix bm(file_in , false);
+	double min_norm_count = min / Stats::getQuartiles(bm.normalization_factors)[0] ; // The counts lower than this are zeros to level the samples with the one having the lowest depth ( first quartile ).
+	std::cerr << "Min normalized count: " << min_norm_count << "\n"; std::cerr.flush();
 	const std::vector<Kmer> partitions = bm.getPartitions(
 			omp_get_max_threads());
-
 	std::pair<double, double> stable_thr;
 	if (stable != 0) {
 		stable_thr = StableProcess::estimate_stable_thresholds(file_in,
@@ -127,7 +130,8 @@ bool Classification::classificationFilterMulti(std::string file_in,
 	}
 	std::vector<std::vector<std::vector<KmerMeanStdLine>>> stable_results(
 			omp_get_max_threads());
-	std::cerr << "Memory occupied: "
+
+	std::cerr << "Memory usage: "
 			<< IOTools::format_space_human(IOTools::getCurrentProcessMemory())
 			<< ".\n";
 	std::cerr << "Reducing with " << omp_get_max_threads() << " threads.\n";
@@ -149,13 +153,11 @@ bool Classification::classificationFilterMulti(std::string file_in,
 			"file_in", file_in }, { "file_out", file_out } };
 	bm.clear();
 
-#pragma omp parallel firstprivate(cross_validation, sd, min_acc, perc_test, adjustments, min, entropy_evaluation,partitions, stable_thr, stable )
+#pragma omp parallel firstprivate(cross_validation, min_norm_count, sd, min_acc, perc_test, adjustments, min, entropy_evaluation,partitions, stable_thr, stable , confidence)
 	{
 		uint64_t thr = omp_get_thread_num();
-		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
-		BinaryMatrix mat(file_in);
+		BinaryMatrix mat(file_in, false);
 		Kmer to_kmer(mat.k_len, std::pow(4, mat.k_len) - 1);
-		double min_norm_count = min / Stats::getQuartiles(mat.normalization_factors)[0] ; // The counts lower than this are zeros to level the samples with the one having the lowest depth ( first quartile ).
 		KmerMatrixLine<double> line;
 		if (thr != omp_get_max_threads() - 1) {
 			to_kmer = partitions[thr];
@@ -167,11 +169,11 @@ bool Classification::classificationFilterMulti(std::string file_in,
 		}
 
 		bool running = mat.getLine(line), keep;
-
+		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000)); // prevent overlap of std::cerr
 		std::cerr << "[ " << IOTools::now() << " ] Thread " << thr
 				<< " starting on cpu " << sched_getcpu() << " with k-mer "
 				<< line.getKmer().str() << " to k-mer " << to_kmer.str()
-				<< ", memory occupied: "
+				<< ", memory usage: "
 				<< IOTools::format_space_human(
 						IOTools::getCurrentProcessMemory()) << ".\n"
 				<< std::flush;
@@ -190,7 +192,6 @@ bool Classification::classificationFilterMulti(std::string file_in,
 			StableProcess stp(stable_thr, stable, stable_results[thr]);
 			processes.push_back(&stp);
 		}
-
 		while (running) {
 			if (line.getKmer() <= to_kmer) {
 				if (mat.getMaxRawCount(line) >= min) {
@@ -200,7 +201,7 @@ bool Classification::classificationFilterMulti(std::string file_in,
 						}
 					}
 					for (auto &proc : processes) {
-						proc->run(line);
+						proc->run(line, min_norm_count*confidence);
 					}
 
 				}
@@ -331,7 +332,7 @@ bool Classification::clusterizationFilter(std::string file_in,
 			<< IOTools::format_space_human(IOTools::getCurrentProcessMemory())
 			<< ".\n";
 	int max_thr = omp_get_max_threads();
-	BinaryMatrix bm(file_in);
+	BinaryMatrix bm(file_in, false);
 	const uint64_t k_len = bm.k_len, batch_size = std::floor(
 			((std::pow(4, bm.k_len)) - 1) / max_thr), nsam =
 			bm.col_names.size();
@@ -348,7 +349,7 @@ bool Classification::clusterizationFilter(std::string file_in,
 		uint64_t thr = omp_get_thread_num();
 		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
 		auto start = std::chrono::high_resolution_clock::now();
-		BinaryMatrix mat(file_in);
+		BinaryMatrix mat(file_in, false);
 		std::string file_out_thr = file_out + std::to_string(thr);
 		uint64_t tot_lines = 0, siglines = 0;
 		uint64_t a = thr * batch_size, b = ((thr + 1) * batch_size) - 1;

@@ -15,8 +15,11 @@ namespace imoka {
 namespace matrix {
 class BinaryMatrix: public Matrix {
 public:
-	BinaryMatrix();
-	BinaryMatrix(std::string file) {
+	BinaryMatrix(bool query_mode){
+		_query_mode=query_mode;
+	};
+	BinaryMatrix(std::string file, bool query_mode) {
+		_query_mode=query_mode;
 		load(file);
 	}
 	;
@@ -108,7 +111,7 @@ public:
 			std::cerr << "Error! Set the total space before open the matrix.";
 		} else {
 			custom_buffer_size=true;
-			binary_db_buffer = bdbb;
+			max_mem_for_db = bdbb;
 		}
 	}
 	bool custom_buffer_size=false;
@@ -127,7 +130,8 @@ private:
 
 	double rescale_factor = 1;
 	uint64_t current_line = 0;
-	uint64_t binary_db_buffer = 1000;
+	uint64_t max_mem_for_db = 10000;
+	bool _query_mode=false;
 	std::set<Kmer> current_kmers;
 	void initKmerVector(int64_t prefix_size);
 	void initDBs();

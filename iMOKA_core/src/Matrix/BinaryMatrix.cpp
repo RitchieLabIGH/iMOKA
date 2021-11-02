@@ -8,8 +8,6 @@
 #include "BinaryMatrix.h"
 namespace imoka {
 namespace matrix {
-BinaryMatrix::BinaryMatrix() {
-}
 
 BinaryMatrix::~BinaryMatrix() {
 	// TODO Auto-generated destructor stub
@@ -76,7 +74,7 @@ void BinaryMatrix::initKmerVector(int64_t prefix_size) {
 			BinaryDB::create(count_files[i], prefix_size);
 			count_files[i] += ".sorted.bin";
 		}
-		BinaryDB tmp(count_files[i]);
+		BinaryDB tmp(count_files[i], false);
 		tmp.getNext();
 		k_len = tmp.getKmer().k_len;
 		total_counts[i] = tmp.getTotCount();
@@ -91,7 +89,7 @@ void BinaryMatrix::save(std::string file) {
 	std::vector<uint64_t> total_suffix;
 	std::vector<uint64_t> prefix_size_header;
 	for (auto count_file : count_files) {
-		BinaryDB db(count_file);
+		BinaryDB db(count_file, false);
 		total_prefix.push_back(db.getTotPrefix());
 		total_suffix.push_back(db.getTotSuffix());
 		prefix_size_header.push_back(db.getPrefixSize());
@@ -148,18 +146,15 @@ void BinaryMatrix::initDBs() {
 	if (!custom_buffer_size) {
 		if (getenv("IMOKA_MAX_MEM_GB")) {
 			try {
-				uint32_t max_mem = std::stoll(getenv("IMOKA_MAX_MEM_GB"));
-				BinaryDB tmp(count_files[0]);
-				int64_t up_size = tmp.getUnitPrefixSize(), us_size =
-						tmp.getUnitSuffixSize(), n_thr = omp_get_max_threads(),
-						n_db = count_files.size();
-				double max_mem_bit = max_mem * 1000000000;
-				max_mem_bit -= (up_size * 1000 * n_db * n_thr);
-				binary_db_buffer = std::ceil(
-						(max_mem_bit) / (us_size * n_db * n_thr));
-				tmp.close();
-				if (binary_db_buffer < 1000) {
-					binary_db_buffer = 1000;
+				int64_t max_mem = std::stoll(getenv("IMOKA_MAX_MEM_GB"));
+				max_mem = (max_mem * 1000000000) - (IOTools::getCurrentProcessMemory()*1000);
+				if ( omp_get_active_level() != 0 ){
+					max_mem = std::floor( max_mem / omp_get_max_threads());
+				}
+				max_mem = std::floor(max_mem / count_files.size());
+				max_mem_for_db =max_mem;
+				if (max_mem_for_db < 100000) {
+					max_mem_for_db = 100000;
 				}
 			} catch (std::exception &e) {
 				std::cerr << "WARNING: environmental IMOKA_MAX_MEM_GB "
@@ -170,21 +165,21 @@ void BinaryMatrix::initDBs() {
 		} else {
 			if (getenv("IMOKA_INNER_BUFFER_SIZE")) {
 				try {
-					binary_db_buffer = std::stoll(
+					max_mem_for_db = std::stoll(
 							getenv("IMOKA_INNER_BUFFER_SIZE"));
 				} catch (std::exception &e) {
 					std::cerr
 							<< "WARNING: environmental IMOKA_INNER_BUFFER_SIZE "
 							<< getenv("IMOKA_INNER_BUFFER_SIZE")
-							<< " has to be an integer number.\n" << e.what()
+							<< " has to be an integer number ( byte reserved for each db ).\n" << e.what()
 							<< "\n";
 				}
 			}
 		}
 	}
 	for (uint64_t sample = 0; sample < count_files.size(); sample++) {
-		bin_databases[sample].setBufferSize(binary_db_buffer);
-		if (!bin_databases[sample].open(count_files[sample])) {
+		bin_databases[sample].setMaxMem(max_mem_for_db);
+		if (!bin_databases[sample].open(count_files[sample], _query_mode)) {
 			std::cerr << "WARNING! Database " << count_files[sample]
 					<< " is empty! \n";
 		}
@@ -284,7 +279,6 @@ void BinaryMatrix::getLines(std::vector<Kmer> &request,
 		row++;
 	}
 	std::vector<std::vector<double>> columns(bin_databases.size());
-#pragma omp parallel for schedule(dynamic, 1)
 	for (uint64_t i = 0; i < bin_databases.size(); i++) {
 		columns[i] = bin_databases[i].getKmers(request);
 	}
@@ -300,7 +294,6 @@ void BinaryMatrix::getLines(std::vector<Kmer> &request,
 void BinaryMatrix::getLine(Kmer &request, KmerMatrixLine<uint32_t> &response) {
 	response.count.resize(normalization_factors.size(), 0);
 	response.setKmer(request);
-#pragma omp parallel for schedule(dynamic, 1)
 	for (uint64_t i = 0; i < bin_databases.size(); i++) {
 		response.count[i] = bin_databases[i].binary_search(request);
 	}
@@ -319,7 +312,6 @@ void BinaryMatrix::getLines(std::vector<Kmer> &request,
 		row++;
 	}
 	std::vector<std::vector<double>> columns(bin_databases.size());
-#pragma omp parallel for schedule(dynamic, 1)
 	for (uint64_t i = 0; i < bin_databases.size(); i++) {
 		columns[i] = bin_databases[i].getKmers(request);
 	}
