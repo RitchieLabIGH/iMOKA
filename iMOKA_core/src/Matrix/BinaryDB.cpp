@@ -42,13 +42,21 @@ bool BinaryDB::getNext() {
 }
 
 void BinaryDB::fillBuffer() {
-	if (stream_buffer.size() != buffer_size) {
-		stream_buffer.resize(buffer_size);
-	}
 	file = fopen(file_name.c_str(), "rb");
-	int r = fseek(file, suffix_init_p + (unit_suffix_binary * current_suffix),
-	SEEK_SET);
-	current_buffer_size = fread(stream_buffer.data(), 1, buffer_size, file);
+	uint64_t to_load = 0;
+	if (current_suffix + buffer_size > tot_suffix) {
+		to_load = tot_suffix - current_suffix;
+	} else {
+		to_load = buffer_size;
+	}
+	current_buffer_size = 0;
+	while (current_buffer_size != to_load * unit_suffix_binary) {
+		int r = fseek(file,
+				suffix_init_p + (unit_suffix_binary * current_suffix),
+				SEEK_SET);
+		current_buffer_size = fread(stream_buffer.data(), 1,
+				to_load * unit_suffix_binary, file);
+	}
 	buffer_p = 0;
 	fclose(file);
 }
@@ -57,28 +65,41 @@ void BinaryDB::fillPrefixBuffer() {
 	if (_query_mode) {
 		loadPrefixes(stream_buffer_prefix);
 	} else {
-		if (stream_buffer_prefix.size() != buffer_prefix_size) {
-			stream_buffer_prefix.resize(buffer_prefix_size);
-		}
 		file_prefix = fopen(file_name.c_str(), "rb");
-		int r = fseek(file_prefix,
-				(prefix_init_p + (unit_prefix_binary * current_prefix)),
-				SEEK_SET);
-		current_buffer_prefix_size = fread(stream_buffer_prefix.data(), 1,
-				buffer_prefix_size, file_prefix);
+		uint64_t to_load = 0;
+		if (current_prefix + buffer_prefix_size > tot_prefix) {
+			to_load = tot_prefix - current_prefix;
+		} else {
+			to_load = buffer_prefix_size;
+		}
+		current_buffer_prefix_size = 0;
+		while (current_buffer_prefix_size != to_load * unit_prefix_binary) {
+			int r = fseek(file_prefix,
+					(prefix_init_p + (unit_prefix_binary * current_prefix)),
+					SEEK_SET);
+			current_buffer_prefix_size = fread(stream_buffer_prefix.data(), 1,
+					to_load * unit_prefix_binary, file_prefix);
+		}
 		p_buffer_p = 0;
 		fclose(file_prefix);
 	}
 
 }
 
+void BinaryDB::clearPrefixBuffer(){
+	stream_buffer_prefix.clear();
+	stream_buffer_prefix.shrink_to_fit();
+	_all_prefix_loaded=false;
+}
+
 std::vector<double> BinaryDB::getKmers(std::vector<Kmer> &requests) {
 	std::vector<double> out(requests.size(), 0);
+	fillPrefixBuffer();
 	for (uint64_t i = 0; i < out.size(); i++) {
 		out[i] = binary_search(requests[i]);
 	}
+	clearPrefixBuffer();
 	return out;
-
 }
 
 /**
@@ -198,26 +219,34 @@ bool BinaryDB::open(std::string file, bool query_mode) {
 	suffix_size = suffix_v_size / 2;
 	current_prefix_range = { Prefix(prefix_size), { 0, 0 } };
 	if (_query_mode) {
-		if (_max_mem - (tot_prefix * getUnitPrefixSize()) > 0) {
+		int64_t max_mem = _max_mem;
+		if (max_mem - (tot_prefix * getUnitPrefixSize()) > 0) {
 			buffer_prefix_size = tot_prefix;
-			buffer_size = std::floor((_max_mem - (tot_prefix * getUnitPrefixSize())));
+			buffer_size = 10;
 		} else {
-			std::cerr
-					<< "Insufficient memory for query mode, switching to parse mode.\n";
 			_query_mode = false;
 		}
 	}
 	if (!_query_mode) {
-		buffer_prefix_size = std::floor((0.1 * _max_mem));
-		buffer_size = std::floor((0.9 * _max_mem));
+		buffer_prefix_size = 100;
+		buffer_size = 1000;
+		if (stream_buffer_prefix.size()
+				!= buffer_prefix_size * unit_prefix_binary) {
+			stream_buffer_prefix.resize(
+					buffer_prefix_size * unit_prefix_binary);
+		}
+		if (stream_buffer.size() != buffer_size * unit_suffix_binary) {
+			stream_buffer.resize(buffer_size * unit_suffix_binary);
+		}
+
 	}
 
-	current_buffer_size = buffer_size;
 	suffix = Suffix(suffix_size);
-	buffer_p = buffer_size; // oblige to fill the buffer
-	p_buffer_p = buffer_prefix_size;
+	buffer_p = 0;
+	p_buffer_p = 0;
+	current_buffer_prefix_size = 0;
+	current_buffer_size = 0;
 	_query_mode = query_mode;
-	fillPrefixBuffer();
 	return tot_suffix > 0;
 }
 
@@ -332,6 +361,7 @@ bool BinaryDB::go_to(Kmer &target) {
 	}
 	current_prefix = search_res.second;
 	getNextPrefix();
+
 	if (!(prefix == getPrefix())) {
 		current_suffix = getPrefix().first_suffix;
 		getNext();
@@ -345,7 +375,7 @@ bool BinaryDB::go_to(Kmer &target) {
 	}
 	search_res = find_suffix(suffix, current_prefix_range.second.first,
 			current_prefix_range.second.second);
-	current_suffix = search_res.second == 0 ? 0 : search_res.second - 1;
+	current_suffix = search_res.second == 0 ? 0 : search_res.second;
 	getNext();
 	while (getKmer() < target) {
 		if (!getNext()) {
@@ -426,6 +456,7 @@ std::pair<bool, int64_t> BinaryDB::find_prefix_disk(Prefix &prefix) {
 }
 
 std::pair<bool, int64_t> BinaryDB::find_prefix_memory(Prefix &prefix) {
+	fillPrefixBuffer();
 	Prefix tmp_prefix(prefix_size);
 	int64_t L = 0, m, R = tot_prefix - 1;
 	while (L < R) {
@@ -488,6 +519,7 @@ std::pair<bool, std::pair<int64_t, int64_t>> BinaryDB::find_prefix_range_disk(
 
 std::pair<bool, std::pair<int64_t, int64_t>> BinaryDB::find_prefix_range_memory(
 		Prefix &prefix) {
+	fillPrefixBuffer();
 	Prefix tmp_prefix(prefix_size);
 	int64_t L = 0, m, R = tot_prefix - 1;
 	while (L < R) {
@@ -534,13 +566,17 @@ uint32_t BinaryDB::binary_search(Kmer &target) {
 	std::pair<bool, std::pair<int64_t, int64_t>> search_res;
 	Prefix prefix(target, prefix_size);
 	Suffix suffix(target, suffix_size);
+
 	if (_query_mode) {
 		search_res = find_prefix_range_memory(prefix);
+
 	} else {
 		search_res = find_prefix_range_disk(prefix);
 	}
-	if (!search_res.first)
+
+	if (!search_res.first) {
 		return out;
+	}
 
 	return find_suffix_count(suffix, search_res.second.first,
 			search_res.second.second);
@@ -568,6 +604,7 @@ int64_t BinaryDB::find_prefix_of_suffix(int64_t suffix_n) {
 }
 ;
 int64_t BinaryDB::find_prefix_of_suffix_mem(int64_t suffix_n) {
+	fillPrefixBuffer();
 	int64_t L = 0, m, R = tot_prefix - 1;
 	uint64_t suffix_prefix_start;
 	while (L < R) {

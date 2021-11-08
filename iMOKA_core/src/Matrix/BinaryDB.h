@@ -30,9 +30,7 @@ public:
 		current_suffix=0;
 		stream_buffer.clear();
 		stream_buffer.shrink_to_fit();
-		stream_buffer_prefix.clear();
-		stream_buffer_prefix.shrink_to_fit();
-
+		clearPrefixBuffer();
 	}
 	virtual ~BinaryDB();
 	bool getNext();
@@ -118,6 +116,7 @@ public:
 	std::pair<Prefix, std::pair<int64_t, int64_t>> current_prefix_range;
 	uint64_t current_suffix = 0;
 	uint32_t binary_search( Kmer & target);
+	void clearPrefixBuffer();
 
 private:
 	int64_t prefix_size;

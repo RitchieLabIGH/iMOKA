@@ -296,6 +296,7 @@ void BinaryMatrix::getLine(Kmer &request, KmerMatrixLine<uint32_t> &response) {
 	response.setKmer(request);
 	for (uint64_t i = 0; i < bin_databases.size(); i++) {
 		response.count[i] = bin_databases[i].binary_search(request);
+		bin_databases[i].clearPrefixBuffer();
 	}
 	return;
 }

@@ -1092,17 +1092,29 @@ void KmerGraphSet::write_kmers(std::ofstream &json_out, std::ofstream &tsv_out,
 	}
 	tsv_out << "\n";
 	tsv_out.flush();
-	KmerMatrixLine<uint32_t> current_k ;
+	std::vector<KmerMatrixLine<uint32_t>> current_k_buffer(100);
+	uint64_t current_k_buffer_pos=100;
 	for (int64_t i = 0; i < winning_nodes.size(); i++) {
 		if (has_matrix) {
-			bm.getLine(winning_nodes[i]->kmer, current_k);
-			matrix_out << current_k.getKmer();
-			for (int j = 0; j < current_k.count.size(); j++)
+			if (current_k_buffer_pos == 100 ){
+				int64_t to_k = i+100 < winning_nodes.size() ? i+100 : winning_nodes.size();
+				std::vector<Kmer> request;
+				current_k_buffer.clear();
+				for ( int64_t j=i; j < to_k ; j++ ){
+					request.push_back(winning_nodes[j]->kmer);
+				}
+				bm.getLines(request, current_k_buffer);
+				current_k_buffer_pos=0;
+			}
+
+			matrix_out << current_k_buffer[current_k_buffer_pos].getKmer();
+			for (int j = 0; j < current_k_buffer[current_k_buffer_pos].count.size(); j++)
 				matrix_out << "\t"
-						<< (current_k.count[j] / bm.normalization_factors[j]);
+						<< (current_k_buffer[current_k_buffer_pos].count[j] / bm.normalization_factors[j]);
 			matrix_out << "\n";
+			current_k_buffer_pos++;
 		}
-		json node=generate_kmer_json(i, current_k);
+		json node=generate_kmer_json(i, current_k_buffer[current_k_buffer_pos-1]);
 		write_tsv_line(node, tsv_out);
 		json_out << (first ? "\"kmers\" : [\n" : ",\n")
 				<< node.dump();
