@@ -102,6 +102,24 @@ std::vector<double> BinaryDB::getKmers(std::vector<Kmer> &requests) {
 	return out;
 }
 
+
+std::vector<double> BinaryDB::getKmers(std::set<Kmer> &requests) {
+	std::vector<double> out(requests.size(), 0);
+	bool not_loaded=false;
+	if ( ! _all_prefix_loaded ){
+		not_loaded=true;
+		fillPrefixBuffer();
+	}
+	int i=0;
+	for ( const Kmer & req : requests){
+		out[i] = binary_search(req);
+		i++;
+	}
+	if ( not_loaded ) clearPrefixBuffer();
+	return out;
+}
+
+
 /**
  * Create a binary DB from a text file
  * @param file Input file in TSV. First coulm k-mer, second column count
@@ -150,6 +168,7 @@ bool BinaryDB::create(std::string file, int64_t prefix_size) {
 				sizeof(std::vector<bool>::size_type));
 		ostr.write((const char*) &c_size, sizeof(c_size));
 		ostr.write((const char*) &p_size, sizeof(p_size));
+
 		uint64_t tot_count = 0;
 		std::vector<Prefix> prefixes;
 		prefix.first_suffix = tot_suffix;
@@ -167,7 +186,6 @@ bool BinaryDB::create(std::string file, int64_t prefix_size) {
 			tot_suffix++;
 			reading = (istr >> kmer_str >> count) ? true : false;
 		}
-
 		for (auto p : prefixes) {
 			ostr.write((const char*) p.kmer.data(), p.kmer.size());
 			ostr.write((const char*) &p.first_suffix, p_size);
@@ -347,7 +365,7 @@ std::vector<Kmer> BinaryDB::getPartitions(uint64_t n) {
 /// @param target
 /// @return true if found exactly the target
 ///
-bool BinaryDB::go_to(Kmer &target) {
+bool BinaryDB::go_to(const Kmer &target) {
 	Prefix prefix(target, prefix_size);
 	Suffix suffix(target, suffix_size);
 
@@ -561,7 +579,7 @@ std::pair<bool, std::pair<int64_t, int64_t>> BinaryDB::find_prefix_range_memory(
 ///	Like goto but just return the count
 /// @param target the k-mer to search
 /// @return the count
-uint32_t BinaryDB::binary_search(Kmer &target) {
+uint32_t BinaryDB::binary_search(const Kmer &target) {
 	uint32_t out = 0;
 	std::pair<bool, std::pair<int64_t, int64_t>> search_res;
 	Prefix prefix(target, prefix_size);

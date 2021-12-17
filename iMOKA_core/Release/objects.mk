@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lboost_serialization -larmadillo -lmlpack
+LIBS := -lboost_serialization -lboost_iostreams -larmadillo -lmlpack
 

@@ -116,26 +116,52 @@ void BinaryMatrix::load(std::string file) {
 	for (auto e : header["count_files"]) {
 		count_files.push_back(e);
 	}
-	for (auto e : header["groups"]) {
-		col_groups.push_back(e);
+	if (header.contains("groups")) {
+		has_groups = true;
+		for (auto e : header["groups"]) {
+			col_groups.push_back(e);
+		}
+	} else {
+		has_groups = false;
 	}
+
 	for (auto e : header["names"]) {
 		col_names.push_back(e);
 	}
-	for (auto e : header["total_counts"]) {
-		total_counts.push_back(e);
+	if (header.contains("rescale_factor")) {
+		rescale_factor = header["rescale_factor"];
+	} else {
+		rescale_factor = 1;
 	}
-	rescale_factor = header["rescale_factor"];
+
+	if (header.contains("total_counts")) {
+		for (auto e : header["total_counts"]) {
+			total_counts.push_back(e);
+		}
+	} else if (header.contains("cell_counts")) {
+		for (auto e : header["cell_counts"]) {
+			total_counts.push_back(e);
+		}
+	} else {
+		total_counts.clear();
+		for (auto &c : col_names) {
+			total_counts.push_back(rescale_factor);
+		}
+	}
+
 	normalization_factors.clear();
 	for (auto c : total_counts) {
 		normalization_factors.push_back(double(c / rescale_factor));
 	}
-	if (header.count("k_len")) {
+	if (header.contains("k_len")) {
 		k_len = header["k_len"];
 	} else {
 		k_len = header["key_len"]; // Little typo still present in some matrices.
 	}
-	initGroupMaps();
+	if (has_groups) {
+		initGroupMaps();
+	}
+
 	initDBs();
 	n_of_bd = bin_databases.size();
 }
@@ -147,12 +173,13 @@ void BinaryMatrix::initDBs() {
 		if (getenv("IMOKA_MAX_MEM_GB")) {
 			try {
 				int64_t max_mem = std::stoll(getenv("IMOKA_MAX_MEM_GB"));
-				max_mem = (max_mem * 1000000000) - (IOTools::getCurrentProcessMemory()*1000);
-				if ( omp_get_active_level() != 0 ){
-					max_mem = std::floor( max_mem / omp_get_max_threads());
+				max_mem = (max_mem * 1000000000)
+						- (IOTools::getCurrentProcessMemory() * 1000);
+				if (omp_get_active_level() != 0) {
+					max_mem = std::floor(max_mem / omp_get_max_threads());
 				}
 				max_mem = std::floor(max_mem / count_files.size());
-				max_mem_for_db =max_mem;
+				max_mem_for_db = max_mem;
 				if (max_mem_for_db < 100000) {
 					max_mem_for_db = 100000;
 				}
@@ -171,8 +198,8 @@ void BinaryMatrix::initDBs() {
 					std::cerr
 							<< "WARNING: environmental IMOKA_INNER_BUFFER_SIZE "
 							<< getenv("IMOKA_INNER_BUFFER_SIZE")
-							<< " has to be an integer number ( byte reserved for each db ).\n" << e.what()
-							<< "\n";
+							<< " has to be an integer number ( byte reserved for each db ).\n"
+							<< e.what() << "\n";
 				}
 			}
 		}
@@ -290,6 +317,30 @@ void BinaryMatrix::getLines(std::vector<Kmer> &request,
 	}
 	return;
 }
+void BinaryMatrix::getLines(std::set<Kmer> &request,
+		std::vector<KmerMatrixLine<double>> &response) {
+	response.clear();
+	response.resize(request.size());
+
+	uint64_t row = 0;
+	for (auto &l : request) {
+		response[row].count.resize(normalization_factors.size(), 0);
+		response[row].setKmer(l);
+		response[row].index = row;
+		row++;
+	}
+	std::vector<std::vector<double>> columns(bin_databases.size());
+	for (uint64_t i = 0; i < bin_databases.size(); i++) {
+		columns[i] = bin_databases[i].getKmers(request);
+	}
+	for (uint64_t i = 0; i < bin_databases.size(); i++) {
+		for (uint64_t j = 0; j < response.size(); j++) {
+			if (columns[i][j] != 0.0)
+				response[j].count[i] = columns[i][j] / normalization_factors[i];
+		}
+	}
+	return;
+}
 
 void BinaryMatrix::getLine(Kmer &request, KmerMatrixLine<uint32_t> &response) {
 	response.count.resize(normalization_factors.size(), 0);
@@ -310,6 +361,30 @@ void BinaryMatrix::getLines(std::vector<Kmer> &request,
 		l.count.resize(normalization_factors.size(), 0);
 		l.setKmer(request[row]);
 		l.index = row;
+		row++;
+	}
+	std::vector<std::vector<double>> columns(bin_databases.size());
+	for (uint64_t i = 0; i < bin_databases.size(); i++) {
+		columns[i] = bin_databases[i].getKmers(request);
+	}
+	for (uint64_t i = 0; i < bin_databases.size(); i++) {
+		for (uint64_t j = 0; j < response.size(); j++) {
+			if (columns[i][j] != 0.0)
+				response[j].count[i] = columns[i][j];
+		}
+	}
+	return;
+}
+
+void BinaryMatrix::getLines(std::set<Kmer> &request,
+		std::vector<KmerMatrixLine<uint32_t>> &response) {
+	response.clear();
+	response.resize(request.size());
+	uint64_t row = 0;
+	for (auto &l : request) {
+		response[row].count.resize(normalization_factors.size(), 0);
+		response[row].setKmer(l);
+		response[row].index = row;
 		row++;
 	}
 	std::vector<std::vector<double>> columns(bin_databases.size());

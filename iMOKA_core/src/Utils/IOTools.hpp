@@ -572,7 +572,7 @@ static void getParameter(json & origin, json & def, std::string key,
 		exit(1);
 	}
 }
-static char rev(char c) {
+static char complementary(char c) {
 	return c == alphabet[0] ? alphabet[3] : c == alphabet[1] ? alphabet[2] :
 			c == alphabet[3] ? alphabet[0] : alphabet[1];
 }
@@ -580,7 +580,7 @@ static char rev(char c) {
 static std::string revComp(std::string s) {
 	std::string out = "";
 	for (int i = s.size() - 1; i >= 0; i--) {
-		out += rev(s[i]);
+		out += complementary(s[i]);
 	}
 	return out;
 }

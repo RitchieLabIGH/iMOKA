@@ -85,6 +85,8 @@
                                     									
                                     <listOptionValue builtIn="false" value="boost_serialization"/>
                                     									
+                                    <listOptionValue builtIn="false" value="boost_iostreams"/>
+                                    									
                                     <listOptionValue builtIn="false" value="armadillo"/>
                                     									
                                     <listOptionValue builtIn="false" value="mlpack"/>

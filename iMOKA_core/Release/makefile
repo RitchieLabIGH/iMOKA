@@ -10,6 +10,7 @@ RM := rm -rf
 -include sources.mk
 -include src/Utils/cephes/subdir.mk
 -include src/Utils/subdir.mk
+-include src/SingleCellDecomposition/subdir.mk
 -include src/Process/subdir.mk
 -include src/Matrix/subdir.mk
 -include src/Graphs/subdir.mk

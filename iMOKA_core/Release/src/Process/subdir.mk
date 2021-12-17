@@ -6,17 +6,20 @@
 CPP_SRCS += \
 ../src/Process/Aggregation.cpp \
 ../src/Process/BinaryMatrixHandler.cpp \
-../src/Process/Classification.cpp 
+../src/Process/Classification.cpp \
+../src/Process/SingleCellDecomposition.cpp 
 
 OBJS += \
 ./src/Process/Aggregation.o \
 ./src/Process/BinaryMatrixHandler.o \
-./src/Process/Classification.o 
+./src/Process/Classification.o \
+./src/Process/SingleCellDecomposition.o 
 
 CPP_DEPS += \
 ./src/Process/Aggregation.d \
 ./src/Process/BinaryMatrixHandler.d \
-./src/Process/Classification.d 
+./src/Process/Classification.d \
+./src/Process/SingleCellDecomposition.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

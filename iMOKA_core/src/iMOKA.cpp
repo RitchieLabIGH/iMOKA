@@ -49,6 +49,7 @@
 #include "Process/Aggregation.h"
 #include "Process/Classification.h"
 #include "Process/BinaryMatrixHandler.h"
+#include "Process/SingleCellDecomposition.h"
 
 
 std::string help() {
@@ -71,7 +72,9 @@ std::string help() {
 					"\e[1mreduce\e[0m: Reduce a k-mer matrix in according to the clusterization power of each k-mer"
 							"\e[1mcluster\e[0m: filter a k-mer matrix in according to their underlying clusters ",
 					"\e[1maggregate\e[0m: reduce the number of k-mers aggregating the redundant ones",
-					"\e[1mconfig\e[0m: print the configuration file necessary for the mapping and annotation procedures"
+					"\e[1mconfig\e[0m: print the configuration file necessary for the mapping and annotation procedures",
+					"\e[1msc_learn\e[0m: learn the k-mer composition of the clusters in scRNA-seq data",
+					"\e[1msc_decompose\e[0m: decompose a FASTQ file into single cell clusters",
 					 };
 	for (auto s : acts)
 		ss << "  - " << s << "\n";
@@ -101,7 +104,7 @@ int main(int argc, char** argv) {
 		std::cerr << "Environmental var OMP_NUM_THREADS is not defined. Using 1 thread.\nTo use a different number of thread, export the variable before running iMOKA:\nexport OMP_NUM_THREADS=4 \n";
 	}
 	if ( ! getenv("IMOKA_MAX_MEM_GB")){
-		std::cerr << "Environmental var IMOKA_MAX_MEM_GB is not defined. Using 2 Gb as default.\n To use a different thershold, export the variable before running iMOKA:\nexport IMOKA_MAX_MEM_GB=2\n";
+		std::cerr << "Environmental var IMOKA_MAX_MEM_GB is not defined. Using 2 Gb as default.\nTo use a different thershold, export the variable before running iMOKA:\nexport IMOKA_MAX_MEM_GB=2\n";
 		setenv("IMOKA_MAX_MEM_GB", "2", 1);
 	}
 	auto start = std::chrono::high_resolution_clock::now();
@@ -112,6 +115,8 @@ int main(int argc, char** argv) {
 		done = imoka::process::Classification(logStreamBuff).run(argc, argv);
 	else if (action == "aggregate" || action == "config")
 		done = imoka::process::Aggregation(logStreamBuff).run(argc, argv);
+	else if (action == "sc_learn" || action == "sc_decompose")
+			done = imoka::process::SingleCellDecomposition(logStreamBuff).run(argc, argv);
 	else if (action == "test") {
 		imoka::matrix::BinaryMatrix matrix(argv[2]);
 		imoka::matrix::KmerMatrixLine<double> line;

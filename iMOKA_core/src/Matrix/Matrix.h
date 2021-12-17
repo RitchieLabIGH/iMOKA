@@ -15,6 +15,8 @@ namespace matrix {
 
 
 class Matrix {
+protected:
+	bool has_groups=false;
 public:
 	Matrix(){
 	};
@@ -30,6 +32,7 @@ public:
 
 
 	void initGroupMaps() {
+		if (! has_groups )return;
 		unique_groups.clear();
 		group_counts.clear();
 		groups.clear();

@@ -27,6 +27,7 @@ src/Annotation \
 src/Graphs \
 src/Matrix \
 src/Process \
+src/SingleCellDecomposition \
 src/Utils \
 src/Utils/cephes \
 src \

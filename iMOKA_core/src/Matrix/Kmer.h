@@ -9,7 +9,6 @@
 #define MATRIX_KMER_H_
 
 #include "../Utils/IOTools.hpp"
-
 namespace imoka {
 namespace matrix {
 
@@ -28,7 +27,7 @@ public:
 	}
 	;
 
-	Kmer(const Kmer & prefix, const Kmer & suffix) {
+	Kmer(const Kmer &prefix, const Kmer &suffix) {
 		k_len = prefix.k_len + suffix.k_len;
 		kmer.resize(std::ceil((double) (2 * k_len) / 8), 0);
 		unsigned char mask, suff_mask = 1;
@@ -54,7 +53,7 @@ public:
 		};
 	}
 	;
-	Kmer(const Kmer & original, uint32_t length) :
+	Kmer(const Kmer &original, uint32_t length) :
 			k_len(length), kmer(std::ceil((double) (2 * k_len) / 8)) {
 		unsigned char mask;
 		int n = 0, c, p = 0, s = 0;
@@ -70,9 +69,9 @@ public:
 	Kmer() {
 	}
 	;
-	Kmer(const std::string & str_kmer) :
+	Kmer(const std::string &str_kmer, bool canonical = false) :
 			Kmer(str_kmer.size()) {
-		from_str(str_kmer);
+		from_str(str_kmer, canonical);
 	}
 	;
 	virtual ~Kmer() {
@@ -82,7 +81,7 @@ public:
 	std::vector<unsigned char> kmer;
 	uint32_t k_len = 31;
 
-	bool operator <(const Kmer & second) const {
+	bool operator <(const Kmer &second) const {
 		unsigned char mask;
 		int n = 0, c;
 		for (c = 0; c < kmer.size(); c++) {
@@ -90,14 +89,15 @@ public:
 				if ((kmer[c] & mask) ^ (second.kmer[c] & mask)) {
 					return (second.kmer[c] & mask);
 				}
-		};
+		}
+		;
 		return false;
 	}
-	bool operator ==(const Kmer & second) const {
+	bool operator ==(const Kmer &second) const {
 		return kmer == second.kmer;
 	}
 
-	bool operator <=(const Kmer & second) const {
+	bool operator <=(const Kmer &second) const {
 		if (this->kmer == second.kmer) {
 			return true;
 		}
@@ -108,10 +108,11 @@ public:
 				if ((kmer[c] & mask) ^ (second.kmer[c] & mask)) {
 					return (second.kmer[c] & mask);
 				}
-		};
+		}
+		;
 		return false;
 	}
-	bool operator >(const Kmer & second) const {
+	bool operator >(const Kmer &second) const {
 		unsigned char mask;
 		int n = 0, c;
 		for (c = 0; c < kmer.size(); c++) {
@@ -119,10 +120,11 @@ public:
 				if ((kmer[c] & mask) ^ (second.kmer[c] & mask)) {
 					return (kmer[c] & mask);
 				}
-		};
+		}
+		;
 		return false;
 	}
-	bool operator >=(const Kmer & second) const {
+	bool operator >=(const Kmer &second) const {
 		if (kmer == second.kmer) {
 			return true;
 		}
@@ -133,7 +135,8 @@ public:
 				if ((kmer[c] & mask) ^ (second.kmer[c] & mask)) {
 					return (kmer[c] & mask);
 				}
-		};
+		}
+		;
 		return true;
 	}
 
@@ -160,15 +163,16 @@ public:
 					}
 				}
 			}
-		};
+		}
+		;
 		return out;
 	}
 
-	friend std::ostream& operator<<(std::ostream& stream, const Kmer & k) {
+	friend std::ostream& operator<<(std::ostream &stream, const Kmer &k) {
 		stream << k.str();
 		return stream;
 	}
-	friend std::istream& operator>>(std::istream& is, Kmer & k) {
+	friend std::istream& operator>>(std::istream &is, Kmer &k) {
 		is.read((char*) k.kmer.data(), k.kmer.size());
 		return is;
 	}
@@ -196,28 +200,74 @@ public:
 					}
 				}
 			}
-		};
+		}
+		;
 		return out;
 	}
 
-	void from_str(std::string str_kmer) {
+	void from_str(std::string str_kmer, bool canonical = false) {
 		unsigned char mask;
 		int n = 0, c, s = 0;
-		for (c = 0; c < kmer.size(); c++) {
-			kmer[c] = 0;
-			for (mask = 1; mask > 0 && n < (k_len * 2); n++, mask <<= 1) {
-				if (n % 2 == 1) {
-					if (str_kmer[s] == 'C' || str_kmer[s] == 'T') {
-						kmer[c] |= mask;
-					}
-					s++;
-				} else {
-					if (str_kmer[s] == 'G' || str_kmer[s] == 'T') {
-						kmer[c] |= mask;
+		if (canonical) {
+			int rev = false;
+			char revc;
+			for (s = 0; s < k_len; s++) {
+				revc = IOTools::complementary(str_kmer[k_len - s - 1]);
+				if (revc < str_kmer[s]) {
+					rev = true;
+					s = k_len;
+				} else if (revc > str_kmer[s]) {
+					s = k_len;
+				}
+			}
+			s = 0;
+			for (c = 0; c < kmer.size(); c++) {
+				kmer[c] = 0;
+				for (mask = 1; mask > 0 && n < (k_len * 2); n++, mask <<= 1) {
+					if (n % 2 == 1) {
+						if (rev) {
+							if (str_kmer[k_len - s - 1] == 'G'
+									|| str_kmer[k_len - s - 1] == 'A') {
+								kmer[c] |= mask;
+							}
+						} else {
+							if (str_kmer[s] == 'C' || str_kmer[s] == 'T') {
+								kmer[c] |= mask;
+							}
+						}
+						s++;
+					} else {
+						if (rev) {
+							if (str_kmer[k_len - s - 1] == 'C'
+									|| str_kmer[k_len - s - 1] == 'A') {
+								kmer[c] |= mask;
+							}
+						} else {
+							if (str_kmer[s] == 'G' || str_kmer[s] == 'T') {
+								kmer[c] |= mask;
+							}
+
+						}
 					}
 				}
 			}
-		};
+		} else {
+			for (c = 0; c < kmer.size(); c++) {
+				kmer[c] = 0;
+				for (mask = 1; mask > 0 && n < (k_len * 2); n++, mask <<= 1) {
+					if (n % 2 == 1) {
+						if (str_kmer[s] == 'C' || str_kmer[s] == 'T') {
+							kmer[c] |= mask;
+						}
+						s++;
+					} else {
+						if (str_kmer[s] == 'G' || str_kmer[s] == 'T') {
+							kmer[c] |= mask;
+						}
+					}
+				}
+			};
+		}
 	}
 
 	void from_int(uint64_t ikmer) {
@@ -247,18 +297,64 @@ public:
 		from_str(result);
 	}
 
-	static std::set<Kmer> generateKmers(std::string & source, uint8_t k_len) {
+	static std::set<Kmer> generateKmers(std::string &source, uint8_t k_len) {
 		std::set<Kmer> out;
+		IOTools::to_upper(source);
 		if (source.size() >= k_len) {
-			for (int i = 0; i <= source.size() - k_len; i++) {
-				out.insert(Kmer(source.substr(i, k_len)));
+			int i = 0;
+			for (int j = 0; j < k_len; j++) {
+				if (IOTools::alphabet.find(source[j]) == std::string::npos) {
+					i = j + 1;
+				}
+			}
+			for (; i <= source.size() - k_len; i++) {
+				if (IOTools::alphabet.find(source[i + k_len - 1])
+						!= std::string::npos) {
+					out.insert(Kmer(source.substr(i, k_len)));
+				} else {
+					i = i + k_len - 1;
+				}
 			}
 		}
 		return out;
 	}
+
+	static std::set<Kmer> generateKmersMasked(std::string &source,
+			uint8_t k_len, std::regex &re, bool canonical = false,
+			int shift = 1) {
+		std::set<Kmer> out;
+		std::string substr;
+		IOTools::to_upper(source);
+		if (source.size() >= k_len) {
+			int i = 0, prev;
+			for (int j = 0; j < k_len; j++) {
+				if (IOTools::alphabet.find(source[j]) == std::string::npos) {
+					i = j + 1;
+				}
+			}
+			prev = i - shift;
+			for (; i <= source.size() - k_len; i++) {
+				if (IOTools::alphabet.find(source[i + k_len - 1])
+						!= std::string::npos) {
+					if (prev <= i - shift) {
+						substr = source.substr(i, k_len);
+						if (!std::regex_match(substr, re)) {
+							out.insert(Kmer(substr, canonical));\
+							prev=i;
+						}
+					}
+				} else {
+					i = i + k_len - 1;
+				}
+			}
+		}
+		return out;
+	}
+
 private:
 
-};
+}
+;
 
 class Prefix: public Kmer {
 public:
@@ -273,7 +369,7 @@ public:
 			Kmer(k), first_suffix(from) {
 	}
 	;
-	Prefix(const Kmer & k, uint8_t prefix_size) :
+	Prefix(const Kmer &k, uint8_t prefix_size) :
 			Kmer(prefix_size) {
 		unsigned char mask;
 		int n = 0, c;
@@ -286,7 +382,7 @@ public:
 		};
 
 	}
-	Prefix(const std::string & s) :
+	Prefix(const std::string &s) :
 			Kmer(s) {
 	}
 	;
@@ -302,7 +398,7 @@ public:
 	Suffix() {
 	}
 	;
-	Suffix(const std::string & s) :
+	Suffix(const std::string &s) :
 			Kmer(s) {
 	}
 	;
@@ -314,7 +410,7 @@ public:
 			Kmer(k), count(count) {
 	}
 	;
-	Suffix(const Kmer & k, uint8_t suffix_size) :
+	Suffix(const Kmer &k, uint8_t suffix_size) :
 			Kmer(suffix_size) {
 		unsigned char mask, suff_mask = 1;
 		int n = 0, c, s = 0, prefix_size = k.k_len - suffix_size;
@@ -342,24 +438,28 @@ private:
 
 };
 
-template <class T>
+template<class T>
 class KmerMatrixLine {
 public:
-	Kmer & getKmer() { return kmer; }
-	std::string getName(){return kmer.str();};
+	Kmer& getKmer() {
+		return kmer;
+	}
+	std::string getName() {
+		return kmer.str();
+	}
+	;
 	std::vector<T> count;
-	uint64_t index=0;
-	void setKmer(const Kmer & new_kmer){
+	uint64_t index = 0;
+	void setKmer(const Kmer &new_kmer) {
 		kmer = new_kmer;
 	}
-	void setKmer(const std::string & new_kmer){
+	void setKmer(const std::string &new_kmer) {
 		Kmer k(new_kmer);
 		kmer = k;
 	}
 private:
 	Kmer kmer;
 };
-
 
 }
 

@@ -35,7 +35,7 @@ public:
 	virtual ~BinaryDB();
 	bool getNext();
 	std::vector<double> getKmers(std::vector<Kmer> & requests);
-
+	std::vector<double> getKmers(std::set<Kmer> & requests);
 	void print(std::ofstream & of) {
 		of << getKmer() << "\t" << getCount() << "\n";
 		while (getNext()) {
@@ -107,16 +107,20 @@ public:
 	int64_t getUnitSuffixSize(){
 			return unit_suffix_binary;
 	}
+	int64_t getKlen(){
+		return suffix_size + prefix_size;
+	}
 
-	bool go_to(Kmer & );
+	bool go_to(const Kmer & );
 	bool go_to(uint64_t n );
 	std::vector<Kmer> getPartitions(uint64_t n);
 	std::string file_name;
 	static int64_t bestPrefixSize(std::string file);
 	std::pair<Prefix, std::pair<int64_t, int64_t>> current_prefix_range;
 	uint64_t current_suffix = 0;
-	uint32_t binary_search( Kmer & target);
+	uint32_t binary_search(const Kmer & target);
 	void clearPrefixBuffer();
+	void fillPrefixBuffer();
 
 private:
 	int64_t prefix_size;
@@ -166,7 +170,6 @@ private:
 	std::vector<uchar> stream_buffer_prefix;
 
 	void fillBuffer();
-	void fillPrefixBuffer();
 	bool getNextPrefix();
 
 	void loadPrefixes(std::vector<uchar> & prefixes);

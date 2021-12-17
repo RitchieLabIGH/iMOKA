@@ -29,7 +29,11 @@ public:
 	void create(std::string inputFile, double rescale_f = 1,
 			int64_t prefix_size = -1);
 	void clear();
-
+	void loadAllPrefixBuffers(){
+		for (int i=0; i< bin_databases.size() ; i++ ){
+			bin_databases[i].fillPrefixBuffer();
+		}
+	}
 	std::vector<Kmer> getPartitions(uint64_t n);
 	virtual bool getLine(KmerMatrixLine<double> &jfl);
 	virtual bool getLine(KmerMatrixLine<uint32_t> &jfl);
@@ -42,12 +46,25 @@ public:
 		getLines(request, out);
 		return out;
 	}
+
+	std::vector<KmerMatrixLine<uint32_t>> query(std::string &request) {
+		std::vector<KmerMatrixLine<uint32_t>> out;
+		query(request, out);
+		return out;
+	}
+
 	std::vector<KmerMatrixLine<double>> getNormalizedLines(
 			std::vector<std::string> &request) {
 		std::vector<KmerMatrixLine<double>> out;
 		getLines(request, out);
 		return out;
 	}
+
+	std::vector<KmerMatrixLine<double>> normalizedQuery(std::string &request) {
+			std::vector<KmerMatrixLine<double>> out;
+			query(request, out);
+			return out;
+		}
 
 	template<class T>
 	void getLines(std::vector<std::string> &request,
@@ -61,6 +78,14 @@ public:
 	}
 
 	template<class T>
+		void query(std::string &request,
+				std::vector<KmerMatrixLine<T>> &response) {
+			std::set<Kmer> req = Kmer::generateKmers(request, k_len);
+			getLines(req, response);
+		}
+
+
+	template<class T>
 	std::vector<KmerMatrixLine<T>> getLines(std::vector<Kmer> &request) {
 		std::vector<KmerMatrixLine<T>> out;
 		getLines(request, out);
@@ -71,22 +96,13 @@ public:
 			std::vector<KmerMatrixLine<double>> &response);
 	void getLines(std::vector<Kmer> &request,
 			std::vector<KmerMatrixLine<uint32_t>> &response);
+	void getLines(std::set<Kmer> &request,
+				std::vector<KmerMatrixLine<double>> &response);
+	void getLines(std::set<Kmer> &request,
+				std::vector<KmerMatrixLine<uint32_t>> &response);
 	void getLine(Kmer &request,
 			KmerMatrixLine<uint32_t> &response );
-	template<class T>
-	bool getBatch(std::vector<KmerMatrixLine<T>> &buffer, uint64_t l) {
-		uint64_t row;
-		buffer.resize(l);
-		for (row = 0; row < l; row++) {
-			if (!getLine(buffer[row])) {
-				buffer.resize(row);
-				break;
-			}
-		}
-		if (row == 0)
-			return false;
-		return true;
-	}
+
 
 	uint32_t getMaxRawCount(KmerMatrixLine<double> &line) {
 		uint32_t max = std::round(line.count[0] * normalization_factors[0]);
@@ -127,7 +143,6 @@ public:
 	}
 
 private:
-
 	double rescale_factor = 1;
 	uint64_t current_line = 0;
 	uint64_t max_mem_for_db = 10000;

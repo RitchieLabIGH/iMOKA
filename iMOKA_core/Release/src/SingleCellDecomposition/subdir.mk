@@ -4,26 +4,17 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/Utils/BamReader.cpp \
-../src/Utils/FastqReader.cpp \
-../src/Utils/MLpack.cpp \
-../src/Utils/Mapper.cpp 
+../src/SingleCellDecomposition/SplitBamRead.cpp 
 
 OBJS += \
-./src/Utils/BamReader.o \
-./src/Utils/FastqReader.o \
-./src/Utils/MLpack.o \
-./src/Utils/Mapper.o 
+./src/SingleCellDecomposition/SplitBamRead.o 
 
 CPP_DEPS += \
-./src/Utils/BamReader.d \
-./src/Utils/FastqReader.d \
-./src/Utils/MLpack.d \
-./src/Utils/Mapper.d 
+./src/SingleCellDecomposition/SplitBamRead.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
-src/Utils/%.o: ../src/Utils/%.cpp
+src/SingleCellDecomposition/%.o: ../src/SingleCellDecomposition/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
 	g++ -std=c++14 -O3 -c -fmessage-length=0 -fopenmp -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
