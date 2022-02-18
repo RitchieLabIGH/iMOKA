@@ -44,9 +44,7 @@ bool Classification::run(int argc, char **argv) {
 					"Print the given number of k-mers for each thread, the entropy and the entropy threshold that would have been used as additional columns. Useful to evaluate the efficency of the entropy filter. Ignored if the entropy filter is disabled. Default: 0 ( Disabled )",
 					cxxopts::value<uint64_t>()->default_value("0"))("m,min",
 					"Minimum raw count that at least one sample has to have to consider a k-mer",
-					cxxopts::value<int>()->default_value("5"))("S,stable",
-					"Estimate the stable k-mers to use for independent normalization. 0 = Disable, N = number of stable k-mers",
-					cxxopts::value<uint64_t>()->default_value("0"))(
+					cxxopts::value<int>()->default_value("5"))(
 					"l,levelling", "Set to zero the normalized counts lower than the min_normalized_count",
 					cxxopts::value<bool>()->default_value("false"));
 			auto parsedArgs = options.parse(argc, argv);
@@ -71,7 +69,7 @@ bool Classification::run(int argc, char **argv) {
 					parsedArgs["accuracy"].as<double>(),
 					parsedArgs["test-percentage"].as<double>(),
 					parsedArgs["confidence"].as<double>(), adjustments,
-					parsedArgs["S"].as<uint64_t>(), parsedArgs["l"].as<bool>());
+					 parsedArgs["l"].as<bool>());
 		}
 
 		if (std::string(argv[1]) == "cluster") {
@@ -118,7 +116,7 @@ bool Classification::run(int argc, char **argv) {
 bool Classification::classificationFilterMulti(std::string file_in,
 		std::string file_out, int min, uint64_t entropy_evaluation,
 		uint64_t cross_validation, double sd, double min_acc, double perc_test,
-		double confidence, std::vector<double> adjustments, uint64_t stable,
+		double confidence, std::vector<double> adjustments,
 		bool levelling) {
 
 	BinaryMatrix bm(file_in, false);
@@ -137,11 +135,6 @@ bool Classification::classificationFilterMulti(std::string file_in,
 	}
 	const std::vector<Kmer> partitions = bm.getPartitions(
 			omp_get_max_threads());
-	std::pair<double, double> stable_thr;
-	if (stable != 0) {
-		stable_thr = StableProcess::estimate_stable_thresholds(file_in,
-				partitions);
-	}
 	std::vector<std::vector<std::vector<KmerMeanStdLine>>> stable_results(
 			omp_get_max_threads());
 
@@ -169,7 +162,7 @@ bool Classification::classificationFilterMulti(std::string file_in,
 			min_norm_count } };
 	bm.clear();
 
-#pragma omp parallel firstprivate(cross_validation, min_norm_count, sd, min_acc, perc_test, adjustments, min, entropy_evaluation,partitions, stable_thr, stable , confidence, levelling)
+#pragma omp parallel firstprivate(cross_validation, min_norm_count, sd, min_acc, perc_test, adjustments, min, entropy_evaluation,partitions, confidence, levelling)
 	{
 		uint64_t thr = omp_get_thread_num();
 		BinaryMatrix mat(file_in, false);
@@ -197,17 +190,11 @@ bool Classification::classificationFilterMulti(std::string file_in,
 		std::string file_out_thr = file_out + std::to_string(thr);
 		std::ofstream outfs(file_out_thr), thrlog(file_out_thr + ".log");
 
-		std::vector<KmerLineProcess<double>*> processes;
 
 		ReductionProcess redp(thr, outfs, thrlog, adjustments, mat,
 				cross_validation, entropy_evaluation > 0, sd, min_acc,
 				perc_test, line.getKmer().to_int(), to_kmer.to_int());
-		processes.push_back(&redp);
-
-		if (stable != 0) {
-			StableProcess stp(stable_thr, stable, stable_results[thr]);
-			processes.push_back(&stp);
-		}
+		double min_norm_count_thr= min_norm_count * confidence;
 		while (running) {
 			if (line.getKmer() <= to_kmer) {
 				if (mat.getMaxRawCount(line) >= min) {
@@ -218,9 +205,7 @@ bool Classification::classificationFilterMulti(std::string file_in,
 							}
 						}
 					}
-					for (auto &proc : processes) {
-						proc->run(line, min_norm_count * confidence);
-					}
+					redp.run(line, min_norm_count_thr);
 
 				}
 				running = mat.getLine(line);
@@ -240,57 +225,6 @@ bool Classification::classificationFilterMulti(std::string file_in,
 		redp.close();
 
 	} // parallel end
-
-	if (stable != 0) {
-
-		for (int i = 1; i < omp_get_max_threads(); i++) {
-			for (int j = 0; j < 3; j++) {
-				if (stable_results[i][j].size() > 0) {
-					stable_results[0][j].insert(stable_results[0][j].end(),
-							stable_results[i][j].begin(),
-							stable_results[i][j].end());
-					stable_results[i][j].clear();
-				}
-			}
-		}
-		if (stable_results[0][0].size() > 1 && stable_results[0][1].size() > 1
-				&& stable_results[0][2].size() > 1) {
-			KmerMeanStdLine &aref = stable_results[0][0][0]; // Due to an annoying Eclipse bug, using reference to the object instad of directly the element in the array
-			std::vector<double> medians = { 0, 0, 0 };
-			for (int j = 0; j < 3; j++) {
-				std::sort(stable_results[0][j].begin(),
-						stable_results[0][j].end(), [](auto &a, auto &b) {
-							return a.stdev < b.stdev;
-						});
-				if (stable_results[0][j].size() > stable) {
-					stable_results[0][j].resize(stable);
-				}
-				aref = stable_results[0][j][std::floor(
-						stable_results[0][j].size() / 2)];
-				if (stable_results[0][j].size() % 2 == 0) {
-					medians[j] = aref.mean;
-				} else {
-					KmerMeanStdLine &bref = stable_results[0][j][std::floor(
-							stable_results[0][j].size() / 2) + 1];
-					medians[j] = (aref.mean + bref.mean) / 2;
-				}
-			}
-			std::ofstream sofs(file_out + "_stable.tsv");
-			sofs << "#{ 'j' : " << (medians[1] / medians[0]) << ", 'k' : "
-					<< (medians[1] / medians[2])
-					<< " }\nkmer\ttype\tmean\tstd\n";
-			for (int j = 0; j < 3; j++) {
-				for (uint64_t i = 0; i < stable_results[0][j].size(); i++) {
-					aref = stable_results[0][j][i];
-					sofs << aref.kmer << "\t"
-							<< (j == 0 ? "LOW" : j == 1 ? "MEDIUM" : "HIGH")
-							<< "\t" << aref.mean << "\t" << aref.stdev << "\n";
-				}
-			}
-
-			sofs.close();
-		}
-	}
 
 	std::ofstream final_ofs(file_out);
 	std::ifstream ifs;
