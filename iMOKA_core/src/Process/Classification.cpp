@@ -32,21 +32,23 @@ bool Classification::run(int argc, char **argv) {
 					"E,entropy-adjustment-two",
 					"The adjustment value of the entropy filter that increase the threshold. Need to be greater than 0, otherwise disable the entropy assertment.",
 					cxxopts::value<double>()->default_value("0.05"))(
-							"C,confidence",
-							"Discard results with low confidence: at least one group has to have the abundance mean greater than confidence x min normalized count",
-							cxxopts::value<double>()->default_value("1.5"))(
+					"C,confidence",
+					"Discard results with low confidence: at least one group has to have the abundance mean greater than confidence x min normalized count. Disable it by setting to 0",
+					cxxopts::value<double>()->default_value("0"))(
 					"c,cross-validation", "Maximum number of cross validation",
 					cxxopts::value<uint64_t>()->default_value("100"))(
 					"s,standard-error",
 					"Standard error to achieve convergence in cross validation. Suggested between 0.5 and 2",
 					cxxopts::value<double>()->default_value("0.5"))(
 					"v,verbose-entropy",
-					"Print the given number of k-mers for each thread, the entropy and the entropy threshold that would have been used as additional columns. Useful to evaluate the efficency of the entropy filter. Ignored if the entropy filter is disabled. Defualt: 0 ( Disabled )",
+					"Print the given number of k-mers for each thread, the entropy and the entropy threshold that would have been used as additional columns. Useful to evaluate the efficency of the entropy filter. Ignored if the entropy filter is disabled. Default: 0 ( Disabled )",
 					cxxopts::value<uint64_t>()->default_value("0"))("m,min",
 					"Minimum raw count that at least one sample has to have to consider a k-mer",
 					cxxopts::value<int>()->default_value("5"))("S,stable",
 					"Estimate the stable k-mers to use for independent normalization. 0 = Disable, N = number of stable k-mers",
-					cxxopts::value<uint64_t>()->default_value("0"));
+					cxxopts::value<uint64_t>()->default_value("0"))(
+					"l,levelling", "Set to zero the normalized counts lower than the min_normalized_count",
+					cxxopts::value<bool>()->default_value("false"));
 			auto parsedArgs = options.parse(argc, argv);
 			if (parsedArgs.count("help") != 0
 					|| IOTools::checkArguments(parsedArgs,
@@ -55,6 +57,7 @@ bool Classification::run(int argc, char **argv) {
 						<< "\n";
 				return false;
 			}
+
 			std::vector<double> adjustments(2);
 			adjustments[0] = parsedArgs["e"].as<double>();
 			adjustments[1] = parsedArgs["E"].as<double>();
@@ -67,9 +70,8 @@ bool Classification::run(int argc, char **argv) {
 					parsedArgs["standard-error"].as<double>(),
 					parsedArgs["accuracy"].as<double>(),
 					parsedArgs["test-percentage"].as<double>(),
-					parsedArgs["confidence"].as<double>(),
-					adjustments,
-					parsedArgs["S"].as<uint64_t>());
+					parsedArgs["confidence"].as<double>(), adjustments,
+					parsedArgs["S"].as<uint64_t>(), parsedArgs["l"].as<bool>());
 		}
 
 		if (std::string(argv[1]) == "cluster") {
@@ -115,12 +117,24 @@ bool Classification::run(int argc, char **argv) {
 /// @param adjustments
 bool Classification::classificationFilterMulti(std::string file_in,
 		std::string file_out, int min, uint64_t entropy_evaluation,
-		uint64_t cross_validation, double sd, double min_acc, double perc_test, double confidence,
-		std::vector<double> adjustments, uint64_t stable) {
+		uint64_t cross_validation, double sd, double min_acc, double perc_test,
+		double confidence, std::vector<double> adjustments, uint64_t stable,
+		bool levelling) {
 
-	BinaryMatrix bm(file_in , false);
-	double min_norm_count = min / Stats::getQuartiles(bm.normalization_factors)[0] ; // The counts lower than this are zeros to level the samples with the one having the lowest depth ( first quartile ).
-	std::cerr << "Min normalized count: " << min_norm_count << "\n"; std::cerr.flush();
+	BinaryMatrix bm(file_in, false);
+	double min_norm_count = min
+			/ Stats::getQuartiles(bm.normalization_factors)[0]; // The counts lower than this are zeros to level the samples with the one having the lowest depth ( first quartile ).
+	std::cerr << "Min normalized count: " << min_norm_count << "\n";
+	std::cerr.flush();
+	if (levelling) {
+		std::cerr << "Normalized count lower than " << min_norm_count
+				<< " will be set to 0\n";
+	}
+	if (confidence > 0) {
+		std::cerr << "If no group has a mean normalized count lower than "
+				<< (min_norm_count * confidence)
+				<< " ( minimum normalized count x confidence ) the k-mer will be ignored\n";
+	}
 	const std::vector<Kmer> partitions = bm.getPartitions(
 			omp_get_max_threads());
 	std::pair<double, double> stable_thr;
@@ -150,10 +164,12 @@ bool Classification::classificationFilterMulti(std::string file_in,
 	json info = { { "cross_validation", cross_validation }, { "standard_error",
 			sd }, { "minimum_count", min }, { "min_acc", min_acc }, {
 			"perc_test", perc_test }, { "adjustments", adjustments }, {
-			"file_in", file_in }, { "file_out", file_out } };
+			"file_in", file_in }, { "file_out", file_out }, { "levelling",
+			levelling }, { "confidence", confidence }, { "min_norm_count",
+			min_norm_count } };
 	bm.clear();
 
-#pragma omp parallel firstprivate(cross_validation, min_norm_count, sd, min_acc, perc_test, adjustments, min, entropy_evaluation,partitions, stable_thr, stable , confidence)
+#pragma omp parallel firstprivate(cross_validation, min_norm_count, sd, min_acc, perc_test, adjustments, min, entropy_evaluation,partitions, stable_thr, stable , confidence, levelling)
 	{
 		uint64_t thr = omp_get_thread_num();
 		BinaryMatrix mat(file_in, false);
@@ -195,13 +211,15 @@ bool Classification::classificationFilterMulti(std::string file_in,
 		while (running) {
 			if (line.getKmer() <= to_kmer) {
 				if (mat.getMaxRawCount(line) >= min) {
-					for (int i = 0; i < line.count.size(); i++) {
-						if (line.count[i] < min_norm_count) {
-							line.count[i] = 0;
+					if (levelling) {
+						for (int i = 0; i < line.count.size(); i++) {
+							if (line.count[i] < min_norm_count) {
+								line.count[i] = 0;
+							}
 						}
 					}
 					for (auto &proc : processes) {
-						proc->run(line, min_norm_count*confidence);
+						proc->run(line, min_norm_count * confidence);
 					}
 
 				}

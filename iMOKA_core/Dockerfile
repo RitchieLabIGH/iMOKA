@@ -14,7 +14,7 @@ RUN apt-get clean all && \
     export DEBIAN_FRONTEND=noninteractive && \ 
     apt-get install -qy make build-essential gcc g++ \
     	 libopenmpi-dev zlib1g-dev libssl-dev  \
-    	libarmadillo-dev libboost-test-dev \
+    	libarmadillo-dev libboost-test-dev libboost-iostreams-dev \
     	libboost-dev libboost-system-dev libboost-math-dev \
     	libboost-program-options-dev libboost-serialization-dev \
     	python3 \

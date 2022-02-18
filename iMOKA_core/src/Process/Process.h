@@ -126,16 +126,18 @@ public:
 			keep = false;
 			for (double &v : res)
 				keep = keep || v >= min_acc;
-			if ( keep ) { // Check that at least one mean is greater than twice the minimum count
-				keep=false;
+			if (keep) { // Check that at least one mean is greater than twice the minimum count
 				std::fill(means.begin(), means.end(), 0);
 				for (int i = 0; i < groups.size(); i++) {
 					means[groups[i]] += line.count[i];
 				}
-				for (int g = 0; g < group_counts.size(); g++) {
-					if ((means[g] / group_counts[g]) > min_norm_count * 1.5){
-						keep=true;
-						g=group_counts.size();
+				if (min_norm_count != 0) {
+					keep = false;
+					for (int g = 0; g < group_counts.size(); g++) {
+						if ((means[g] / group_counts[g]) > min_norm_count) {
+							keep = true;
+							g = group_counts.size();
+						}
 					}
 				}
 			}
