@@ -247,7 +247,8 @@ bool BinaryDB::open(std::string file, bool query_mode) {
 	}
 	if (!_query_mode) {
 		buffer_prefix_size = 100;
-		buffer_size = 1000;
+		buffer_size = std::floor(_max_mem / getUnitSuffixSize());
+		if ( buffer_size < 1000 ) buffer_size = 1000;
 		if (stream_buffer_prefix.size()
 				!= buffer_prefix_size * unit_prefix_binary) {
 			stream_buffer_prefix.resize(
