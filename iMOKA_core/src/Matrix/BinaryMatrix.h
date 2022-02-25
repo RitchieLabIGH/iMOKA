@@ -31,7 +31,7 @@ public:
 	void clear();
 	void loadAllPrefixBuffers(){
 		for (int i=0; i< bin_databases.size() ; i++ ){
-			bin_databases[i].fillPrefixBuffer();
+			bin_databases[i]->fillPrefixBuffer();
 		}
 	}
 	std::vector<Kmer> getPartitions(uint64_t n);
@@ -133,10 +133,10 @@ public:
 	bool custom_buffer_size=false;
 	std::vector<uint64_t> total_counts;
 	std::vector<double> normalization_factors;
-	std::vector<BinaryDB> bin_databases;
+	std::vector<std::unique_ptr<BinaryDB>> bin_databases;
 	bool isOpen() {
 		for (auto &db : bin_databases) {
-			if (db.isOpen())
+			if (db->isOpen())
 				return true;
 		}
 		return false;

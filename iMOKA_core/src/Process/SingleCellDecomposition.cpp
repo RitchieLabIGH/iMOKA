@@ -114,7 +114,6 @@ bool SingleCellDecomposition::learn(std::string input_folder,
 	splitter.close();
 	log << " 2) Counting the k-mer in each cluster with KMC3\n";
 	IOTools::makeDir(output_folder + "/counts/");
-	BinaryDB bdb;
 
 	for (int i = 0; i < clusters_sizes.size(); i++) {
 		json clus;
@@ -154,7 +153,7 @@ bool SingleCellDecomposition::learn(std::string input_folder,
 		}
 		command = "rm -fr " + file_name + ".kmc* " + file_name + "_tmp";
 		err = system(command.c_str());
-		bdb.create(file_name + ".txt", -1);
+		BinaryDB::create(file_name + ".txt", -1);
 		clus["bin_file"] = file_name + ".txt.sorted.bin";
 		clus["k_len"] = k_len;
 		std::ofstream ofs(file_name + ".json");
@@ -223,14 +222,14 @@ bool SingleCellDecomposition::decompose(std::string input_file,
 	std::vector<int> cell_counts;
 	int64_t k_len = -1;
 	std::vector<std::string> files = IOTools::GetDirectoryFiles(counts);
-	BinaryDB tmp;
+	BinaryDBFetch tmp;
 	for (std::string file : files) {
 		if (file.find(".json") == file.size() - 5) {
 			std::ifstream ifs(counts + "/" + file);
 			json clj = json::parse(ifs);
 			ifs.close();
 			IOTools::fileExists(clj["bin_file"], true);
-			tmp.open(clj["bin_file"], false);
+			tmp.open(clj["bin_file"]);
 			if (k_len == -1) {
 				k_len = tmp.getKlen();
 			} else {

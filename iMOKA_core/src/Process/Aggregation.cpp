@@ -18,7 +18,7 @@ bool Aggregation::run(int argc, char** argv){
 			cxxopts::Options options("iMOKA",
 					"Aggregate overlapping k-mers");
 			options.add_options()
-					("i,input", "Input file containing the informations...",cxxopts::value<std::string>())
+					("i,input", "Input file, output of the reduction step",cxxopts::value<std::string>())
 					("o,output", "Basename of the output files", cxxopts::value<std::string>()->default_value("./aggregated"))
 					("h,help","Show this help")
 					("w,shift","Maximum shift considered during the edges creation", cxxopts::value<uint64_t>()->default_value("1"))

@@ -129,7 +129,7 @@ bool Classification::classificationFilterMulti(std::string file_in,
 				<< " will be set to 0\n";
 	}
 	if (confidence > 0) {
-		std::cerr << "If no group has a mean normalized count lower than "
+		std::cerr << "If no group has a mean normalized count higher than "
 				<< (min_norm_count * confidence)
 				<< " ( minimum normalized count x confidence ) the k-mer will be ignored\n";
 	}
