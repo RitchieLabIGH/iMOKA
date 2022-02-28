@@ -21,7 +21,7 @@ RUN apt-get clean all && \
     	fastqc samtools python3-pip libxml-libxml-perl curl \
     	bedtools libxml-parser-perl  \
     	gzip gawk libz-dev wget cmake perl graphviz locales && \
-    pip3 install --no-cache-dir  SimpSOM numpy scipy sklearn pandas && \
+    pip3 install --upgrade pip && pip3 install --no-cache-dir  SimpSOM numpy==1.22.2 scipy==1.3.3 scikit-learn==0.22.2.post1 pandas==0.25.3 && \
 ### mlpack v3.4.2
 	cd /iMOKA/external/ && \
 	wget https://mlpack.org/files/mlpack-3.4.2.tar.gz && \
