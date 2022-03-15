@@ -15,11 +15,14 @@ namespace imoka {
 namespace matrix {
 class BinaryMatrix: public Matrix {
 public:
-	BinaryMatrix(bool query_mode){
-		_query_mode=query_mode;
-	};
-	BinaryMatrix(std::string file, bool query_mode) {
-		_query_mode=query_mode;
+	BinaryMatrix(bool query_mode, bool log_transform) {
+		_log_transform = log_transform;
+		_query_mode = query_mode;
+	}
+	;
+	BinaryMatrix(std::string file, bool query_mode, bool log_transform) {
+		_query_mode = query_mode;
+		_log_transform = log_transform;
 		load(file);
 	}
 	;
@@ -29,8 +32,8 @@ public:
 	void create(std::string inputFile, double rescale_f = 1,
 			int64_t prefix_size = -1);
 	void clear();
-	void loadAllPrefixBuffers(){
-		for (int i=0; i< bin_databases.size() ; i++ ){
+	void loadAllPrefixBuffers() {
+		for (int i = 0; i < bin_databases.size(); i++) {
 			bin_databases[i]->fillPrefixBuffer();
 		}
 	}
@@ -61,10 +64,10 @@ public:
 	}
 
 	std::vector<KmerMatrixLine<double>> normalizedQuery(std::string &request) {
-			std::vector<KmerMatrixLine<double>> out;
-			query(request, out);
-			return out;
-		}
+		std::vector<KmerMatrixLine<double>> out;
+		query(request, out);
+		return out;
+	}
 
 	template<class T>
 	void getLines(std::vector<std::string> &request,
@@ -78,12 +81,10 @@ public:
 	}
 
 	template<class T>
-		void query(std::string &request,
-				std::vector<KmerMatrixLine<T>> &response) {
-			std::set<Kmer> req = Kmer::generateKmers(request, k_len);
-			getLines(req, response);
-		}
-
+	void query(std::string &request, std::vector<KmerMatrixLine<T>> &response) {
+		std::set<Kmer> req = Kmer::generateKmers(request, k_len);
+		getLines(req, response);
+	}
 
 	template<class T>
 	std::vector<KmerMatrixLine<T>> getLines(std::vector<Kmer> &request) {
@@ -97,24 +98,31 @@ public:
 	void getLines(std::vector<Kmer> &request,
 			std::vector<KmerMatrixLine<uint32_t>> &response);
 	void getLines(std::set<Kmer> &request,
-				std::vector<KmerMatrixLine<double>> &response);
+			std::vector<KmerMatrixLine<double>> &response);
 	void getLines(std::set<Kmer> &request,
-				std::vector<KmerMatrixLine<uint32_t>> &response);
-	void getLine(Kmer &request,
-			KmerMatrixLine<uint32_t> &response );
-
+			std::vector<KmerMatrixLine<uint32_t>> &response);
+	void getLine(Kmer &request, KmerMatrixLine<uint32_t> &response);
 
 	uint32_t getMaxRawCount(KmerMatrixLine<double> &line) {
-		uint32_t max = std::round(line.count[0] * normalization_factors[0]);
-		for (uint32_t i = 1; i < line.count.size(); i++) {
-			if (line.count[i] * normalization_factors[i] > max) {
-				max = std::round(line.count[i] * normalization_factors[i]);
+		if (_log_transform) {
+			uint32_t max = 0;
+			for (uint32_t i = 0; i < line.count.size(); i++) {
+				if (line.count[i] != 0 && (std::exp2(line.count[i])) * normalization_factors[i] > max) {
+					max = std::round((std::exp2(line.count[i])) * normalization_factors[i]);
+				}
 			}
+			return max;
+		} else {
+			uint32_t max = std::round(line.count[0] * normalization_factors[0]);
+			for (uint32_t i = 1; i < line.count.size(); i++) {
+				if (line.count[i] * normalization_factors[i] > max) {
+					max = std::round(line.count[i] * normalization_factors[i]);
+				}
+			}
+			return max;
 		}
-		return max;
+
 	}
-
-
 
 	bool go_to(Kmer&);
 
@@ -126,11 +134,11 @@ public:
 		if (isOpen()) {
 			std::cerr << "Error! Set the total space before open the matrix.";
 		} else {
-			custom_buffer_size=true;
+			custom_buffer_size = true;
 			max_mem_for_db = bdbb;
 		}
 	}
-	bool custom_buffer_size=false;
+	bool custom_buffer_size = false;
 	std::vector<uint64_t> total_counts;
 	std::vector<double> normalization_factors;
 	std::vector<std::unique_ptr<BinaryDB>> bin_databases;
@@ -146,12 +154,13 @@ private:
 	double rescale_factor = 1;
 	uint64_t current_line = 0;
 	uint64_t max_mem_for_db = 10000;
-	bool _query_mode=false;
+	bool _query_mode = false;
 	std::set<Kmer> current_kmers;
 	void initKmerVector(int64_t prefix_size);
 	void initDBs();
 	uint64_t file_len;
 	uint64_t n_of_bd;
+	bool _log_transform = false;
 }
 ;
 }

@@ -142,6 +142,13 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 	std::cout << "\nStep "<< step++ << " : Reading "<< in_file <<  "...";std::cout.flush();
 	graphs::KmerGraphSet gg(w, count_matrix);
 	gg.load(in_file, threshold);
+	bool logarithmic = false;
+	json reduce_info =json::parse(gg.infos["input_infos"].get<std::string>());
+	if ( reduce_info.contains("logarithmic") ){
+		logarithmic = reduce_info["logarithmic"];
+	}
+	std::cerr << "Logarithmic : " << (logarithmic ? "true" : "false") << "\n";
+
 	uint64_t or_nodes = gg.size();
 	std::cout  << "done.\n\tRead " << or_nodes << " kmers."
 			<< "\n\tSpace occupied: "
@@ -240,7 +247,7 @@ bool Aggregation::redundancyFilter(std::string in_file, std::string out_file,
 		}
 		out_str.close();
 	}
-	gg.write_output(out_file);
+	gg.write_output(out_file, logarithmic);
 	info["end_time"]= std::time(0);
 
 	infoJSON.open(json_info_file);

@@ -89,7 +89,7 @@ void KmerGraphSet::setCountMatrix(std::string file) {
 	matrix_file = file;
 	has_matrix = IOTools::fileExists(file);
 	if (has_matrix) {
-		BinaryMatrix binm(matrix_file, false);
+		BinaryMatrix binm(matrix_file, false, true);
 		normalization_factors = binm.normalization_factors;
 		sample_groups_names = binm.unique_groups;
 		n_columns = binm.col_names.size();
@@ -997,7 +997,7 @@ void KmerGraphSet::write_tsv_line(json & node, std::ofstream & tsv_out) {
 	tsv_out << "\n";
 }
 
-void KmerGraphSet::write_output(std::string out_file) {
+void KmerGraphSet::write_output(std::string out_file, bool logarithmic) {
 	std::ofstream json_out(out_file + ".json");
 	json_out << "{ \"info\" : " << infos.dump() << ", \n ";
 	std::ofstream tsv_out(out_file + ".tsv");
@@ -1005,7 +1005,7 @@ void KmerGraphSet::write_output(std::string out_file) {
 	if (has_matrix) {
 		matrix_out.open(out_file + ".kmers.matrix");
 	}
-	write_kmers(json_out, tsv_out, matrix_out);
+	write_kmers(json_out, tsv_out, matrix_out, logarithmic);
 	if (winning_nodes.size() > 0)
 		json_out << ",\n";
 	write_genes_json(json_out);
@@ -1069,9 +1069,9 @@ void KmerGraphSet::write_sequences_json(std::ofstream &ofs) {
 }
 
 void KmerGraphSet::write_kmers(std::ofstream &json_out, std::ofstream &tsv_out,
-		std::ofstream &matrix_out) {
+		std::ofstream &matrix_out, bool logarithmic) {
 	bool first = true;
-	BinaryMatrix bm(true);
+	BinaryMatrix bm(true, logarithmic);
 	if (has_matrix) {
 		bm.load(matrix_file);
 		std::cerr << "\n\nMemory = " << IOTools::format_space_human(IOTools::getCurrentProcessMemory()) << "\n";
@@ -1108,9 +1108,16 @@ void KmerGraphSet::write_kmers(std::ofstream &json_out, std::ofstream &tsv_out,
 			}
 
 			matrix_out << current_k_buffer[current_k_buffer_pos].getKmer();
-			for (int j = 0; j < current_k_buffer[current_k_buffer_pos].count.size(); j++)
-				matrix_out << "\t"
-						<< (current_k_buffer[current_k_buffer_pos].count[j] / bm.normalization_factors[j]);
+			for (int j = 0; j < current_k_buffer[current_k_buffer_pos].count.size(); j++){
+				if (logarithmic){
+					matrix_out << "\t"
+											<< std::log2((current_k_buffer[current_k_buffer_pos].count[j] / bm.normalization_factors[j])+1);
+				} else {
+					matrix_out << "\t"
+											<< (current_k_buffer[current_k_buffer_pos].count[j] / bm.normalization_factors[j]);
+				}
+
+			}
 			matrix_out << "\n";
 			current_k_buffer_pos++;
 		}

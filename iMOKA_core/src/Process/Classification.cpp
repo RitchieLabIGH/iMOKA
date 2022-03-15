@@ -45,8 +45,11 @@ bool Classification::run(int argc, char **argv) {
 					cxxopts::value<uint64_t>()->default_value("0"))("m,min",
 					"Minimum raw count that at least one sample has to have to consider a k-mer",
 					cxxopts::value<int>()->default_value("5"))(
-					"l,levelling", "Set to zero the normalized counts lower than the min_normalized_count",
-					cxxopts::value<bool>()->default_value("false"));
+					"l,leveling", "Set to zero the normalized counts lower than the min_normalized_count",
+					cxxopts::value<bool>()->default_value("false"))
+					(
+										"log", "Use the logarithmic transformation",
+										cxxopts::value<bool>()->default_value("false"));
 			auto parsedArgs = options.parse(argc, argv);
 			if (parsedArgs.count("help") != 0
 					|| IOTools::checkArguments(parsedArgs,
@@ -69,7 +72,8 @@ bool Classification::run(int argc, char **argv) {
 					parsedArgs["accuracy"].as<double>(),
 					parsedArgs["test-percentage"].as<double>(),
 					parsedArgs["confidence"].as<double>(), adjustments,
-					 parsedArgs["l"].as<bool>());
+					 parsedArgs["l"].as<bool>(),
+					 parsedArgs["log"].as<bool>());
 		}
 
 		if (std::string(argv[1]) == "cluster") {
@@ -78,7 +82,8 @@ bool Classification::run(int argc, char **argv) {
 			options.add_options()("i,input", "The input matrix JSON header",
 					cxxopts::value<std::string>())("o,output",
 					"Output matrix file", cxxopts::value<std::string>())(
-					"h,help", "Show this help")("s,sigthr",
+					"h,help", "Show this help")(
+							"log", "Logarithmic transformation")("s,sigthr",
 					"Proportion of non zero values to consider a k-mer [0-1] ",
 					cxxopts::value<double>()->default_value("0.10"))("b,bins",
 					"Number of bins used to discretize the k-mer counts",
@@ -94,7 +99,7 @@ bool Classification::run(int argc, char **argv) {
 			return clusterizationFilter(parsedArgs["input"].as<std::string>(),
 					parsedArgs["output"].as<std::string>(),
 					parsedArgs["bins"].as<uint64_t>(),
-					parsedArgs["sigthr"].as<double>());
+					parsedArgs["sigthr"].as<double>(), parsedArgs.count("log") != 0);
 		}
 
 	} catch (const cxxopts::OptionException &e) {
@@ -117,11 +122,14 @@ bool Classification::classificationFilterMulti(std::string file_in,
 		std::string file_out, int min, uint64_t entropy_evaluation,
 		uint64_t cross_validation, double sd, double min_acc, double perc_test,
 		double confidence, std::vector<double> adjustments,
-		bool levelling) {
+		bool levelling, bool logarithmic) {
 
-	BinaryMatrix bm(file_in, false);
+	BinaryMatrix bm(file_in, false, logarithmic);
 	double min_norm_count = min
 			/ Stats::getQuartiles(bm.normalization_factors)[0]; // The counts lower than this are zeros to level the samples with the one having the lowest depth ( first quartile ).
+	if ( logarithmic ){
+		min_norm_count = std::log2(min_norm_count+1);
+	}
 	std::cerr << "Min normalized count: " << min_norm_count << "\n";
 	std::cerr.flush();
 	if (levelling) {
@@ -159,13 +167,13 @@ bool Classification::classificationFilterMulti(std::string file_in,
 			"perc_test", perc_test }, { "adjustments", adjustments }, {
 			"file_in", file_in }, { "file_out", file_out }, { "levelling",
 			levelling }, { "confidence", confidence }, { "min_norm_count",
-			min_norm_count } };
+			min_norm_count } , {"logarithmic" , logarithmic}};
 	bm.clear();
 
-#pragma omp parallel firstprivate(cross_validation, min_norm_count, sd, min_acc, perc_test, adjustments, min, entropy_evaluation,partitions, confidence, levelling)
+#pragma omp parallel firstprivate(cross_validation, min_norm_count, sd, min_acc, perc_test, adjustments, min, entropy_evaluation,partitions, confidence, levelling, logarithmic)
 	{
 		uint64_t thr = omp_get_thread_num();
-		BinaryMatrix mat(file_in, false);
+		BinaryMatrix mat(file_in, false, logarithmic);
 		Kmer to_kmer(mat.k_len, std::pow(4, mat.k_len) - 1);
 		KmerMatrixLine<double> line;
 		if (thr != omp_get_max_threads() - 1) {
@@ -279,12 +287,12 @@ bool Classification::classificationFilterMulti(std::string file_in,
 /// @param clusters
 /// @param min_cluster
 bool Classification::clusterizationFilter(std::string file_in,
-		std::string file_out, uint64_t nbins, double sigthr) {
+		std::string file_out, uint64_t nbins, double sigthr, bool logarithmic) {
 	std::cerr << "Memory occupied: "
 			<< IOTools::format_space_human(IOTools::getCurrentProcessMemory())
 			<< ".\n";
 	int max_thr = omp_get_max_threads();
-	BinaryMatrix bm(file_in, false);
+	BinaryMatrix bm(file_in, false, logarithmic);
 	const uint64_t k_len = bm.k_len, batch_size = std::floor(
 			((std::pow(4, bm.k_len)) - 1) / max_thr), nsam =
 			bm.col_names.size();
@@ -296,12 +304,12 @@ bool Classification::clusterizationFilter(std::string file_in,
 
 	std::vector<arma::Mat<double>> results(max_thr);
 
-#pragma omp parallel firstprivate( nsam, file_in, file_out, batch_size, nbins, sigthr )
+#pragma omp parallel firstprivate( nsam, file_in, file_out, batch_size, nbins, sigthr , logarithmic)
 	{
 		uint64_t thr = omp_get_thread_num();
 		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
 		auto start = std::chrono::high_resolution_clock::now();
-		BinaryMatrix mat(file_in, false);
+		BinaryMatrix mat(file_in, false, logarithmic);
 		std::string file_out_thr = file_out + std::to_string(thr);
 		uint64_t tot_lines = 0, siglines = 0;
 		uint64_t a = thr * batch_size, b = ((thr + 1) * batch_size) - 1;

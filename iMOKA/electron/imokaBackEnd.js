@@ -175,7 +175,7 @@ class iMokaBE extends EventEmitter {
 				}
 				if (!request.file_type) request.file_type = "matrix";
 				let line = "", obj;
-				if (request.file_type == "matrix" || request.file_type == "matrix_raw") {
+				if (request.file_type == "matrix" || request.file_type == "matrix_raw" || request.file_type == "matrix_log" ) {
 					line = "\t" + that.data.kmers.info.samples_names.join("\t") + "\ngroup"
 					that.data.kmers.info.groups.forEach((g) => {
 						line = line + "\t" + that.data.kmers.info.groups_names[g];
@@ -191,7 +191,12 @@ class iMokaBE extends EventEmitter {
 								if (request.file_type == "matrix_raw") {
 									line = line + "\t" + c;
 								} else {
-									line = line + "\t" + (c / that.data.kmers.info.count_normalization[cidx]);
+									if (request.file_type == "matrix_log"){
+										line = line + "\t" + Math.log2((c / that.data.kmers.info.count_normalization[cidx])+1);	
+									} else {
+										line = line + "\t" + (c / that.data.kmers.info.count_normalization[cidx]);
+									}
+									
 								}
 							});
 							this.push(line + "\n");

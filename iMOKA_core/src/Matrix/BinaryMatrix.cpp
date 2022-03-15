@@ -287,8 +287,12 @@ bool BinaryMatrix::getLine(KmerMatrixLine<double> &line) {
 	line.index = current_line++;
 	for (uint64_t i = 0; i < n_of_bd; i++) {
 		if (bin_databases[i].get()->getKmer() == line.getKmer()) {
-			line.count[i] = ((bin_databases[i].get()->getCount())
-					/ normalization_factors[i]);
+			if ( _log_transform ){
+				line.count[i] = std::log2( ((bin_databases[i].get()->getCount()) / normalization_factors[i]) +1);
+			} else {
+				line.count[i] = ((bin_databases[i].get()->getCount()) / normalization_factors[i]);
+			}
+
 			if (bin_databases[i].get()->getNext()) {
 				current_kmers.insert((bin_databases[i].get()->getKmer()));
 			}
@@ -317,8 +321,15 @@ void BinaryMatrix::getLines(std::vector<Kmer> &request,
 	}
 	for (uint64_t i = 0; i < bin_databases.size(); i++) {
 		for (uint64_t j = 0; j < response.size(); j++) {
-			if (columns[i][j] != 0.0)
-				response[j].count[i] = columns[i][j] / normalization_factors[i];
+			if (columns[i][j] != 0.0){
+				if ( _log_transform){
+					response[j].count[i] = std::log2((columns[i][j] / normalization_factors[i])+1);
+				}else {
+					response[j].count[i] = columns[i][j] / normalization_factors[i];
+				}
+
+			}
+
 		}
 	}
 	return;
@@ -341,8 +352,14 @@ void BinaryMatrix::getLines(std::set<Kmer> &request,
 	}
 	for (uint64_t i = 0; i < bin_databases.size(); i++) {
 		for (uint64_t j = 0; j < response.size(); j++) {
-			if (columns[i][j] != 0.0)
-				response[j].count[i] = columns[i][j] / normalization_factors[i];
+			if (columns[i][j] != 0.0){
+				if ( _log_transform){
+					response[j].count[i] = std::log2((columns[i][j] / normalization_factors[i])+1);
+				} else {
+					response[j].count[i] = columns[i][j] / normalization_factors[i];
+				}
+
+			}
 		}
 	}
 	return;

@@ -46,7 +46,9 @@ bool BinaryMatrixHandler::run(int argc, char **argv) {
 					"The source from where extract the features (JSON header file)",
 					cxxopts::value<std::string>())("r,raw",
 					"Get the raw counts instead of the ones rescaled with the values in the JSON header file")(
-					"h,help", "Show this help");
+					"h,help", "Show this help")(
+							"log",
+							"Transform in logarithmic scale the normalized values");
 			auto parsedArgs = options.parse(argc, argv);
 			bool help = IOTools::checkArguments(parsedArgs,
 					{ "input", "source" }, log);
@@ -54,7 +56,7 @@ bool BinaryMatrixHandler::run(int argc, char **argv) {
 				return extract(parsedArgs["input"].as<std::string>(),
 						parsedArgs["source"].as<std::string>(),
 						parsedArgs["output"].as<std::string>(),
-						parsedArgs.count("raw") == 0);
+						parsedArgs.count("raw") == 0, parsedArgs.count("log") != 0);
 			}
 		}
 		if (std::string(argv[1]) == "stable") {
@@ -65,14 +67,14 @@ bool BinaryMatrixHandler::run(int argc, char **argv) {
 					"The source from where extract the features (JSON header file)",
 					cxxopts::value<std::string>())("m,max",
 					"Maximum number of k-mers to output for each category",
-					cxxopts::value<std::uint64_t>()->default_value("9"))(
-					"h,help", "Show this help");
+					cxxopts::value<std::uint64_t>()->default_value("9"))
+					("h,help", "Show this help")("log","Transform in logarithmic scale the normalized values");
 			auto parsedArgs = options.parse(argc, argv);
 			bool help = IOTools::checkArguments(parsedArgs, { "source" }, log);
 			if (!help) {
 				return stable(parsedArgs["source"].as<std::string>(),
 						parsedArgs["output"].as<std::string>(),
-						parsedArgs["max"].as<uint64_t>());
+						parsedArgs["max"].as<uint64_t>(), parsedArgs.count("log") != 0);
 			}
 		}
 		if (std::string(argv[1]) == "dump") {
@@ -86,10 +88,13 @@ bool BinaryMatrixHandler::run(int argc, char **argv) {
 					cxxopts::value<std::string>()->default_value("none"))(
 					"r,raw",
 					"Get the raw counts instead of the ones rescaled with the values in the JSON header file")(
+							"log",
+							"Transform in logarithmic scale the normalized values")(
 					"h,help", "Show this help");
 			auto parsedArgs = options.parse(argc, argv);
 			bool help = IOTools::checkArguments(parsedArgs, { "input" }, log);
 			if (!help) {
+				bool logarithmic = parsedArgs.count("log") != 0;
 				if (parsedArgs["output"].as<std::string>() == "stdout"
 						|| parsedArgs["from-kmer"].as<std::string>() != "none"
 						|| parsedArgs["to-kmer"].as<std::string>() != "none") {
@@ -97,11 +102,11 @@ bool BinaryMatrixHandler::run(int argc, char **argv) {
 							parsedArgs["output"].as<std::string>(),
 							parsedArgs["from-kmer"].as<std::string>(),
 							parsedArgs["to-kmer"].as<std::string>(),
-							parsedArgs.count("raw") == 0);
+							parsedArgs.count("raw") == 0, logarithmic);
 				} else {
 					std::string input_matrix = parsedArgs["input"].as<
 							std::string>();
-					BinaryMatrix bm(input_matrix, false);
+					BinaryMatrix bm(input_matrix, false, logarithmic);
 					const uint64_t k_len = bm.k_len, batch_size = std::floor(
 							((std::pow(4, bm.k_len)) - 1)
 									/ omp_get_max_threads());
@@ -118,7 +123,7 @@ bool BinaryMatrixHandler::run(int argc, char **argv) {
 						Kmer kmer_from(k_len, a);
 						Kmer kmer_to(k_len, b);
 						dump(input_matrix, out_file, kmer_from.str(),
-								kmer_to.str(), parsedArgs.count("raw") == 0,
+								kmer_to.str(), parsedArgs.count("raw") == 0, logarithmic,
 								omp_get_thread_num() == 0);
 					}
 					std::string ofile = parsedArgs["output"].as<std::string>();
@@ -153,22 +158,22 @@ bool BinaryMatrixHandler::run(int argc, char **argv) {
 
 
 bool BinaryMatrixHandler::stable(std::string source, std::string outfile,
-		uint64_t max_n) {
-	BinaryMatrix bm(source, false);
+		uint64_t max_n, bool logarithmic) {
+	BinaryMatrix bm(source, false, logarithmic);
 	const std::vector<Kmer> partitions = bm.getPartitions(
 			omp_get_max_threads());
 	std::pair<double, double> means_ranges = StableProcess::estimate_stable_thresholds(source,
-			partitions);
+			partitions, logarithmic);
 	std::vector<std::vector<std::vector<KmerMeanStdLine>>> results(
 			omp_get_max_threads());
 
 	bm.clear();
-#pragma omp parallel firstprivate(  means_ranges, partitions , source, max_n )
+#pragma omp parallel firstprivate(  means_ranges, partitions , source, max_n, logarithmic )
 	{
 		uint64_t thr = omp_get_thread_num();
 		std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
 		auto start = std::chrono::high_resolution_clock::now();
-		BinaryMatrix mat(source, false);
+		BinaryMatrix mat(source, false, logarithmic);
 		std::string file_out_thr = outfile + std::to_string(thr);
 		std::string expected_end, reading_time, total_time, process_time;
 		uint64_t tot_lines = 0;
@@ -265,7 +270,7 @@ bool BinaryMatrixHandler::stable(std::string source, std::string outfile,
 /// @param normalized True will get you the normalized data, false the original k-mer counts.
 /// @return true if the dump ended correctly
 bool BinaryMatrixHandler::dump(std::string input, std::string output,
-		std::string from_k, std::string to_k, bool normalized,
+		std::string from_k, std::string to_k, bool normalized, bool logarithmic,
 		bool write_header) {
 	if (normalized) {
 		return _dump<double>(input, output, from_k, to_k, write_header);
@@ -283,11 +288,11 @@ bool BinaryMatrixHandler::dump(std::string input, std::string output,
 /// @return
 
 bool BinaryMatrixHandler::extract(std::string input, std::string source,
-		std::string output, bool normalized) {
+		std::string output, bool normalized, bool logarithmic) {
 	if ( normalized ){
-		return _extract<double>(input, source, output);
+		return _extract<double>(input, source, output, logarithmic);
 	} else {
-		return _extract<uint32_t>(input, source, output);
+		return _extract<uint32_t>(input, source, output, logarithmic);
 	}
 }
 
@@ -301,7 +306,7 @@ bool BinaryMatrixHandler::extract(std::string input, std::string source,
 /// @return bool true if everithing went well.
 bool BinaryMatrixHandler::create(std::string input, std::string output,
 		int64_t prefix, double rescaling) {
-	BinaryMatrix bm(false);
+	BinaryMatrix bm(false, true);
 	bm.create(input, rescaling, prefix);
 	bm.save(output);
 	return true;

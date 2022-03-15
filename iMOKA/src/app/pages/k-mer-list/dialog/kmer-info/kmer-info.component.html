@@ -40,7 +40,10 @@
        </mat-card-content> </mat-card>
     </div>
     <div class="col-12">
-      <mat-card class="margin-1  mat-elevation-z2" *ngIf="data.boxplot"> <mat-card-title> Plots </mat-card-title> <mat-card-content> <plotly-plot [data]="data.boxplot.data" [layout]="data.boxplot.layout"></plotly-plot> </mat-card-content> </mat-card>
+      <mat-card class="margin-1  mat-elevation-z2" *ngIf="data.boxplot"> <mat-card-title> Plots  
+      <button mat-button color="primary" (click)="changeLogged()" >{{logged ? 'Logarithmic transformed' : 'Without logarithmic transformation'}}</button> 
+      
+      </mat-card-title> <mat-card-content> <plotly-plot [data]="data.boxplot.data" [layout]="data.boxplot.layout"></plotly-plot> </mat-card-content> </mat-card>
     </div>
   </div>
   <div class="row"><div class="col-12">
@@ -51,7 +54,7 @@
         <th class="mat-header-cell">Sample</th>
         <th class="mat-header-cell">Class</th>
         <th class="mat-header-cell">Count</th>
-        <th class="mat-header-cell">Normalized count</th>
+        <th class="mat-header-cell">{{ logged ? "Log" : "" }} Normalized count</th>
       </tr>
     </thead>
     <tbody>
@@ -59,7 +62,7 @@
         <th class="mat-header-cell">{{ info.samples_names[i] }}</th>
         <td class="mat-cell">{{info.groups_names[info.groups[i]]}}</td>
         <td class="mat-cell">{{value}}</td>
-        <td class="mat-cell">{{(value / info.count_normalization[i]) | number }}</td>
+        <td class="mat-cell">{{getLogged(value,info.count_normalization[i] ) }}</td>
       </tr>
     </tbody>
   </table>

@@ -217,6 +217,7 @@ static void compute_frequencies(std::vector<float> &result,
 bool SingleCellDecomposition::decompose(std::string input_file,
 		std::string paired, std::string output_folder, std::string counts,
 		int augmentation, int shift) {
+	/// TODO: add parameter logatrithmic
 	std::vector<std::string> binary_files;
 	std::vector<std::string> names;
 	std::vector<int> cell_counts;
@@ -255,7 +256,7 @@ bool SingleCellDecomposition::decompose(std::string input_file,
 	hofs << header.dump() << '\n';
 	hofs.close();
 	log << "Found " << binary_files.size() << " clusters: \n";
-	BinaryMatrix bm(matrix_file, true);
+	BinaryMatrix bm(matrix_file, true, true);
 
 	FastqRead read1, read2;
 	FastqReader reader1, reader2;
@@ -333,7 +334,7 @@ bool SingleCellDecomposition::decompose(std::string input_file,
 			int n_by_thr = std::floor(n / omp_get_max_threads());
 #pragma omp parallel firstprivate(matrix_file, is_pe, n, n_by_thr, shift)
 			{
-				BinaryMatrix binm(matrix_file, true);
+				BinaryMatrix binm(matrix_file, true, true);
 				binm.loadAllPrefixBuffers();
 				std::string to_filter = std::to_string(
 						std::max(3, (int) std::ceil(binm.k_len / 3))),

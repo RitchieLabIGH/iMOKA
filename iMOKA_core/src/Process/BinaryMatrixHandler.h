@@ -29,15 +29,15 @@ public:
 	bool create(std::string input, std::string output, int64_t prefix,
 			double rescaling);
 	bool dump(std::string input, std::string output, std::string from_k,
-			std::string to_k, bool raw, bool write_header = true);
+			std::string to_k, bool raw, bool logarithmic, bool write_header = true);
 	bool extract(std::string input, std::string source, std::string output,
-			bool normalized);
-	bool stable(std::string source, std::string outfile, uint64_t max_n);
+			bool normalized, bool logarithmic);
+	bool stable(std::string source, std::string outfile, uint64_t max_n, bool logarithmic);
 
 private:
 	template<class T>
-	bool _extract(std::string input, std::string source, std::string output) {
-		BinaryMatrix bm(true);
+	bool _extract(std::string input, std::string source, std::string output, bool logartithmic) {
+		BinaryMatrix bm(true, logartithmic);
 		bm.load(source);
 		std::ofstream ofs;
 		std::streambuf *buf;
@@ -105,8 +105,8 @@ private:
 
 	template<class T>
 	bool _dump(std::string input, std::string output, std::string from_k,
-			std::string to_k, bool write_header = true) {
-		BinaryMatrix bm(false);
+			std::string to_k, bool logartithmic , bool write_header = true) {
+		BinaryMatrix bm(false, logartithmic);
 		bm.load(input);
 		std::ofstream ofs;
 		std::streambuf *buf;

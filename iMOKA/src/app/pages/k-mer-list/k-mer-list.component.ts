@@ -425,6 +425,7 @@ export class KMerListComponent implements OnInit, OnDestroy {
 			});
 		}
 		data.information_list.push(new InfoListElement("Normalized k-mer matrix", "a text file containing the normalized k-mer counts", extract_file, { ftype: "matrix" }));
+		data.information_list.push(new InfoListElement("Log Normalized k-mer matrix", "a text file containing the log2 normalized k-mer counts", extract_file, { ftype: "matrix_log" }));
 		data.information_list.push(new InfoListElement("Raw k-mer matrix", "a text file containing the raw k-mer counts", extract_file, { ftype: "matrix_raw" }));
 		data.information_list.push(new InfoListElement("TSV gene file", "a text file containing the informations gene-wise of the k-mer table", extract_file, { ftype: "genes" }));
 		data.information_list.push(new InfoListElement("TSV k-mer file", "a text file containing the informations k-mer-wise displayed in the k-mer table", extract_file, { ftype: "tsv" }));

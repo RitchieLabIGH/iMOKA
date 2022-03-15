@@ -41,7 +41,7 @@ public:
 	uint64_t size() { return nodes.size(); };
 	void setPerfectMatch(bool perfect_match ) {this->perfect_match=perfect_match;};
 	std::vector<std::string> graph_type;
-	void write_output(std::string);
+	void write_output(std::string, bool logarithmic);
 
 	std::vector<BNode*> winning_nodes;
 	std::map<std::string, std::pair<uint64_t, uint64_t>> graph_type_count;
@@ -83,7 +83,7 @@ private:
 	void write_genes_json(std::ofstream &);
 	void write_sequences_json(std::ofstream &);
 	void write_signatures_json(std::ofstream &);
-	void write_kmers(std::ofstream &,std::ofstream &,std::ofstream &);
+	void write_kmers(std::ofstream &,std::ofstream &,std::ofstream &, bool logar);
 	int64_t addWinningNode(Event & );
 	json generate_kmer_json(uint64_t node_idx, KmerMatrixLine<uint32_t> & kmer);
 	BNode & getMaxKmer(std::string seq, uint64_t graph);

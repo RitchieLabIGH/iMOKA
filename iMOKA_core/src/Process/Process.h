@@ -249,17 +249,17 @@ public:
 	std::vector<KmerMeanStdLine> *vect = NULL;
 
 	static std::pair<double, double> estimate_stable_thresholds(
-			std::string source, const std::vector<Kmer> &partitions) {
+			std::string source, const std::vector<Kmer> &partitions, bool logarithmic) {
 		/// test 1M k-mers picked randomly for each thread
 		std::vector<std::vector<double>> means(omp_get_max_threads());
 		uint64_t max_per_thr = 100000;
 		std::cout << "Estimating mean values...";
 		std::cout.flush();
-#pragma omp parallel firstprivate( partitions , source )
+#pragma omp parallel firstprivate( partitions , source ,logarithmic)
 		{
 			uint64_t thr = omp_get_thread_num(), skip = 0;
 			std::this_thread::sleep_for(std::chrono::milliseconds(thr * 1000));
-			BinaryMatrix mat(source, false);
+			BinaryMatrix mat(source, false, logarithmic);
 			Kmer to_kmer(mat.k_len, std::pow(4, mat.k_len) - 1);
 			KmerMatrixLine<double> line;
 			if (thr != omp_get_max_threads() - 1) {
