@@ -170,7 +170,7 @@ while read line; do
     logdir=$(realpath ./logs)
     echo -e "\n######################################################################"
     echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] Processing ${s_name}  ( ${line_n} / ${total_line} )"
-    for f in $s_links; do
+    for f in $s_links ; do
         fname=$(echo $f | awk -F "/" '{print $NF}')
         if [[ "${f}" =~ ^(http|ftp).*$ ]]; then
             echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] DOWNLOADING ${fname}"
@@ -190,7 +190,7 @@ while read line; do
             cd ..
             downloaded="T"
         else  
-            [ ! -f "${f}" ] &&  usage "ERROR! File $f not found!" 1 
+            [ ! -f "${f}" ] &&  usage "ERROR! File ${f} not found!" 1 
         fi
         s_files="${s_files} ${f}"
     done
@@ -214,8 +214,8 @@ while read line; do
         fi
         f_files="${f_files} ${f}"
     done
-    s_files=$(echo "$f_files" | xargs )
-    paired=$(echo "$s_files" | awk '{if (NF == 2) { print "T" } else { print "F" } }')
+    s_files=$(echo "${f_files}" | xargs )
+    paired=$(echo "${s_files}" | awk '{if (NF == 2) { print "T" } else { print "F" } }')
     if [[ "${use_fastqc}" == "T" ]]; then
         echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] running fastqc ${fname}"
         mkdir ./fastqc
@@ -253,11 +253,11 @@ while read line; do
     echo ${s_files} | awk '{for (i=1; i<= NF; i++) { print $i } }' > ./tmp_dir/kmc_input
     prev_count_success="0"
     count_success="1"
-    while [[ ${prev_count_success} -ne ${count_success} ]]; do
+    while [[ ${prev_count_success} -ne ${count_success} ]] || [[ ${count_success} -eq 5 ]] ; do
    	    echo -n "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] running KMC "
 	    mkdir -p ./working_dir/
    	    prev_count_success=$count_success
-        kmc -k${kmer_len} -t${threads} -m${maxRam} -cs${kmcCounterVal} -ci${minCounts} -b -${file_type} @./tmp_dir/kmc_input ./tmp_dir/tmp.kmc ./working_dir/ 2>> ${logdir}/kmc.err >> ${logdir}/kmc.out  || count_success=$(( count_success + 1)) ;
+        kmc -k${kmer_len} -t${threads} -sm -m${maxRam} -cs${kmcCounterVal} -ci${minCounts} -b -${file_type} @./tmp_dir/kmc_input ./tmp_dir/tmp.kmc ./working_dir/ 2>> ${logdir}/kmc.err >> ${logdir}/kmc.out  || count_success=$(( count_success + 1)) ;
         rm -fr ./working_dir
         if [[ ${prev_count_success} -ne ${count_success} ]]; then
        		echo "failed. Trying again with attempt ${count_success}"
@@ -265,14 +265,18 @@ while read line; do
         	echo "succeeded."
         fi
     done
-    echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] running KMC dump"    
-	kmc_tools transform ./tmp_dir/tmp.kmc dump -s ./tmp_dir/tmp.txt 2>> ${logdir}/kmc_tools.err >> ${logdir}/kmc_tools.out
-	mv ./tmp_dir/tmp.txt ./${s_name}.tsv
-	count_file=$(realpath ./${s_name}.tsv)
-    echo -e "${count_file}\t${s_name}\t${s_class}" > ./tmp_dir/kma.input
-    echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] creating the binary file"    
-    iMOKA_core create -i ./tmp_dir/kma.input -o "./${s_name}.json" -r 1 2>> ${logdir}/imoka_create.err >> ${logdir}/imoka_create.out
-    cat ./tmp_dir/kma.input >> $matrix_file
+    if [[ ${prev_count_success} -ne ${count_success} ]] ; then
+        echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] KMC kept failing! Try with a different memory argument."    
+    else
+        echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] running KMC dump"    
+    	kmc_tools transform ./tmp_dir/tmp.kmc dump -s ./tmp_dir/tmp.txt 2>> ${logdir}/kmc_tools.err >> ${logdir}/kmc_tools.out
+    	mv ./tmp_dir/tmp.txt ./${s_name}.tsv
+	    count_file=$(realpath ./${s_name}.tsv)
+        echo -e "${count_file}\t${s_name}\t${s_class}" > ./tmp_dir/kma.input
+        echo "###[MESSAGE][$(date +%y-%m-%d-%H:%M:%S)] creating the binary file"    
+        iMOKA_core create -i ./tmp_dir/kma.input -o "./${s_name}.json" -r 1 2>> ${logdir}/imoka_create.err >> ${logdir}/imoka_create.out
+        cat ./tmp_dir/kma.input >> $matrix_file
+    fi
     if [[ "${keepFiles}" == "F" ]]; then
         rm ./${s_name}.tsv
         rm -fr ./fasta ./fastq

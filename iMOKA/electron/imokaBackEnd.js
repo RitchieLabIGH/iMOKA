@@ -192,11 +192,11 @@ class iMokaBE extends EventEmitter {
 									line = line + "\t" + c;
 								} else {
 									if (request.file_type == "matrix_log"){
-										line = line + "\t" + Math.log2((c / that.data.kmers.info.count_normalization[cidx])+1);	
+										line = line + "\t" + Math.log2((c / that.data.kmers.info.count_normalization[cidx])+1);
 									} else {
 										line = line + "\t" + (c / that.data.kmers.info.count_normalization[cidx]);
 									}
-									
+
 								}
 							});
 							this.push(line + "\n");
@@ -1308,7 +1308,7 @@ class iMokaBE extends EventEmitter {
 			}
 			if (request.filters.minFC[g] != 0 ) {
 				for (var e = 0; e < this.data.kmers.kmers.length; e++) {
-					if (this.data.kmers.kmers[e].fc[g] < request.filters.minFC[g]) out[e] = false;
+					if (Math.abs(this.data.kmers.kmers[e].fc[g]) < request.filters.minFC[g]) out[e] = false;
 				}
 			}
 			if (request.filters.minPval[g] != 0 ) {
