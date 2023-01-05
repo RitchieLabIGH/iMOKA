@@ -11,10 +11,11 @@ Lorenzi, C., Barriere, S., Villemin, J. et al. iMOKA: k-mer based software to an
  **The iMOKA_core and iMOKA_GUI are downlodable from the [Release page of GitHub](https://github.com/RitchieLabIGH/iMOKA/releases) in the assets section.**
  
 **Checkout the iMOKA video [presentation](https://youtu.be/KNrYGpEFm2k) and [tutorials](https://www.youtube.com/playlist?list=PLn1zt4v34Yz-AYvQRWc1QxwatYmXmWA3S)!**
- 
+
 The core software is distributed as [Singularity](https://sylabs.io/singularity/) image and need as only dependency singularity version 3 or higher ( currently available only on Linux distributions). 
 The graphical user interface (GUI), that allows to visualize the results and to use the core software in local environment or in SLURM clusters, is a multiplatform application implemented using [Electron](https://www.electronjs.org/).
 
+**Finally, [here](https://github.com/RitchieLabIGH/iMOKA/blob/master/iMOKA_core/README.md) you can find the CLI documentation**
 
 
 ## How to contribute
